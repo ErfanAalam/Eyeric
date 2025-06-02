@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Eye, Glasses, Sun, Star, Shield, Clock, Users, Heart } from "lucide-react";
 import Navbar  from '../../components/Navbar'; // Assuming you have a Navbar component
 import Footer from "../../components/Footer";
+import Image from "next/image";
 
 
 // Hero Slider Component
@@ -39,7 +40,7 @@ const HeroSlider = () => {
   }, []);
 
   return (
-    <div className="relative h-[20vh] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="relative md:h-[50vh] h-[20vh] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {slides.map((slide, index) => (
         <div
           key={index}
@@ -48,7 +49,7 @@ const HeroSlider = () => {
           }`}
         >
           <div className="absolute inset-0 bg-black/40 z-10" />
-          <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
+          <Image src={slide.image} alt={slide.title} width={400} height={500} className="w-full h-full object-cover" />
           <div className="absolute inset-0 z-20 flex items-center justify-center">
             <div className="text-center text-white px-4 max-w-4xl">
               <h1 className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2">
@@ -194,7 +195,10 @@ const CategoryTabs = () => {
               className="group relative overflow-hidden max-h-[420px] flex flex-col justify-between rounded-xl bg-white/30 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
             >
               <div className="aspect-[4/3] overflow-hidden">
-                <img
+                <Image
+                  width={400}
+                  height={300}
+                  loading="lazy"
                   src={item.image}
                   alt={item.title}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -220,7 +224,10 @@ const VisionCareSection = () => {
   return (
     <div className="relative py-16 md:py-24 flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
       <div className="absolute inset-0 bg-black/30" />
-      <img
+      <Image
+        width={1200}
+        height={600}
+        loading="lazy"
         src="https://images.unsplash.com/photo-1509695507497-903c140c43b0?w=1200&h=600&fit=crop"
         alt="Eye care"
         className="absolute inset-0 w-full h-full object-cover"
@@ -329,7 +336,10 @@ const BestSellers = () => {
                 </span>
               </div>
               <div className="aspect-square overflow-hidden">
-                <img
+                <Image
+                  width={400}
+                  height={300}
+                  loading="lazy"
                   src={item.image}
                   alt={item.name}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -406,7 +416,10 @@ const ShopByShapes = () => {
           {/* Preview Image */}
           <div className="w-full max-w-2xl mb-8">
             <div className="relative overflow-hidden rounded-3xl shadow-2xl bg-white/30 backdrop-blur-sm border border-white/50">
-              <img
+              <Image
+                width={600}
+                height={400}
+                loading="lazy"
                 src={shapes[selectedShape].image}
                 alt={shapes[selectedShape].name}
                 className="w-full h-64 md:h-96 object-cover transition-all duration-500"
@@ -573,7 +586,10 @@ const ProductCategories = () => {
               className="group relative overflow-hidden rounded-3xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-4"
             >
               <div className="aspect-square overflow-hidden">
-                <img
+                <Image
+                  width={500}
+                  height={400}
+                  loading="lazy"
                   src={category.image}
                   alt={category.title}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
