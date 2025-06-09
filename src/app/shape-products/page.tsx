@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Filter, Grid, List, ArrowLeft } from "lucide-react";
@@ -20,7 +20,8 @@ interface Product {
   image: string;
 }
 
-const ShapeProductsPage = () => {
+// Client component that uses useSearchParams
+const ShapeProductsContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const shape = searchParams.get("shape");
@@ -200,6 +201,19 @@ const ShapeProductsPage = () => {
 
       <Footer />
     </div>
+  );
+};
+
+// Main page component
+const ShapeProductsPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    }>
+      <ShapeProductsContent />
+    </Suspense>
   );
 };
 
