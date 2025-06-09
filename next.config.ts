@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  reactStrictMode: true,
+  swcMinify: true,
   images: {
     remotePatterns: [
       {
@@ -28,8 +29,14 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "localhost",
+        port: "",
+        pathname: "/**",
+      },
     ],
-},
+  },
 }
 
 export default nextConfig;
