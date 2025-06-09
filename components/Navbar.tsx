@@ -34,19 +34,15 @@ const Navbar: React.FC = () => {
   const navItems: NavItems = {
     sunglasses: {
       title: 'Sunglasses',
-      items: ['Aviator', 'Wayfarer', 'Round', 'Cat Eye', 'Sports', 'Polarized']
+      items: ['Aviator', 'Wayfarer', 'Round', 'Cat-Eye', 'Sports', 'Square']
     },
     eyeglasses: {
       title: 'Eyeglasses',
-      items: ['Rectangle', 'Round', 'Square', 'Oval', 'Cat Eye', 'Rimless']
-    },
-    frames: {
-      title: 'Frames',
-      items: ['Metal', 'Plastic', 'Titanium', 'Acetate', 'Flexible', 'Designer']
+      items: ['Round', 'Cat-Eye', 'Wayfarer', 'Aviator', 'Square']
     },
     computerGlasses: {
       title: 'Computer Glasses',
-      items: ['Blue Light Filter', 'Anti-Glare', 'Gaming', 'Office', 'Reading', 'Progressive']
+      items: ['Round', 'Wayfarer', 'Sports', 'Square']
     },
     bestseller: {
       title: 'Bestseller',
@@ -82,67 +78,13 @@ const Navbar: React.FC = () => {
   return (
     <>
       <style jsx>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         
-        @keyframes slideInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        @keyframes pulse {
-          0%, 100% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.05);
-          }
-        }
-        
-        @keyframes shimmer {
-          0% {
-            background-position: -200% 0;
-          }
-          100% {
-            background-position: 200% 0;
-          }
-        }
-        
-        .animate-fadeInUp {
-          animation: fadeInUp 0.5s ease-out;
-        }
-        
-        .animate-slideInLeft {
-          animation: slideInLeft 0.3s ease-out;
-        }
-        
-        .animate-pulse-custom {
-          animation: pulse 2s infinite;
-        }
-        
-        .shimmer-effect {
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(255, 255, 255, 0.4),
-            transparent
-          );
-          background-size: 200% 100%;
-          animation: shimmer 2s infinite;
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
         }
         
         .glass-effect {
@@ -163,27 +105,33 @@ const Navbar: React.FC = () => {
         }
         
         .hover-lift {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: transform 0.2s ease-out;
         }
         
         .hover-lift:hover {
           transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
         
-        .dropdown-enter {
-          animation: fadeInUp 0.3s ease-out;
+        /* Optimize mobile menu animations */
+        .mobile-menu {
+          transform: translateY(0);
+          transition: transform 0.3s ease-out;
+          will-change: transform;
+          overscroll-behavior: contain;
         }
         
-        .mobile-menu-enter {
-          animation: slideInLeft 0.4s ease-out;
+        .mobile-menu-content {
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+          overscroll-behavior: contain;
+          scroll-behavior: smooth;
         }
       `}</style>
 
-      <nav className={`w-full sticky top-0 z-50 transition-all duration-500 ${
+      <nav className={`w-full sticky top-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'glass-effect shadow-2xl' 
-          : 'bg-white/90 backdrop-blur-sm shadow-lg'
+          ? 'glass-effect shadow-lg' 
+          : 'bg-white/90 backdrop-blur-sm shadow-md'
       }`}>
         {/* Main Navbar */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -334,7 +282,7 @@ const Navbar: React.FC = () => {
                           {item.items.map((subItem: string, index: number) => (
                             <Link
                               key={index}
-                              href={`/${key}/${subItem.toLowerCase().replace(/\s+/g, '-')}`}
+                              href={`/${key.toLowerCase()}/${subItem.toLowerCase()}`}
                               className="block px-4 py-3 text-sm font-medium rounded-2xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300 hover-lift"
                               style={{ 
                                 color: colors.text,
@@ -354,74 +302,73 @@ const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Optimized version */}
         {isMobileMenuOpen && (
-          <div className="md:hidden glass-effect border-t border-white/20 mobile-menu-enter">
-            <div className="px-6 py-6 space-y-6">
-              {/* Mobile Search */}
-              <form onSubmit={handleSearchSubmit} className="relative">
-                <input
-                  type="text"
-                  placeholder="Search amazing frames..."
-                  value={searchQuery}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                  className="w-full pl-6 pr-14 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-400 focus:bg-white transition-all duration-300 bg-gray-50"
-                />
-                <button 
-                  type="submit"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-xl hover:bg-blue-500 hover:text-white transition-all duration-300"
-                  style={{ color: colors.muted }}
-                >
-                  <Search size={20} />
-                </button>
-              </form>
-
-              {/* Mobile Icons */}
-              <div className="flex justify-center space-x-8 py-4">
-                {[
-                  { href: '/favorites', icon: Heart, label: 'Favorites', count: 3, color: 'text-red-500' },
-                  { href: '/cart', icon: ShoppingCart, label: 'Cart', count: 2, color: 'text-blue-500' },
-                  { href: '/account', icon: User, label: 'Account', count: 0, color: 'text-purple-500' }
-                ].map((item, index) => (
-                  <Link 
-                    key={item.label}
-                    href={item.href}
-                    className="flex flex-col items-center space-y-2 p-4 rounded-2xl hover:bg-gray-50 transition-all duration-300 hover-lift group"
-                    style={{ animationDelay: `${index * 100}ms` }}
+          <div className="md:hidden glass-effect border-t border-white/20 mobile-menu">
+            <div className="mobile-menu-content max-h-[calc(100vh-4rem)] overflow-y-auto">
+              <div className="px-4 py-4 space-y-4">
+                {/* Mobile Search - Simplified */}
+                <form onSubmit={handleSearchSubmit} className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search amazing frames..."
+                    value={searchQuery}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                    className="w-full pl-4 pr-12 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-400 focus:bg-white transition-colors duration-200 bg-gray-50"
+                  />
+                  <button 
+                    type="submit"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg hover:bg-blue-500 hover:text-white transition-colors duration-200"
+                    style={{ color: colors.muted }}
                   >
-                    <div className="relative">
-                      <item.icon size={28} className={`${item.color} group-hover:scale-110 transition-transform`} />
-                      {item.count > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold">
-                          {item.count}
-                        </span>
-                      )}
-                    </div>
-                    <span className="text-sm font-medium text-gray-600 group-hover:text-gray-900">
-                      {item.label}
-                    </span>
-                  </Link>
-                ))}
-              </div>
+                    <Search size={20} />
+                  </button>
+                </form>
 
-              {/* Mobile Auth Buttons */}
-              <div className="flex space-x-4 pt-4">
-                <Link 
-                  href="/login"
-                  className="flex-1 px-6 py-4 text-sm font-semibold text-center border-2 border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
-                  style={{ color: colors.text }}
-                >
-                  Login
-                </Link>
-                <Link 
-                  href="/signup"
-                  className="flex-1 px-6 py-4 text-sm font-semibold text-white text-center rounded-2xl hover:shadow-lg transition-all duration-300 relative overflow-hidden group"
-                  style={{ backgroundColor: colors.primary }}
-                >
-                  <span className="relative z-10">Sign Up</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </Link>
-              </div>
+                {/* Mobile Icons - Simplified */}
+                <div className="flex justify-around py-2">
+                  {[
+                    { href: '/favorites', icon: Heart, label: 'Favorites', count: 3, color: 'text-red-500' },
+                    { href: '/cart', icon: ShoppingCart, label: 'Cart', count: 2, color: 'text-blue-500' },
+                    { href: '/account', icon: User, label: 'Account', count: 0, color: 'text-purple-500' }
+                  ].map((item) => (
+                    <Link 
+                      key={item.label}
+                      href={item.href}
+                      className="flex flex-col items-center space-y-1 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      <div className="relative">
+                        <item.icon size={24} className={item.color} />
+                        {item.count > 0 && (
+                          <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                            {item.count}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-medium text-gray-600">
+                        {item.label}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Mobile Auth Buttons - Simplified */}
+                <div className="flex space-x-3 pt-2">
+                  <Link 
+                    href="/login"
+                    className="flex-1 px-4 py-2.5 text-sm font-semibold text-center border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors duration-200"
+                    style={{ color: colors.text }}
+                  >
+                    Login
+                  </Link>
+                  <Link 
+                    href="/signup"
+                    className="flex-1 px-4 py-2.5 text-sm font-semibold text-white text-center rounded-xl hover:shadow-md transition-all duration-200"
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    Sign Up
+                  </Link>
+                </div>
 
               {/* Mobile Navigation Items */}
               <div className="border-t border-gray-100 pt-6 space-y-4">
@@ -435,7 +382,7 @@ const Navbar: React.FC = () => {
                       {item.items.map((subItem: string, subIndex: number) => (
                         <Link
                           key={subIndex}
-                          href={`/${key}/${subItem.toLowerCase().replace(/\s+/g, '-')}`}
+                          href={`/${key.toLowerCase()}/${subItem.toLowerCase()}`}
                           className="py-3 px-4 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300 text-gray-600 hover-lift"
                           onClick={() => setIsMobileMenuOpen(false)}
                         >
@@ -445,6 +392,7 @@ const Navbar: React.FC = () => {
                     </div>
                   </div>
                 ))}
+                </div>
               </div>
             </div>
           </div>
