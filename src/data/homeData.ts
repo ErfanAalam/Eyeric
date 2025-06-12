@@ -139,11 +139,6 @@ export const shapes: Shape[] = [
     description: "Classic round frames for a timeless look",
   },
   {
-    name: "Square",
-    image: "https://images.unsplash.com/photo-1509695507497-903c140c43b0?w=600&h=400&fit=crop",
-    description: "Bold square frames for a modern edge",
-  },
-  {
     name: "Cat-Eye",
     image: "https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=600&h=400&fit=crop",
     description: "Elegant cat-eye frames for sophistication",
@@ -157,6 +152,21 @@ export const shapes: Shape[] = [
     name: "Wayfarer",
     image: "https://images.unsplash.com/photo-1577803645773-f96470509666?w=600&h=400&fit=crop",
     description: "Iconic wayfarer design for versatility",
+  },
+  {
+    name: "Oval",
+    image: "https://images.unsplash.com/photo-1577803645773-f96470509666?w=600&h=400&fit=crop",
+    description: "Iconic oval design for versatility",
+  },
+  {
+    name: "Rectangle",
+    image: "https://images.unsplash.com/photo-1577803645773-f96470509666?w=600&h=400&fit=crop",
+    description: "Iconic rectangle design for versatility",
+  },
+  {
+    name: "Square",
+    image: "https://images.unsplash.com/photo-1509695507497-903c140c43b0?w=600&h=400&fit=crop",
+    description: "Bold square frames for a modern edge",
   },
 ];
 
