@@ -7,9 +7,7 @@ export default function FilterSidebar({
   currentGender,
   onGenderChange,
   selectedStyles,
-  onStyleChange,
   selectedShapes,
-  onShapeChange,
   currentPrice,
   onPriceChange,
   styleOptions,
@@ -22,9 +20,7 @@ export default function FilterSidebar({
   currentGender: string;
   onGenderChange: (gender: string) => void;
   selectedStyles: string[];
-  onStyleChange: (styles: string[]) => void;
   selectedShapes: string[];
-  onShapeChange: (shapes: string[]) => void;
   currentPrice: { min: number; max: number };
   onPriceChange: (price: { min: number; max: number }) => void;
   styleOptions: string[];

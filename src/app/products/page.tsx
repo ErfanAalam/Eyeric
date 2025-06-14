@@ -81,12 +81,6 @@ const ProductsContent = () => {
       router.push(`/products?category=${gender.toLowerCase()}&type=${type || ''}`);
     }
   };
-  const handleShapeChange = (shape: string) => {
-    setSelectedShapes([shape.toLowerCase()]);
-  };
-  const handleStyleChange = (style: string) => {
-    setSelectedStyles([style]);
-  };
   const handlePriceChange = (price: { min: number; max: number }) => {
     setPriceRange(price);
   };
@@ -145,9 +139,7 @@ const ProductsContent = () => {
             currentGender={category || ''}
             onGenderChange={handleGenderChange}
             selectedStyles={selectedStyles}
-            onStyleChange={setSelectedStyles}
             selectedShapes={selectedShapes}
-            onShapeChange={setSelectedShapes}
             currentPrice={priceRange}
             onPriceChange={handlePriceChange}
             styleOptions={styleOptions}
@@ -162,9 +154,7 @@ const ProductsContent = () => {
             currentGender={category || ''}
             onGenderChange={handleGenderChange}
             selectedStyles={selectedStyles}
-            onStyleChange={setSelectedStyles}
             selectedShapes={selectedShapes}
-            onShapeChange={setSelectedShapes}
             currentPrice={priceRange}
             onPriceChange={handlePriceChange}
             styleOptions={styleOptions}
