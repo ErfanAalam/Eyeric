@@ -119,9 +119,7 @@ const ShapeProductsContent = () => {
             currentGender={""}
             onGenderChange={handleGenderChange}
             selectedStyles={selectedStyles}
-            onStyleChange={setSelectedStyles}
             selectedShapes={selectedShapes}
-            onShapeChange={setSelectedShapes}
             currentPrice={priceRange}
             onPriceChange={handlePriceChange}
             styleOptions={styleOptions}
@@ -136,9 +134,7 @@ const ShapeProductsContent = () => {
             currentGender={""}
             onGenderChange={handleGenderChange}
             selectedStyles={selectedStyles}
-            onStyleChange={setSelectedStyles}
             selectedShapes={selectedShapes}
-            onShapeChange={setSelectedShapes}
             currentPrice={priceRange}
             onPriceChange={handlePriceChange}
             styleOptions={styleOptions}
