@@ -14,6 +14,7 @@ import {
   // productTypes,
   // features,
   // productCategories,
+  makeInIndia,
 } from "../data/homeData";
 import {
   getHeroSlides,
@@ -62,8 +63,8 @@ const HeroSlider = () => {
           <Image
             src={slide.image}
             alt={slide.title}
-            width={2400}
-            height={1600}
+            width={24000}
+            height={16000}
             className="w-full h-full object-center"
             quality={100}
           />
@@ -402,6 +403,22 @@ const LatestTrends = () => {
   );
 };
 
+// Make In India Banner Section
+const MakeInIndia = () => (
+  <div className="py-12 bg-[#f5f1e6] flex flex-col items-center text-center">
+    <div className="mb-2 text-sm md:text-base text-gray-700">Styled By {makeInIndia.styledBy}</div>
+    <h2 className="text-2xl md:text-4xl font-serif font-semibold mb-2 text-gray-900">{makeInIndia.title}</h2>
+    <div className="font-bold text-lg md:text-xl mb-6 text-gray-800">
+      {makeInIndia.subtitle}
+    </div>
+    <a href={makeInIndia.buttonUrl}>
+      <button className="bg-black text-white px-8 py-3 rounded-md text-base font-medium hover:bg-gray-900 transition-all">
+        {makeInIndia.buttonText}
+      </button>
+    </a>
+  </div>
+);
+
 // Shop by Shapes Section
 const ShopByShapes = () => {
   const [selectedShape, setSelectedShape] = useState(0);
@@ -641,6 +658,62 @@ const ShopByShapes = () => {
 //   );
 // };
 
+const HowToKnowFaceSize = () => {
+  const router = useRouter();
+  return (
+    <div className="py-16 px-4 bg-gradient-to-br from-teal-50 to-blue-50">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8">
+          <h2 className="text-2xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
+            Find Your Perfect Fit
+          </h2>
+          <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
+            Choosing the right frame size is crucial for comfort and style. Our comprehensive size guide helps you measure your face and find frames that complement your features perfectly.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
+            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl">📏</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-gray-800">Measure Your Face</h3>
+            <p className="text-sm text-gray-600">Learn how to accurately measure your face width, temple length, and bridge size.</p>
+          </div>
+
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
+            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl">👓</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-gray-800">Frame Sizing Guide</h3>
+            <p className="text-sm text-gray-600">Understand frame measurements and how they correspond to your face measurements.</p>
+          </div>
+
+          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
+            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
+              <span className="text-2xl">✨</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-2 text-gray-800">Style Tips</h3>
+            <p className="text-sm text-gray-600">Discover which frame styles work best for your face shape and size.</p>
+          </div>
+        </div>
+
+        <div className="text-center">
+          <button
+            className="bg-gradient-to-r from-teal-600 to-blue-600 text-white px-8 py-3 rounded-full text-base font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            onClick={() => router.push("/size-guide")}
+          >
+            View Size Guide
+          </button>
+          <p className="mt-4 text-sm text-gray-500">
+            Need help? Our experts are ready to assist you
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Main Home Component
 
 export default function Home() {
@@ -654,6 +727,8 @@ export default function Home() {
       <ShopByShapes />
       <BestSellers />
       <LatestTrends />
+      <HowToKnowFaceSize />
+      <MakeInIndia />
       {/* <ProductInfoSection /> */}
       {/* <ProductCategories /> */}
       <Footer />

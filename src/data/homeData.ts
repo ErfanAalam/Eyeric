@@ -12,13 +12,13 @@ export const heroSlides: Slide[] = [
   {
     title: "Premium Designer Frames",
     subtitle: "Elevate your look with luxury",
-    image: "https://dcassetcdn.com/design_img/579303/174850/174850_3861797_579303_image.jpg",
+    image: "https://yourspex.com/cdn/shop/files/Exclusive_Styles-01_1.jpg?v=1749555842&width=750",
     gradient: "from-purple-600 to-pink-600",
   },
   {
     title: "Smart Vision Technology",
     subtitle: "Experience the future of optical wear",
-    image: "https://www.fittingbox.com/hs-fs/hubfs/WEBP%20images/Images%20Blog%20webp/banner-blog-ecommerce-tools.webp?width=1015&height=254&name=banner-blog-ecommerce-tools.webp",
+    image: "https://yourspex.com/cdn/shop/files/Free_Home_eye_test-01_b0e90012-3b11-4a29-80c4-96462bc93cd7.jpg?v=1749553388&width=750",
     gradient: "from-indigo-600 to-blue-600",
   },
 ];
@@ -225,4 +225,13 @@ export const productCategories: ProductCategory[] = [
     description: "Blue light blocking technology",
     gradient: "from-green-400 to-blue-500",
   },
-]; 
+];
+
+// Admin Editable Banner Data
+export const makeInIndia = {
+  styledBy: "Eyeric Eyewear",
+  title: "Premium Eyewear Collection",
+  subtitle: "Proudly Made in India 🇮🇳",
+  buttonText: "SHOP NOW",
+  buttonUrl: "/shop-eyewear",
+}; 

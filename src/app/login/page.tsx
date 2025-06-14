@@ -1,27 +1,18 @@
-import React from 'react'
-import { supabase } from '../../../lib/supabaseClient'
+import React from "react";
+import { supabase } from "../../../lib/supabaseClient";
 
 const page = () => {
+  const Createname = async () => {
+    const { data, error } = await supabase.from("views").insert({
+      name: "Erfan Aalam",
+    });
+    console.log(data);
+    console.error(error);
+  };
 
-    const Createname =async ()=>{
-        const {data, error} = await supabase
-            .from('views')
-            .insert({
-            name :'Erfan Aalam'
-        })
-        console.log(data)
-        console.error(error)
-    }
+  Createname();
 
+  return <div>this is login page</div>;
+};
 
-
-    Createname()
-
-  return (
-    <div>
-      this is login page
-    </div>
-  )
-}
-
-export default page
+export default page;
