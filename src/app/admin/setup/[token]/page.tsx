@@ -15,6 +15,7 @@ interface AdminInvitation {
 /**
  * @param {{ params: { token: string } }} props
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function AdminSetup({ params }: any) {
   const { token } = params;
   const [password, setPassword] = useState("");
