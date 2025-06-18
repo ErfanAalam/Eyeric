@@ -12,7 +12,7 @@ interface AdminInvitation {
   expires_at: string;
 }
 
-export default function AdminSetup({ params }: { params: { token: string } }) {
+export default function AdminSetup({ params }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
