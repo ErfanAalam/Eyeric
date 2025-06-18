@@ -1,59 +1,59 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+// import { supabase } from "../../../../lib/supabaseClient";
 import { supabase } from "../../../../../lib/supabaseClient";
 import bcrypt from "bcryptjs";
 
-interface SetupPageProps {
-  params: {
-    token: string;
-  };
+interface AdminInvitation {
+  email: string;
+  token: string;
+  expires_at: string;
 }
 
-const AdminSetup = ({ params }: SetupPageProps) => {
+export default function AdminSetup({ params }: { params: { token: string } }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [invitation, setInvitation] = useState<{ email: string } | null>(null);
+  const [invitation, setInvitation] = useState<AdminInvitation | null>(null);
   const [validating, setValidating] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
+    async function validateToken() {
+      try {
+        const { data, error } = await supabase
+          .from("admin_invitations")
+          .select("*")
+          .eq("token", params.token)
+          .single();
+
+        if (error || !data) {
+          setMessage("Invalid or expired invitation link.");
+          setValidating(false);
+          return;
+        }
+
+        const now = new Date();
+        const expiresAt = new Date(data.expires_at);
+        
+        if (now > expiresAt) {
+          setMessage("This invitation has expired. Please request a new one.");
+          setValidating(false);
+          return;
+        }
+
+        setInvitation(data);
+        setValidating(false);
+      } catch {
+        setMessage("Error validating invitation. Please try again.");
+        setValidating(false);
+      }
+    }
     validateToken();
   }, [params.token]);
-
-  const validateToken = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("admin_invitations")
-        .select("*")
-        .eq("token", params.token)
-        .single();
-
-      if (error || !data) {
-        setMessage("Invalid or expired invitation link.");
-        setValidating(false);
-        return;
-      }
-
-      const now = new Date();
-      const expiresAt = new Date(data.expires_at);
-      
-      if (now > expiresAt) {
-        setMessage("This invitation has expired. Please request a new one.");
-        setValidating(false);
-        return;
-      }
-
-      setInvitation(data);
-      setValidating(false);
-    } catch {
-      setMessage("Error validating invitation. Please try again.");
-      setValidating(false);
-    }
-  }, [params.token, setMessage, setValidating]);
 
   const handleSetup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,7 +79,7 @@ const AdminSetup = ({ params }: SetupPageProps) => {
       const { error: adminError } = await supabase
         .from("admin")
         .insert({
-          email: invitation?.email,
+          email: invitation!.email,
           password_hash: passwordHash
         });
 
@@ -197,6 +197,4 @@ const AdminSetup = ({ params }: SetupPageProps) => {
       </div>
     </div>
   );
-};
-
-export default AdminSetup; 
+} 
