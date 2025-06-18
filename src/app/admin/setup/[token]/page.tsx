@@ -12,12 +12,7 @@ interface AdminInvitation {
   expires_at: string;
 }
 
-type Props = {
-  params: { token: string };
-  searchParams?: { [key: string]: string | string[] | undefined };
-};
-
-export default function AdminSetup({ params }: Props) {
+export default function AdminSetup({ params }: { params: { token: string } }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
