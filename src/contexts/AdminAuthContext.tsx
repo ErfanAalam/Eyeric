@@ -63,7 +63,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       localStorage.setItem("admin", JSON.stringify(adminData));
       setLoading(false);
       return { error: null };
-    } catch (err) {
+    } catch {
       setLoading(false);
       return { error: new Error("Login failed") };
     }
