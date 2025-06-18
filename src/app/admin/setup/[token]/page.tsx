@@ -12,14 +12,11 @@ interface AdminInvitation {
   expires_at: string;
 }
 
-interface AdminSetupProps {
-  params: {
-    token: string;
-  };
-}
-
-export default function AdminSetup(props: AdminSetupProps) {
-  const { params } = props;
+/**
+ * @param {{ params: { token: string } }} props
+ */
+export default function AdminSetup({ params }: any) {
+  const { token } = params;
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -34,7 +31,7 @@ export default function AdminSetup(props: AdminSetupProps) {
         const { data, error } = await supabase
           .from("admin_invitations")
           .select("*")
-          .eq("token", params.token)
+          .eq("token", token)
           .single();
 
         if (error || !data) {
@@ -60,7 +57,7 @@ export default function AdminSetup(props: AdminSetupProps) {
       }
     }
     validateToken();
-  }, [params.token]);
+  }, [token]);
 
   const handleSetup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -100,7 +97,7 @@ export default function AdminSetup(props: AdminSetupProps) {
       await supabase
         .from("admin_invitations")
         .delete()
-        .eq("token", params.token);
+        .eq("token", token);
 
       setMessage("Admin account created successfully! Redirecting to login...");
       setTimeout(() => {
