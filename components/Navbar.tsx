@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Heart, ShoppingCart, User, Menu, X, ChevronDown, Sparkles } from 'lucide-react';
+import { Search, Heart, ShoppingCart, User, Menu, X, ChevronDown, Sparkles, LogOut } from 'lucide-react';
+import { useAuth } from '../src/contexts/AuthContext';
 
 // Import your colors
 import colors from '@/constants/colors';
@@ -22,6 +23,9 @@ const Navbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [searchFocused, setSearchFocused] = useState<boolean>(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState<boolean>(false);
+  
+  const { user, userProfile, signOut } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +34,24 @@ const Navbar: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close user dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (userDropdownOpen && !target.closest('.user-dropdown')) {
+        setUserDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userDropdownOpen]);
+
+  const handleLogout = async () => {
+    await signOut();
+    setUserDropdownOpen(false);
+  };
 
   const navItems: NavItems = {
     sunglasses: {
@@ -216,23 +238,77 @@ const Navbar: React.FC = () => {
                 <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">2</span>
               </Link>
 
-              <div className="flex items-center space-x-3">
-                <Link 
-                  href="/login"
-                  className="px-6 py-2.5 text-sm font-semibold border-2 border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 hover-lift"
-                  style={{ color: colors.text }}
-                >
-                  Login
-                </Link>
-                <Link 
-                  href="/signup"
-                  className="px-6 py-2.5 text-sm font-semibold text-white rounded-2xl transition-all duration-300 hover-lift relative overflow-hidden group"
-                  style={{ backgroundColor: colors.primary }}
-                >
-                  <span className="relative z-10">Sign Up</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </Link>
-              </div>
+              {/* User Authentication Section */}
+              {user ? (
+                <div className="relative user-dropdown">
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center space-x-2 px-4 py-2.5 text-sm font-semibold border-2 border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 hover-lift"
+                    style={{ color: colors.text }}
+                  >
+                    <User size={20} />
+                    <span className="hidden sm:block">
+                      {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}
+                    </span>
+                    <ChevronDown size={16} className={`transition-transform duration-300 ${userDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* User Dropdown */}
+                  {userDropdownOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-48 glass-effect rounded-2xl shadow-2xl border border-white/20 z-50">
+                      <div className="p-4">
+                        <div className="text-sm font-semibold text-gray-800 mb-2">
+                          {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}
+                        </div>
+                        <div className="text-xs text-gray-500 mb-4">
+                          {user.email}
+                        </div>
+                        <div className="space-y-2">
+                          <Link
+                            href="/profile"
+                            className="block px-3 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            My Profile
+                          </Link>
+                          <Link
+                            href="/orders"
+                            className="block px-3 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            My Orders
+                          </Link>
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:text-white transition-all duration-300"
+                          >
+                            <LogOut size={16} />
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center space-x-3">
+                  <Link 
+                    href="/login"
+                    className="px-6 py-2.5 text-sm font-semibold border-2 border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 hover-lift"
+                    style={{ color: colors.text }}
+                  >
+                    Login
+                  </Link>
+                  <Link 
+                    href="/signup"
+                    className="px-6 py-2.5 text-sm font-semibold text-white rounded-2xl transition-all duration-300 hover-lift relative overflow-hidden group"
+                    style={{ backgroundColor: colors.primary }}
+                  >
+                    <span className="relative z-10">Sign Up</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -330,7 +406,7 @@ const Navbar: React.FC = () => {
                   {[
                     { href: '/favorites', icon: Heart, label: 'Favorites', count: 3, color: 'text-red-500' },
                     { href: '/cart', icon: ShoppingCart, label: 'Cart', count: 2, color: 'text-blue-500' },
-                    { href: '/account', icon: User, label: 'Account', count: 0, color: 'text-purple-500' }
+                    { href: user ? '/profile' : '/login', icon: User, label: user ? 'Profile' : 'Account', count: 0, color: 'text-purple-500' }
                   ].map((item) => (
                     <Link 
                       key={item.label}
@@ -352,23 +428,57 @@ const Navbar: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Mobile Auth Buttons - Simplified */}
-                <div className="flex space-x-3 pt-2">
-                  <Link 
-                    href="/login"
-                    className="flex-1 px-4 py-2.5 text-sm font-semibold text-center border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors duration-200"
-                    style={{ color: colors.text }}
-                  >
-                    Login
-                  </Link>
-                  <Link 
-                    href="/signup"
-                    className="flex-1 px-4 py-2.5 text-sm font-semibold text-white text-center rounded-xl hover:shadow-md transition-all duration-200"
-                    style={{ backgroundColor: colors.primary }}
-                  >
-                    Sign Up
-                  </Link>
-                </div>
+                {/* Mobile Auth Section */}
+                {user ? (
+                  <div className="border-t border-gray-100 pt-4">
+                    <div className="text-sm font-semibold text-gray-800 mb-2">
+                      Welcome, {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}!
+                    </div>
+                    <div className="space-y-2">
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        My Profile
+                      </Link>
+                      <Link
+                        href="/orders"
+                        className="block px-4 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        My Orders
+                      </Link>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:text-white transition-all duration-300"
+                      >
+                        <LogOut size={16} />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex space-x-3 pt-2">
+                    <Link 
+                      href="/login"
+                      className="flex-1 px-4 py-2.5 text-sm font-semibold text-center border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors duration-200"
+                      style={{ color: colors.text }}
+                    >
+                      Login
+                    </Link>
+                    <Link 
+                      href="/signup"
+                      className="flex-1 px-4 py-2.5 text-sm font-semibold text-white text-center rounded-xl hover:shadow-md transition-all duration-200"
+                      style={{ backgroundColor: colors.primary }}
+                    >
+                      Sign Up
+                    </Link>
+                  </div>
+                )}
 
               {/* Mobile Navigation Items */}
               <div className="border-t border-gray-100 pt-6 space-y-4">
