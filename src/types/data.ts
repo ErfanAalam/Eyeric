@@ -2,10 +2,7 @@ import { LucideIcon } from 'lucide-react';
 
 // Hero Slider Types
 export interface Slide {
-  title: string;
-  subtitle: string;
   image: string;
-  gradient: string;
 }
 
 // Category Types

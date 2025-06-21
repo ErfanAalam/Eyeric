@@ -16,6 +16,7 @@ interface AdminAuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => void;
+  setLoading: (loading: boolean) => void;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
@@ -30,16 +31,21 @@ export const useAdminAuth = () => {
 
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [admin, setAdmin] = useState<Admin | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Check for admin session in localStorage
-    const storedAdmin = localStorage.getItem("admin");
-    if (storedAdmin) {
-      setAdmin(JSON.parse(storedAdmin));
-    }
+    setLoading(true);
+    const loadAdmin = async () => {
+      const storedAdmin = localStorage.getItem("admin");
+      if (storedAdmin) {
+        setAdmin(JSON.parse(storedAdmin));
+      }
+      setLoading(false);
+    };
+    loadAdmin();
   }, []);
+
 
   const signIn = async (email: string, password: string): Promise<{ error: Error | null }> => {
     setLoading(true);
@@ -76,7 +82,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   return (
-    <AdminAuthContext.Provider value={{ admin, loading, signIn, signOut }}>
+    <AdminAuthContext.Provider value={{ admin, loading, signIn, signOut, setLoading }}>
       {children}
     </AdminAuthContext.Provider>
   );

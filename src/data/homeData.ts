@@ -1,27 +1,32 @@
 import { Eye, Glasses, Sun, Shield, Clock, Users, Heart } from "lucide-react";
-import { Slide, CategoryData, Brand, BestSeller, Shape, ProductType, Feature, ProductCategory } from "../types/data";
+import { CategoryData, Brand, BestSeller, Shape, ProductType, Feature, ProductCategory, Slide } from "../types/data";
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Hero Slider Data
 export const heroSlides: Slide[] = [
   {
-    title: "Revolutionary Eyewear Collection",
-    subtitle: "Discover perfect style & comfort",
     image: "https://yourspex.com/cdn/shop/files/Buy_1_Get_1_Free_1.jpg?v=1744283854",
-    gradient: "from-blue-600 to-purple-600",
   },
   {
-    title: "Premium Designer Frames",
-    subtitle: "Elevate your look with luxury",
     image: "https://yourspex.com/cdn/shop/files/Exclusive_Styles-01_1.jpg?v=1749555842&width=750",
-    gradient: "from-purple-600 to-pink-600",
   },
   {
-    title: "Smart Vision Technology",
-    subtitle: "Experience the future of optical wear",
     image: "https://yourspex.com/cdn/shop/files/Free_Home_eye_test-01_b0e90012-3b11-4a29-80c4-96462bc93cd7.jpg?v=1749553388&width=750",
-    gradient: "from-indigo-600 to-blue-600",
   },
 ];
+export async function getHeroSlides() {
+  const { data, error } = await supabase
+    .from('slide')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  // Return in the format expected by the homepage slider
+  return (data || []).map(slide => ({ image: slide.image_url }));
+}
 
 // Category Data
 export const categoryData: CategoryData = {
