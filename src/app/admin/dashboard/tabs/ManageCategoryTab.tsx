@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Plus, Edit, Trash2, Save, X, Users, Glasses, Shapes } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
 
@@ -45,11 +45,7 @@ const ManageCategoryTab = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    fetchCategories();
-  }, [categoryType,]);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setLoading(true);
     const { data, error } = await supabase
       .from("categories")
@@ -58,7 +54,11 @@ const ManageCategoryTab = () => {
       .order("id", { ascending: true });
     if (!error) setCategories(data);
     setLoading(false);
-  };
+  }, [categoryType]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [categoryType, fetchCategories]);
 
   const handleAdd = async () => {
     if (!newCategory.trim()) return;

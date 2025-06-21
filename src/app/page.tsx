@@ -85,7 +85,7 @@ const HeroSlider = () => {
         >
           <Image
             src={slide.image}
-            alt={slide.title}
+            alt="slide"
             width={24000}
             height={16000}
             className="w-full h-full object-center"

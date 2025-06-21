@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 type Slide = { id: string; image_url: string; created_at: string };
 
@@ -63,9 +64,11 @@ const SlidesTab = ({ slides, slideLoading, slideMsg, handleSlideUpload, handleSl
         {slides.map((slide) => (
           <div key={slide.id} className="group relative bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-200">
             <div className="aspect-video bg-slate-100">
-              <img 
+              <Image 
                 src={slide.image_url} 
                 alt="slide" 
+                width={800} 
+                height={450} 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
               />
             </div>
