@@ -13,6 +13,8 @@ import InviteTab from "./tabs/InviteTab";
 import AddProductTab from "./tabs/AddProductTab";
 import ManageProductTab from "./tabs/ManageProductTab";
 import ManageCategoryTab from "./tabs/ManageCategoryTab";
+import AddLensTab from "./tabs/AddLensTab";
+import ManageLensTab from "./tabs/ManageLensTab";
 
 // Add Admin type
 interface AdminType {
@@ -33,11 +35,13 @@ const Sidebar = ({
   setIsOpen: (open: boolean) => void;
 }) => {
   const [productsDropdown, setProductsDropdown] = useState(false);
+  const [lensesDropdown, setLensesDropdown] = useState(false);
   const tabs = [
     { id: "overview", label: "Dashboard", icon: "📊" },
     { id: "orders", label: "Orders", icon: "📦" },
     { id: "categories", label: "Categories", icon: "🎨" },
     { id: "products", label: "Products", icon: "🛍️", dropdown: true },
+    { id: "lenses", label: "Lenses", icon: "👓", dropdown: true },
     { id: "users", label: "Customers", icon: "👥" },
     { id: "slides", label: "Media", icon: "🖼️" },
     { id: "invite", label: "Team", icon: "👨‍💼" },
@@ -48,14 +52,27 @@ const Sidebar = ({
       setProductsDropdown((prev) => !prev);
       return;
     }
+    if (tabId === "lenses") {
+      setLensesDropdown((prev) => !prev);
+      return;
+    }
     setTab(tabId);
     setIsOpen(false);
     setProductsDropdown(false);
+    setLensesDropdown(false);
   };
 
   const handleProductSubTab = (subTab: string) => {
     setTab(subTab);
     setIsOpen(false);
+    setProductsDropdown(false);
+    setLensesDropdown(false);
+  };
+
+  const handleLensesSubTab = (subTab: string) => {
+    setTab(subTab);
+    setIsOpen(false);
+    setLensesDropdown(false);
     setProductsDropdown(false);
   };
 
@@ -121,7 +138,7 @@ const Sidebar = ({
               <div key={tab.id} className="space-y-1">
                 <button
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left font-medium transition-all duration-200 group ${
-                    currentTab.startsWith("products")
+                    (tab.id === "products" && currentTab.startsWith("products")) || (tab.id === "lenses" && currentTab.startsWith("lenses"))
                       ? "bg-blue-50 text-blue-700 border border-blue-200"
                       : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   }`}
@@ -133,7 +150,7 @@ const Sidebar = ({
                   </div>
                   <svg
                     className={`w-4 h-4 transition-transform duration-200 ${
-                      productsDropdown ? "rotate-180" : ""
+                      (tab.id === "products" && productsDropdown) || (tab.id === "lenses" && lensesDropdown) ? "rotate-180" : ""
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -147,7 +164,7 @@ const Sidebar = ({
                     />
                   </svg>
                 </button>
-                {productsDropdown && (
+                {tab.id === "products" && productsDropdown && (
                   <div className="ml-6 space-y-1 border-l border-gray-200 pl-4">
                     <button
                       className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left text-sm transition-all ${
@@ -170,6 +187,32 @@ const Sidebar = ({
                     >
                       <span className="text-xs">🛠️</span>
                       <span>Manage Products</span>
+                    </button>
+                  </div>
+                )}
+                {tab.id === "lenses" && lensesDropdown && (
+                  <div className="ml-6 space-y-1 border-l border-gray-200 pl-4">
+                    <button
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left text-sm transition-all ${
+                        currentTab === "lenses-add"
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
+                      onClick={() => handleLensesSubTab("lenses-add")}
+                    >
+                      <span className="text-xs">➕</span>
+                      <span>Add Lens</span>
+                    </button>
+                    <button
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left text-sm transition-all ${
+                        currentTab === "lenses-manage"
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
+                      onClick={() => handleLensesSubTab("lenses-manage")}
+                    >
+                      <span className="text-xs">🛠️</span>
+                      <span>Manage Lenses</span>
                     </button>
                   </div>
                 )}
@@ -254,7 +297,6 @@ const AdminDashboard = () => {
       .select("*")
       .order("created_at", { ascending: false });
     if (!error && data) setUsers(data);
-    console.log(data);
   }
 
   React.useEffect(() => {
@@ -528,6 +570,10 @@ const AdminDashboard = () => {
               {tab === "products-add" && <AddProductTab />}
 
               {tab === "products-manage" && <ManageProductTab />}
+
+              {tab === "lenses-add" && <AddLensTab />}
+
+              {tab === "lenses-manage" && <ManageLensTab />}
             </div>
           </div>
         </main>
