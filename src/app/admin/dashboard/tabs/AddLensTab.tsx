@@ -1,4 +1,4 @@
-import React, { SetStateAction, useState } from "react";
+import React, { useState } from "react";
 import { Upload, Eye, Camera, Package, DollarSign, Tag, FileText, Star } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
 import Image from "next/image";
@@ -30,7 +30,9 @@ const AddLensTab = () => {
       // Create preview URL
       const reader = new FileReader();
       reader.onload = (e) => {
-        setImagePreview(e.target.result);
+        if (typeof e.target?.result === 'string') {
+          setImagePreview(e.target.result);
+        }
       };
       reader.readAsDataURL(file);
     }

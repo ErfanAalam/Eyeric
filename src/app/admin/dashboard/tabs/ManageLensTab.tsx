@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../../../lib/supabaseClient";
+import Image from "next/image";
 
 const ManageLensTab = () => {
   const [lenses, setLenses] = useState([]);
@@ -46,7 +47,7 @@ const ManageLensTab = () => {
         {lenses.map((lens) => (
           <div key={lens.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow hover:shadow-lg transition-all duration-200">
             <div className="aspect-video bg-slate-100 flex items-center justify-center">
-              {lens.image_url && <img src={lens.image_url} alt={lens.title} className="w-full h-full object-cover" />}
+              {lens.image_url && <Image src={lens.image_url} alt={lens.title} width={300} height={300} className="w-full h-full object-cover" />}
             </div>
             <div className="p-4">
               <div className="font-bold text-lg mb-1">{lens.title}</div>

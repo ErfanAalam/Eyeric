@@ -278,7 +278,6 @@ const AdminDashboard = () => {
   React.useEffect(() => {
     if (tab === "slides") fetchSlides();
     if (tab === "invite") fetchAdmins();
-    // eslint-disable-next-line
   }, [tab]);
 
   async function fetchSlides() {
@@ -301,7 +300,6 @@ const AdminDashboard = () => {
 
   React.useEffect(() => {
     if (tab === "users") fetchUsers();
-    // eslint-disable-next-line
   }, [tab]);
 
   async function fetchAdmins() {
