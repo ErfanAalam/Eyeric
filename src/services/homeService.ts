@@ -1,4 +1,6 @@
 import { Slide, CategoryData, Brand, BestSeller, Shape, ProductType, Feature, ProductCategory } from "../types/data";
+import { supabase } from '../../lib/supabaseClient';
+import { Product } from '../app/admin/dashboard/tabs/ManageProductTab';
 
 // These functions would be replaced with actual database calls
 export const getHeroSlides = async (): Promise<Slide[]> => {
@@ -55,4 +57,16 @@ export const getProductCategories = async (): Promise<ProductCategory[]> => {
   // const response = await fetch('/api/product-categories');
   // return response.json();
   return [];
+};
+
+export const getProducts = async (): Promise<Product[]> => {
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .order('display_order', { ascending: true });
+  if (error) {
+    console.error('Error fetching products:', error);
+    return [];
+  }
+  return data as Product[];
 }; 

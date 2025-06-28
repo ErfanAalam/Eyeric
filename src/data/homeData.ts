@@ -76,18 +76,6 @@ export const categoryData: CategoryData = {
       description: "Built to withstand active play",
     },
   ],
-  unisex: [
-    {
-      title: "Eyeglasses",
-      image: "https://images.unsplash.com/photo-1509695507497-903c140c43b0?w=400&h=250&fit=crop",
-      description: "Timeless designs for everyone",
-    },
-    {
-      title: "Sunglasses",
-      image: "https://images.unsplash.com/photo-1584036553516-bf83210aa16c?w=400&h=250&fit=crop",
-      description: "Clean, simple aesthetics",
-    },
-  ],
 };
 
 // Brand Data

@@ -9,9 +9,7 @@ import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import {
   heroSlides,
-  categoryData,
   // brands,
-  shapes,
   // productTypes,
   // features,
   // productCategories,
@@ -19,14 +17,44 @@ import {
 } from "../data/homeData";
 import {
   getHeroSlides,
-  getCategoryData,
   // getBrands,
-  getShapes,
   // getProductTypes,
   // getFeatures,
   // getProductCategories,
+  getProducts,
 } from "../services/homeService";
-import productData from "../../productData";
+
+// Define Product type locally
+interface Product {
+  id?: string;
+  title: string;
+  description: string;
+  original_price: number;
+  discounted_price?: number;
+  display_order?: number;
+  bestseller?: boolean;
+  latest_trend?: boolean;
+  banner_image_1?: string;
+  banner_image_2?: string;
+  colors: { color: string; images: string[] }[];
+  sizes: string[];
+  frame_material?: string;
+  features: string[];
+  shape_category?: string;
+  tags: string[];
+  gender_category: string[];
+  type_category: string[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Utility function to truncate description to 5 words
+function truncateDescription(desc: string): string {
+  if (!desc) return '';
+  const words = desc.split(' ');
+  if (words.length <= 4) return desc;
+  return words.slice(0, 4).join(' ') + '...';
+}
 
 // Welcome Section Component
 const WelcomeSection = () => {
@@ -112,35 +140,56 @@ const HeroSlider = () => {
 };
 
 // Category Tabs Component
-const CategoryTabs = () => {
+const CategoryTabs = ({ products }: { products: Product[] }) => {
   const [activeTab, setActiveTab] = useState("men");
-  const [categories, setCategories] = useState(categoryData);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      const data = await getCategoryData();
-      if (Object.keys(data).length > 0) {
-        setCategories(data);
-      }
-    };
-    fetchCategories();
-  }, []);
+  // Get all unique type categories from products
+  const typeTitles = Array.from(
+    new Set(
+      products.flatMap((p) => (Array.isArray(p.type_category) ? p.type_category : []))
+    )
+  );
+  const categoryKeys = ["men", "women", "kids"];
 
-  const categoryKeys = Object.keys(categories);
+  // For kids, only show eyeglasses and computer glasses
+  const kidsAllowedTypes = ["eyeglasses", "computer glasses"];
+
+  // Build categories object dynamically from products
+  const dynamicCategories: { [key: string]: { title: string; image: string; description: string }[] } = {};
+  categoryKeys.forEach((gender) => {
+    dynamicCategories[gender] = typeTitles
+      .filter((type) =>
+        gender === "kids"
+          ? kidsAllowedTypes.includes(type.toLowerCase())
+          : true
+      )
+      .map((type) => {
+        // Find a product for this gender/type to get an image/description
+        const match = products.find(
+          (p) =>
+            Array.isArray(p.gender_category) &&
+            p.gender_category.map((g) => g.toLowerCase()).includes(gender) &&
+            Array.isArray(p.type_category) &&
+            p.type_category.map((t) => t.toLowerCase()).includes(type.toLowerCase())
+        );
+        return match
+          ? {
+              title: type,
+              image: match.banner_image_1 || match.banner_image_2 || "",
+              description: truncateDescription(match.description || ""),
+            }
+          : {
+              title: type,
+              image: "",
+              description: "",
+            };
+      });
+  });
 
   const handleCategoryClick = (category: string, title: string) => {
-    // Map the title to the correct product type
     const type = title.toLowerCase();
-    
-    // Map the category to match productData gender values
     const mappedCategory = category.toLowerCase();
-    
-    console.log("Navigating to:", {
-      category: mappedCategory,
-      type: type
-    });
-    
     router.push(`/products?category=${mappedCategory}&type=${type}`);
   };
 
@@ -150,7 +199,6 @@ const CategoryTabs = () => {
         <h2 className="text-2xl md:text-4xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           Shop by Categories
         </h2>
-
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8">
           <div className="bg-white/70 backdrop-blur-sm rounded-full p-1 border border-white/50 shadow-lg">
@@ -171,35 +219,275 @@ const CategoryTabs = () => {
             </div>
           </div>
         </div>
-
         {/* Category Cards */}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-3 self-center">
-          {categories[activeTab]?.map((item, index) => (
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 lg:grid-cols-4 self-center">
+          {dynamicCategories[activeTab]?.map((item, index) => (
             <div
               key={index}
               onClick={() => handleCategoryClick(activeTab, item.title)}
-              className="group relative overflow-hidden max-h-[420px] flex flex-col justify-between rounded-xl bg-white/30 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
+              className="group relative overflow-hidden max-h-[320px] max-w-[300px] flex flex-col justify-between rounded-xl bg-white/30 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
             >
               <div className="aspect-[4/3] overflow-hidden">
-                <Image
-                  width={400}
-                  height={300}
-                  loading="lazy"
-                  src={item.image}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                />
+                {item.image && (
+                  <Image
+                    width={400}
+                    height={300}
+                    loading="lazy"
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                )}
               </div>
               <div className="p-4">
                 <h3 className="text-[12px] md:text-lg font-bold mb-1 text-gray-800">
                   {item.title}
                 </h3>
                 <p className="text-[12px] md:text-sm text-gray-600">
-                  {item.description}
+                  {truncateDescription(item.description)}
                 </p>
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Best Sellers Section
+const BestSellers = ({ products }: { products: Product[] }) => {
+  const sellers = (products || [])
+    .filter((p) => p.bestseller)
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+    .slice(0, 8);
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+
+  return (
+    <div className="py-16 px-4 bg-gradient-to-br from-purple-50 to-pink-50">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+          Best Sellers
+        </h2>
+        <div className="relative">
+          <div className="overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex space-x-6 min-w-min">
+              {sellers.map((item, index) => (
+                <div
+                  key={item.id || index}
+                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col"
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                >
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                      Best Seller
+                    </span>
+                  </div>
+                  <div className="aspect-square overflow-hidden">
+                    <Image
+                      width={400}
+                      height={300}
+                      loading="lazy"
+                      src={
+                        hoveredIndex === index && item.banner_image_2
+                          ? item.banner_image_2
+                          : item.banner_image_1 || item.banner_image_2 || ''
+                      }
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                  </div>
+                  <div className="p-4 flex flex-col flex-grow">
+                    <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-2 min-h-[3.5rem]">
+                      {item.title}
+                    </h3>
+                    <div className="flex items-center mb-3">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${i < 4 ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                          />
+                        ))}
+                        <span className="ml-2 text-sm text-gray-600">
+                          (4.5)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-md md:text-xl font-bold text-purple-600">
+                        ₹{item.discounted_price || item.original_price}
+                      </span>
+                      <button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                        Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Latest Trends Section
+const LatestTrends = ({ products }: { products: Product[] }) => {
+  const trends = (products || [])
+    .filter((p) => p.latest_trend)
+    .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
+    .slice(0, 8);
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+
+  return (
+    <div className="py-16 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+          Latest Trends
+        </h2>
+        <div className="relative">
+          <div className="overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex space-x-6 min-w-min">
+              {trends.map((item, index) => (
+                <div
+                  key={item.id || index}
+                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col"
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                >
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                      New Trend
+                    </span>
+                  </div>
+                  <div className="aspect-square overflow-hidden">
+                    <Image
+                      width={400}
+                      height={300}
+                      loading="lazy"
+                      src={
+                        hoveredIndex === index && item.banner_image_2
+                          ? item.banner_image_2
+                          : item.banner_image_1 || item.banner_image_2 || ''
+                      }
+                      alt={item.title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    />
+                  </div>
+                  <div className="p-4 flex flex-col flex-grow">
+                    <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-2 min-h-[3.5rem]">
+                      {item.title}
+                    </h3>
+                    <div className="flex items-center mb-3">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${i < 4 ? "text-yellow-400 fill-current" : "text-gray-300"}`}
+                          />
+                        ))}
+                        <span className="ml-2 text-sm text-gray-600">
+                          (4.5)
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-md md:text-xl font-bold text-blue-600">
+                        ₹{item.discounted_price || item.original_price}
+                      </span>
+                      <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                        Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Shop by Shapes Section
+const ShopByShapes = ({ products }: { products: Product[] }) => {
+  // Get unique shapes from products
+  const uniqueShapes: Product[] = [
+    ...new Map(
+      (products || [])
+        .filter((p) => p.shape_category)
+        .map((p) => [String(p.shape_category).toLowerCase(), p])
+    ).values(),
+  ];
+  const [selectedShape, setSelectedShape] = useState(0);
+  const router = useRouter();
+
+  const handleShapeClick = (shape: string) => {
+    const formattedShape = shape.toLowerCase().replace(/\s+/g, "-");
+    router.push(`/shape-products?shape=${formattedShape}`);
+  };
+
+  return (
+    <div className="py-16 px-4 bg-gradient-to-br from-indigo-50 to-purple-50">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          Shop by Shapes
+        </h2>
+        <div className="flex flex-col items-center">
+          {/* Preview Image */}
+          <div className="w-full max-w-2xl mb-8">
+            {uniqueShapes[selectedShape] && (
+              <div
+                className="relative overflow-hidden rounded-3xl shadow-2xl bg-white/30 backdrop-blur-sm border border-white/50 cursor-pointer hover:shadow-3xl transition-all duration-500"
+                onClick={() => handleShapeClick(String(uniqueShapes[selectedShape].shape_category))}
+              >
+                <Image
+                  width={600}
+                  height={400}
+                  loading="lazy"
+                  src={uniqueShapes[selectedShape].banner_image_1 || uniqueShapes[selectedShape].banner_image_2 || ''}
+                  alt={String(uniqueShapes[selectedShape].shape_category)}
+                  className="w-full h-64 md:h-96 object-cover transition-all duration-500"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 text-white">
+                  <h3 className="text-xl md:text-2xl font-bold mb-2">
+                    {uniqueShapes[selectedShape].shape_category}
+                  </h3>
+                  <p className="text-sm md:text-lg opacity-90">
+                    {truncateDescription(uniqueShapes[selectedShape].description)}
+                  </p>
+                  <div className="mt-4 text-sm text-white/80">
+                    Click to view all {String(uniqueShapes[selectedShape].shape_category)?.toLowerCase()} shaped products
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          {/* Shape Buttons */}
+          <div className="overflow-x-auto pb-4 px-4 py-2 w-full max-w-4xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex space-x-4 min-w-min">
+              {uniqueShapes.map((shape, index) => (
+                <button
+                  key={index}
+                  onMouseEnter={() => setSelectedShape(index)}
+                  onClick={() => setSelectedShape(index)}
+                  className={`p-4 rounded-xl text-center transition-all duration-300 flex-none ${
+                    selectedShape === index
+                      ? "bg-white/60 backdrop-blur-sm shadow-xl scale-105 border-2 border-purple-300"
+                      : "bg-white/30 backdrop-blur-sm hover:bg-white/50 border border-black/10"
+                  }`}
+                >
+                  <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-1">
+                    {shape.shape_category}
+                  </h3>                                                                                            
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -236,196 +524,6 @@ const VisionCareSection = () => {
   );
 };
 
-// Shop by Brands Section
-// const ShopByBrands = () => {
-//   const [brandList, setBrandList] = useState(brands);
-
-//   useEffect(() => {
-//     const fetchBrands = async () => {
-//       const data = await getBrands();
-//       if (data.length > 0) {
-//         setBrandList(data);
-//       }
-//     };
-//     fetchBrands();
-//   }, []);
-
-//   return (
-//     <div className="py-16 px-4 bg-gradient-to-br from-gray-100 to-blue-100">
-//       <div className="max-w-7xl mx-auto">
-//         <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-//           Shop by Brands
-//         </h2>
-//         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-//           {brandList.map((brand, index) => (
-//             <div
-//               key={index}
-//               className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 aspect-square flex items-center justify-center"
-//             >
-//               <div
-//                 className={`w-16 h-16 rounded-full bg-gradient-to-r ${brand.color} flex items-center justify-center text-white font-bold text-xl mb-4`}
-//               >
-//                 {brand.logo}
-//               </div>
-//               <div className="absolute bottom-4 left-0 right-0 text-center">
-//                 <h3 className="text-sm font-bold text-gray-800">
-//                   {brand.name}
-//                 </h3>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// Best Sellers Section
-const BestSellers = () => {
-  const sellers = productData.slice(0, 8);
-
-  return (
-    <div className="py-16 px-4 bg-gradient-to-br from-purple-50 to-pink-50">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-          Best Sellers
-        </h2>
-        <div className="relative">
-          <div className="overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="flex space-x-6 min-w-min">
-              {sellers
-                .sort((a, b) => a.displayOrder - b.displayOrder)
-                .map((item, index) => (
-                  <div
-                    key={index}
-                    className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col"
-                  >
-                    <div className="absolute top-3 left-3 z-10">
-                      <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        Best Seller
-                      </span>
-                    </div>
-                    <div className="aspect-square overflow-hidden">
-                      <Image
-                        width={400}
-                        height={300}
-                        loading="lazy"
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                      />
-                    </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-2 min-h-[3.5rem]">
-                        {item.title}
-                      </h3>
-                      <div className="flex items-center mb-3">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < 4 ? "text-yellow-400 fill-current" : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                          <span className="ml-2 text-sm text-gray-600">
-                            (4.5)
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-auto flex items-center justify-between">
-                        <span className="text-md md:text-xl font-bold text-purple-600">
-                          ${item.price}
-                        </span>
-                        <button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-                          Add to Cart
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Latest Trends Section
-const LatestTrends = () => {
-  const trends = productData.slice(8, 16); // Get next 8 products after best sellers
-
-  return (
-    <div className="py-16 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          Latest Trends
-        </h2>
-        <div className="relative">
-          <div className="overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="flex space-x-6 min-w-min">
-              {trends
-                .sort((a, b) => a.displayOrder - b.displayOrder)
-                .map((item, index) => (
-                  <div
-                    key={index}
-                    className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col"
-                  >
-                    <div className="absolute top-3 left-3 z-10">
-                      <span className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                        New Trend
-                      </span>
-                    </div>
-                    <div className="aspect-square overflow-hidden">
-                      <Image
-                        width={400}
-                        height={300}
-                        loading="lazy"
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                      />
-                    </div>
-                    <div className="p-4 flex flex-col flex-grow">
-                      <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-2 min-h-[3.5rem]">
-                        {item.title}
-                      </h3>
-                      <div className="flex items-center mb-3">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < 4 ? "text-yellow-400 fill-current" : "text-gray-300"
-                              }`}
-                            />
-                          ))}
-                          <span className="ml-2 text-sm text-gray-600">
-                            (4.5)
-                          </span>
-                        </div>
-                      </div>
-                      <div className="mt-auto flex items-center justify-between">
-                        <span className="text-md md:text-xl font-bold text-blue-600">
-                          ${item.price}
-                        </span>
-                        <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-                          Add to Cart
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // Make In India Banner Section
 const MakeInIndia = () => (
   <div className="py-12 bg-[#f5f1e6] flex flex-col items-center text-center">
@@ -441,245 +539,6 @@ const MakeInIndia = () => (
     </a>
   </div>
 );
-
-// Shop by Shapes Section
-const ShopByShapes = () => {
-  const [selectedShape, setSelectedShape] = useState(0);
-  const [shapeList, setShapeList] = useState(shapes);
-  const router = useRouter();
-
-  useEffect(() => {
-    const fetchShapes = async () => {
-      const data = await getShapes();
-      if (data.length > 0) {
-        setShapeList(data);
-      }
-    };
-    fetchShapes();
-  }, []);
-
-  const handleShapeClick = (shape: string) => {
-    const formattedShape = shape.toLowerCase().replace(/\s+/g, '-');
-    router.push(`/shape-products?shape=${formattedShape}`);
-  };
-
-  return (
-    <div className="py-16 px-4 bg-gradient-to-br from-indigo-50 to-purple-50">
-      <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          Shop by Shapes
-        </h2>
-
-        <div className="flex flex-col items-center">
-          {/* Preview Image */}
-          <div className="w-full max-w-2xl mb-8">
-            <div 
-              className="relative overflow-hidden rounded-3xl shadow-2xl bg-white/30 backdrop-blur-sm border border-white/50 cursor-pointer hover:shadow-3xl transition-all duration-500"
-              onClick={() => handleShapeClick(shapeList[selectedShape].name)}
-            >
-              <Image
-                width={600}
-                height={400}
-                loading="lazy"
-                src={shapeList[selectedShape].image}
-                alt={shapeList[selectedShape].name}
-                className="w-full h-64 md:h-96 object-cover transition-all duration-500"
-              />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 text-white">
-                <h3 className="text-xl md:text-2xl font-bold mb-2">
-                  {shapeList[selectedShape].name}
-                </h3>
-                <p className="text-sm md:text-lg opacity-90">
-                  {shapeList[selectedShape].description}
-                </p>
-                <div className="mt-4 text-sm text-white/80">
-                  Click to view all {shapeList[selectedShape].name.toLowerCase()} shaped products
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Shape Buttons */}
-          <div className="overflow-x-auto pb-4 px-4 py-2 w-full max-w-4xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="flex space-x-4 min-w-min">
-              {shapeList.map((shape, index) => (
-                <button
-                  key={index}
-                  onMouseEnter={() => setSelectedShape(index)}
-                  onClick={() => setSelectedShape(index)}
-                  className={`p-4 rounded-xl text-center transition-all duration-300 flex-none ${
-                    selectedShape === index
-                      ? "bg-white/60 backdrop-blur-sm shadow-xl scale-105 border-2 border-purple-300"
-                      : "bg-white/30 backdrop-blur-sm hover:bg-white/50 border border-black/10"
-                  }`}
-                >
-                  <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-1">
-                    {shape.name}
-                  </h3>
-                  <p className="text-xs text-gray-600 hidden md:block">
-                    {shape.description}
-                  </p>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Product Info Section
-// const ProductInfoSection = () => {
-//   const [types, setTypes] = useState(productTypes);
-//   const [featureList, setFeatureList] = useState(features);
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       const [typesData, featuresData] = await Promise.all([
-//         getProductTypes(),
-//         getFeatures(),
-//       ]);
-
-//       if (typesData.length > 0) {
-//         setTypes(typesData);
-//       }
-//       if (featuresData.length > 0) {
-//         setFeatureList(featuresData);
-//       }
-//     };
-//     fetchData();
-//   }, []);
-
-//   return (
-//     <div className="py-16 px-4 bg-gradient-to-br from-gray-50 to-indigo-50">
-//       <div className="max-w-7xl mx-auto">
-//         <h2 className="text-2xl md:text-4xl font-bold text-center mb-4 bg-gradient-to-r from-gray-800 to-indigo-600 bg-clip-text text-transparent">
-//           Why Choose Our Eyewear?
-//         </h2>
-//         <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-//           Discover our comprehensive range of premium eyewear designed for every
-//           lifestyle and vision need.
-//         </p>
-
-//         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-//           {types.map((product, index) => (
-//             <div
-//               key={index}
-//               className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/50"
-//             >
-//               <div
-//                 className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${product.color} flex items-center justify-center mb-6`}
-//               >
-//                 <product.icon className="w-8 h-8 text-white" />
-//               </div>
-
-//               <h3 className="text-xl md:text-2xl font-bold text-gray-800 mb-4">
-//                 {product.title}
-//               </h3>
-//               <p className="text-gray-600 mb-6 leading-relaxed">
-//                 {product.description}
-//               </p>
-
-//               <div className="space-y-3">
-//                 {product.features.map((feature, featureIndex) => (
-//                   <div key={featureIndex} className="flex items-center">
-//                     <div
-//                       className={`w-2 h-2 rounded-full bg-gradient-to-r ${product.color} mr-3`}
-//                     ></div>
-//                     <span className="text-sm text-gray-700">{feature}</span>
-//                   </div>
-//                 ))}
-//               </div>
-
-//               <button
-//                 className={`w-full mt-6 bg-gradient-to-r ${product.color} text-white py-3 rounded-xl hover:shadow-lg transition-all duration-300 transform hover:scale-105 font-semibold`}
-//               >
-//                 Learn More
-//               </button>
-//             </div>
-//           ))}
-//         </div>
-
-//         {/* Additional Features */}
-//         <div className="mt-16 grid grid-cols-1 md:grid-cols-4 gap-6">
-//           {featureList.map((feature, index) => (
-//             <div
-//               key={index}
-//               className="text-center p-6 bg-white/40 backdrop-blur-sm rounded-xl border border-white/50"
-//             >
-//               <feature.icon className="w-8 h-8 mx-auto mb-3 text-indigo-600" />
-//               <h4 className="font-semibold text-gray-800 mb-1">
-//                 {feature.title}
-//               </h4>
-//               <p className="text-sm text-gray-600">{feature.desc}</p>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
-
-// // Product Categories Section
-// const ProductCategories = () => {
-//   const [categories, setCategories] = useState(productCategories);
-
-//   useEffect(() => {
-//     const fetchCategories = async () => {
-//       const data = await getProductCategories();
-//       if (data.length > 0) {
-//         setCategories(data);
-//       }
-//     };
-//     fetchCategories();
-//   }, []);
-
-//   return (
-//     <div className="py-16 px-4 bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-//       <div className="max-w-7xl mx-auto">
-//         <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 text-white">
-//           Our Collections
-//         </h2>
-
-//         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-//           {categories.map((category, index) => (
-//             <div
-//               key={index}
-//               className="group relative overflow-hidden rounded-3xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:-translate-y-4"
-//             >
-//               <div className="aspect-square overflow-hidden">
-//                 <Image
-//                   width={500}
-//                   height={400}
-//                   loading="lazy"
-//                   src={category.image}
-//                   alt={category.title}
-//                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-125"
-//                 />
-//               </div>
-//               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-//               <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 text-white">
-//                 <category.icon className="w-10 h-10 md:w-12 md:h-12 mb-4 text-blue-400" />
-//                 <h3 className="text-xl md:text-2xl font-bold mb-2">
-//                   {category.title}
-//                 </h3>
-//                 <p className="text-sm md:text-lg opacity-90 mb-4 md:mb-6">
-//                   {category.description}
-//                 </p>
-//                 <button
-//                   className={`w-full bg-gradient-to-r ${category.gradient} text-white py-2 md:py-3 text-sm md:text-base rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105`}
-//                 >
-//                   Shop Now
-//                 </button>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
 
 const HowToKnowFaceSize = () => {
   const router = useRouter();
@@ -740,21 +599,28 @@ const HowToKnowFaceSize = () => {
 // Main Home Component
 
 export default function Home() {
+  const [products, setProducts] = React.useState<Product[]>([]);
+
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      const data = await getProducts();
+      setProducts(data);
+    };
+    fetchProducts();
+  }, []);
+
   return (
     <div className="min-h-screen">
       <Navbar />
       <WelcomeSection />
       <HeroSlider />
-      <CategoryTabs />
+      <CategoryTabs products={products} />
       <VisionCareSection />
-      {/* <ShopByBrands /> */}
-      <ShopByShapes />
-      <BestSellers />
-      <LatestTrends />
+      <BestSellers products={products} />
+      <LatestTrends products={products} />
+      <ShopByShapes products={products} />
       <HowToKnowFaceSize />
       <MakeInIndia />
-      {/* <ProductInfoSection /> */}
-      {/* <ProductCategories /> */}
       <Footer />
     </div>
   );

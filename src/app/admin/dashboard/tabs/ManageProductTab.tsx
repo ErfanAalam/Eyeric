@@ -26,6 +26,12 @@ export type Product = {
   updated_at?: string;
 };
 
+const GENDER_TABS = [
+  { label: "Men", value: "men" },
+  { label: "Women", value: "women" },
+  { label: "Kids", value: "kids" },
+];
+
 const ManageProductTab = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,6 +55,7 @@ const ManageProductTab = () => {
   const [editBannerImage1File, setEditBannerImage1File] = useState<File | null>(null);
   const [editBannerImage2File, setEditBannerImage2File] = useState<File | null>(null);
   const [editColorImageFiles, setEditColorImageFiles] = useState<(File[] | null)[]>([]);
+  const [activeGender, setActiveGender] = useState<string>("men");
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -220,6 +227,34 @@ const ManageProductTab = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Gender Tabs */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          {GENDER_TABS.map((tab, index) => {
+            const isActive = activeGender === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setActiveGender(tab.value)}
+                className={`
+                  group relative px-2 md:px-6 py-4 rounded-2xl font-semibold transition-all duration-300 
+                  transform hover:scale-105 hover:shadow-lg
+                  ${isActive 
+                    ? `bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xl shadow-pink-200` 
+                    : 'bg-white/70 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200'
+                  }
+                `}
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="flex items-center gap-3 text-sm md:text-base">
+                  <span className="capitalize">{tab.label}</span>
+                </div>
+                {isActive && (
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/20 to-transparent animate-pulse" />
+                )}
+              </button>
+            );
+          })}
+        </div>
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -471,57 +506,59 @@ const ManageProductTab = () => {
 
         {/* Products Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 p-5 flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-              {/* Product Images */}
-              <div className="relative mb-4 overflow-hidden rounded-xl flex gap-2">
-                {product.banner_image_1 ? (
-                  <Image height={96} width={96} src={product.banner_image_1} alt={product.title} className="w-24 h-24 object-cover rounded-xl shadow" />
-                ) : null}
-                {product.banner_image_2 ? (
-                  <Image height={96} width={96} src={product.banner_image_2} alt={product.title} className="w-24 h-24 object-cover rounded-xl shadow" />
-                ) : null}
+          {products
+            .filter(product => product.gender_category && product.gender_category.includes(activeGender))
+            .map((product) => (
+              <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 p-5 flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+                {/* Product Images */}
+                <div className="relative mb-4 overflow-hidden rounded-xl flex gap-2">
+                  {product.banner_image_1 ? (
+                    <Image height={96} width={96} src={product.banner_image_1} alt={product.title} className="w-24 h-24 object-cover rounded-xl shadow" />
+                  ) : null}
+                  {product.banner_image_2 ? (
+                    <Image height={96} width={96} src={product.banner_image_2} alt={product.title} className="w-24 h-24 object-cover rounded-xl shadow" />
+                  ) : null}
+                </div>
+                {/* Product Info */}
+                {/* "text-lg font-semibold text-blue-600 line-through" */}
+                <div className="flex-1 space-y-2">
+                  <h3 className="font-bold text-lg text-slate-800 line-clamp-2">{product.title}</h3>
+                  <p className="text-slate-600 text-sm line-clamp-3">{product.description}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-semibold text-blue-600 line-through">₹{product.original_price.toLocaleString()}</span>
+                    {product.discounted_price && <span className="text-xl font-bold text-emerald-600">₹{product.discounted_price.toLocaleString()}</span>}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="px-2 py-1 bg-slate-100 rounded text-xs">Order: {product.display_order ?? '-'}</span>
+                    <span className="px-2 py-1 bg-blue-100 rounded text-xs">{product.gender_category.join(", ")}</span>
+                    <span className="px-2 py-1 bg-green-100 rounded text-xs">{product.type_category.join(", ")}</span>
+                    <span className="px-2 py-1 bg-purple-100 rounded text-xs">{product.shape_category}</span>
+                    {product.latest_trend && <span className="px-2 py-1 bg-pink-100 rounded text-xs">Latest Trend</span>}
+                    {product.bestseller && <span className="px-2 py-1 bg-yellow-100 rounded text-xs">Bestseller</span>}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {product.sizes && product.sizes.length > 0 && <span className="px-2 py-1 bg-slate-200 rounded text-xs">Sizes: {product.sizes.join(", ")}</span>}
+                    {product.features && product.features.length > 0 && <span className="px-2 py-1 bg-slate-200 rounded text-xs">Features: {product.features.join(", ")}</span>}
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {product.colors && product.colors.map((c, i) => (
+                      <span key={i} className="px-2 py-1 bg-slate-50 border rounded text-xs">{c.color}</span>
+                    ))}
+                  </div>
+                </div>
+                {/* Action Buttons */}
+                <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100">
+                  <button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg" onClick={() => startEdit(product)} disabled={loading}>
+                    <Edit3 className="w-4 h-4" />
+                    Edit
+                  </button>
+                  <button className="flex-1 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg" onClick={() => handleDelete(product.id || "")} disabled={loading}>
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                </div>
               </div>
-              {/* Product Info */}
-              {/* "text-lg font-semibold text-blue-600 line-through" */}
-              <div className="flex-1 space-y-2">
-                <h3 className="font-bold text-lg text-slate-800 line-clamp-2">{product.title}</h3>
-                <p className="text-slate-600 text-sm line-clamp-3">{product.description}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-semibold text-blue-600 line-through">₹{product.original_price.toLocaleString()}</span>
-                  {product.discounted_price && <span className="text-xl font-bold text-emerald-600">₹{product.discounted_price.toLocaleString()}</span>}
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="px-2 py-1 bg-slate-100 rounded text-xs">Order: {product.display_order ?? '-'}</span>
-                  <span className="px-2 py-1 bg-blue-100 rounded text-xs">{product.gender_category.join(", ")}</span>
-                  <span className="px-2 py-1 bg-green-100 rounded text-xs">{product.type_category.join(", ")}</span>
-                  <span className="px-2 py-1 bg-purple-100 rounded text-xs">{product.shape_category}</span>
-                  {product.latest_trend && <span className="px-2 py-1 bg-pink-100 rounded text-xs">Latest Trend</span>}
-                  {product.bestseller && <span className="px-2 py-1 bg-yellow-100 rounded text-xs">Bestseller</span>}
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {product.sizes && product.sizes.length > 0 && <span className="px-2 py-1 bg-slate-200 rounded text-xs">Sizes: {product.sizes.join(", ")}</span>}
-                  {product.features && product.features.length > 0 && <span className="px-2 py-1 bg-slate-200 rounded text-xs">Features: {product.features.join(", ")}</span>}
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {product.colors && product.colors.map((c, i) => (
-                    <span key={i} className="px-2 py-1 bg-slate-50 border rounded text-xs">{c.color}</span>
-                  ))}
-                </div>
-              </div>
-              {/* Action Buttons */}
-              <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100">
-                <button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg" onClick={() => startEdit(product)} disabled={loading}>
-                  <Edit3 className="w-4 h-4" />
-                  Edit
-                </button>
-                <button className="flex-1 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg" onClick={() => handleDelete(product.id || "")} disabled={loading}>
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
         </div>
 
         {/* Empty State */}
