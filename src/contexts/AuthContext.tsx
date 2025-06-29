@@ -136,11 +136,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     refreshUserProfile,
-  };
+  };                                                                                                                      
 
+  // Only render children when loading is false
   return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
+<AuthContext.Provider value={value}>
+
+        {children}
+</AuthContext.Provider>
   );
 }; 

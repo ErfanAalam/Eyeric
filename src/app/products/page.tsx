@@ -6,22 +6,34 @@ import Image from "next/image";
 import { ChevronDown, Heart, ShoppingBag, SlidersHorizontal, Filter } from "lucide-react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
-import productData from "../../../productData";
 import FilterSidebar from '../../../components/FilterSidebar';
+import { getProducts } from "../../../src/services/homeService";
+import { useFavorites } from "../../contexts/FavoritesContext";
+import { useHasMounted } from "../../hooks/useHasMounted";
 
+// Define Product interface locally
 interface Product {
-  id: string;
+  id?: string;
   title: string;
   description: string;
-  price: number;
-  displayOrder: number;
-  gender: string;
-  type: string;
-  shape: string;
-  image: string;
+  original_price: number;
+  discounted_price?: number;
+  display_order?: number;
+  bestseller?: boolean;
+  latest_trend?: boolean;
+  banner_image_1?: string;
+  banner_image_2?: string;
+  colors: { color: string; images: string[] }[];
+  sizes: string[];
+  frame_material?: string;
+  features: string[];
+  shape_category?: string;
+  tags: string[];
+  gender_category: string[];
+  type_category: string[];
+  created_at?: string;
+  updated_at?: string;
 }
-
-
 
 // Client component that uses useSearchParams
 const ProductsContent = () => {
@@ -31,27 +43,85 @@ const ProductsContent = () => {
   const shape = searchParams.get("shape");
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
-  const [sortBy, setSortBy] = useState("featured");
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("featured");
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const router = useRouter();
+  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
+
   const styleOptions = ["Full Rim", "Half Rim", "Rimless"];
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedShapes, setSelectedShapes] = useState<string[]>([]);
-  const router = useRouter();
 
+  // Calculate maximum price from all products
+  const maxProductPrice = allProducts.length > 0 
+    ? Math.max(...allProducts.map(p => p.discounted_price || p.original_price))
+    : 1000;
+  const maxPrice = maxProductPrice + 500;
+
+  // Update price range when maxPrice changes
   useEffect(() => {
+    setPriceRange({ min: 0, max: maxPrice });
+  }, [maxPrice]);
+
+  // Fetch all products from Supabase
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      const data = await getProducts();
+      setAllProducts(data);
+      setLoading(false);
+    };
+    fetchProducts();
+  }, []);
+
+  // Filter products based on URL parameters
+  useEffect(() => {
+    if (allProducts.length === 0) return;
+
+    // Normalization helper
+    const normalize = (str: string) => str.toLowerCase().replace(/[\s-]/g, '');
+
     console.log("Category:", category);
     console.log("Type:", type);
     console.log("Shape:", shape);
-    console.log("All Products:", productData);
+    console.log("All Products:", allProducts);
+
+    // Debug: Log all unique shapes in the database
+    const allShapes = Array.from(new Set(allProducts.filter(p => p.shape_category).map(p => p.shape_category)));
+    console.log("All shapes in database:", allShapes);
+
+    // Debug: Log all products that match the shape regardless of type
+    if (shape) {
+      const shapeMatches = allProducts.filter(product => product.shape_category && normalize(product.shape_category) === normalize(shape));
+      console.log("Products matching shape only:", shapeMatches.map(p => p.title));
+    }
 
     // Filter products based on category, type, and shape
-    const filteredProducts = productData.filter(product => {
-      const categoryMatch = !category || product.gender.toLowerCase() === category.toLowerCase();
-      const typeMatch = !type || product.type.toLowerCase() === type.toLowerCase();
-      const shapeMatch = !shape || product.shape.toLowerCase() === shape.toLowerCase();
+    const filteredProducts = allProducts.filter(product => {
+      // Handle category (gender) filtering
+      const categoryMatch = !category || 
+        (Array.isArray(product.gender_category) && 
+         product.gender_category.map(g => normalize(g)).includes(normalize(category)));
+      
+      // Handle type filtering (from Navbar navigation) - check if any type matches
+      const typeMatch = !type || 
+        (Array.isArray(product.type_category) && 
+         product.type_category.some(t => normalize(t) === normalize(type)));
+      
+      // Handle shape filtering - normalize both the URL shape and product shape
+      const shapeMatch = !shape || 
+        (product.shape_category && normalize(product.shape_category) === normalize(shape));
       
       console.log("Product:", product.title);
+      console.log("Product types:", product.type_category);
+      console.log("Product shape:", product.shape_category);
+      console.log("Normalized product shape:", product.shape_category && normalize(product.shape_category));
+      console.log("Requested type:", type);
+      console.log("Requested shape:", shape);
+      console.log("Normalized URL shape:", shape && normalize(shape));
       console.log("Category Match:", categoryMatch);
       console.log("Type Match:", typeMatch);
       console.log("Shape Match:", shapeMatch);
@@ -61,18 +131,18 @@ const ProductsContent = () => {
 
     console.log("Filtered Products:", filteredProducts);
     setProducts(filteredProducts);
-  }, [category, type, shape]);
+  }, [category, type, shape, allProducts]);
 
   const sortProducts = (products: Product[]) => {
     switch (sortBy) {
       case "price-low":
-        return [...products].sort((a, b) => a.price - b.price);
+        return [...products].sort((a, b) => (a.discounted_price || a.original_price) - (b.discounted_price || b.original_price));
       case "price-high":
-        return [...products].sort((a, b) => b.price - a.price);
+        return [...products].sort((a, b) => (b.discounted_price || b.original_price) - (a.discounted_price || a.original_price));
       case "name":
         return [...products].sort((a, b) => a.title.localeCompare(b.title));
       default:
-        return products;
+        return products.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
     }
   };
 
@@ -81,6 +151,7 @@ const ProductsContent = () => {
       router.push(`/products?category=${gender.toLowerCase()}&type=${type || ''}`);
     }
   };
+
   const handlePriceChange = (price: { min: number; max: number }) => {
     setPriceRange(price);
   };
@@ -89,20 +160,64 @@ const ProductsContent = () => {
     setSelectedStyles(styles);
     setSelectedShapes(shapes);
   };
+
   const onClearFilters = () => {
     setSelectedStyles([]);
     setSelectedShapes([]);
-    setPriceRange({ min: 0, max: 1000 });
+    setPriceRange({ min: 0, max: maxPrice });
+  };
+
+  const handleProductClick = (product: Product) => {
+    router.push(`/product/${product.id}`);
+  };
+
+  const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    
+    if (!isLoggedIn) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      if (isFavorite(product.id!)) {
+        await removeFromFavorites(product.id!);
+      } else {
+        await addToFavorites(product);
+      }
+    } catch (error) {
+      console.error('Error handling favorite:', error);
+    }
   };
 
   const filteredProducts = sortProducts(
     products.filter(product => {
-      const shapeMatch = selectedShapes.length === 0 || selectedShapes.includes(product.shape.toLowerCase());
-      const styleMatch = selectedStyles.length === 0 || selectedStyles.includes(product.type);
-      const priceMatch = product.price >= priceRange.min && product.price <= priceRange.max;
+      const shapeMatch = selectedShapes.length === 0 || 
+        (product.shape_category && selectedShapes.includes(product.shape_category.toLowerCase()));
+      const styleMatch = selectedStyles.length === 0 || 
+        (Array.isArray(product.type_category) && selectedStyles.some(style => 
+          product.type_category.map(t => t.toLowerCase()).includes(style.toLowerCase())
+        ));
+      const priceMatch = (product.discounted_price || product.original_price) >= priceRange.min && 
+                        (product.discounted_price || product.original_price) <= priceRange.max;
       return shapeMatch && styleMatch && priceMatch;
     })
   );
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading products...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -148,6 +263,7 @@ const ProductsContent = () => {
             isMobile={false}
             onClearFilters={onClearFilters}
             onApplyFilters={onApplyFilters}
+            maxPrice={maxPrice}
           />
           {/* Mobile Modal */}
           <FilterSidebar
@@ -163,6 +279,7 @@ const ProductsContent = () => {
             isMobile={true}
             onClearFilters={onClearFilters}
             onApplyFilters={onApplyFilters}
+            maxPrice={maxPrice}
           />
           {/* Product Grid */}
           <main className="flex-1">
@@ -183,23 +300,44 @@ const ProductsContent = () => {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className="relative bg-white rounded-2xl shadow-lg group overflow-hidden flex flex-col">
+                  <div 
+                    key={product.id} 
+                    className="relative bg-white rounded-2xl shadow-lg group overflow-hidden flex flex-col cursor-pointer"
+                    onClick={() => handleProductClick(product)}
+                  >
                     {/* Wishlist Icon */}
-                    <button className="absolute top-3 right-3 z-10 bg-white rounded-full p-2 shadow hover:bg-gray-100 transition">
-                      <Heart className="w-5 h-5 text-gray-400 group-hover:text-red-500" />
+                    <button 
+                      onClick={(e) => handleFavoriteClick(e, product)}
+                      className="absolute top-3 right-3 z-10 bg-white rounded-full p-2 shadow hover:bg-gray-100 transition"
+                    >
+                      <Heart 
+                        className={`w-5 h-5 transition-colors ${
+                          isFavorite(product.id!) ? 'text-red-500 fill-current' : 'text-gray-400 group-hover:text-red-500'
+                        }`} 
+                      />
                     </button>
                     {/* Sale Badge */}
-                    <span className="absolute top-3 left-3 z-10 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Sale</span>
+                    {product.discounted_price && (
+                      <span className="absolute top-3 left-3 z-10 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Sale</span>
+                    )}
                     {/* Product Image */}
                     <div className="aspect-[4/3] w-full overflow-hidden">
-                      <Image src={product.image} alt={product.title} width={400} height={300} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <Image 
+                        src={product.banner_image_1 || product.banner_image_2 || ''} 
+                        alt={product.title} 
+                        width={400} 
+                        height={300} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                      />
                     </div>
                     {/* Product Info */}
                     <div className="p-4 flex flex-col flex-1">
                       <h3 className="font-bold text-gray-900 text-base mb-1 line-clamp-2">{product.title}</h3>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-gray-400 line-through text-sm">₹2,099</span>
-                        <span className="text-blue-600 font-bold text-lg">₹{product.price}</span>
+                        {product.discounted_price && (
+                          <span className="text-gray-400 line-through text-sm">₹{product.original_price}</span>
+                        )}
+                        <span className="text-blue-600 font-bold text-lg">₹{product.discounted_price || product.original_price}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
                         <span className="cursor-pointer hover:underline">Compare</span>
@@ -220,14 +358,11 @@ const ProductsContent = () => {
   );
 };
 
-// Main page component
 const ProductsPage = () => {
+  const hasMounted = useHasMounted();
+  if (!hasMounted) return null;
   return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    }>
+    <Suspense fallback={<div>Loading...</div>}>
       <ProductsContent />
     </Suspense>
   );

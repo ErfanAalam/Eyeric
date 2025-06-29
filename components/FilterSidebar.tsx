@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 
-const GENDERS = ["Men", "Women", "Kids", "Unisex"];
+const GENDERS = ["Men", "Women", "Kids"];
 
 export default function FilterSidebar({
   currentGender,
@@ -15,7 +15,8 @@ export default function FilterSidebar({
   onClose,
   isMobile,
   onClearFilters,
-  onApplyFilters
+  onApplyFilters,
+  maxPrice = 1000
 }: {
   currentGender: string;
   onGenderChange: (gender: string) => void;
@@ -29,6 +30,7 @@ export default function FilterSidebar({
   isMobile?: boolean;
   onClearFilters: () => void;
   onApplyFilters: (styles: string[], shapes: string[]) => void;
+  maxPrice?: number;
 }) {
   // Local state for multi-select
   const [localStyles, setLocalStyles] = useState<string[]>(selectedStyles);
@@ -143,7 +145,7 @@ export default function FilterSidebar({
           <input
             type="range"
             min={0}
-            max={1000}
+            max={maxPrice}
             value={currentPrice.max}
             onChange={e => onPriceChange({ ...currentPrice, max: Number(e.target.value) })}
             className="w-full"

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Search, Heart, ShoppingCart, User, Menu, X, ChevronDown, Sparkles, LogOut } from 'lucide-react';
 import { useAuth } from '../src/contexts/AuthContext';
+import { useFavorites } from '../src/contexts/FavoritesContext';
+import { getProducts } from '../src/services/homeService';
 
 // Import your colors
 import colors from '@/constants/colors';
@@ -24,8 +26,112 @@ const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
   const [searchFocused, setSearchFocused] = useState<boolean>(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState<boolean>(false);
+  const [navItems, setNavItems] = useState<NavItems>({});
   
   const { user, userProfile, signOut } = useAuth();
+  const { favoritesCount, isLoggedIn } = useFavorites();
+
+  // Fetch products and generate navigation items
+  useEffect(() => {
+    const fetchProductsAndGenerateNav = async () => {
+      try {
+        const products = await getProducts();
+        
+        // Get unique type categories
+        const typeCategories = Array.from(
+          new Set(
+            products.flatMap((p) => (Array.isArray(p.type_category) ? p.type_category : []))
+          )
+        );
+
+        // Get unique shape categories
+        const shapeCategories = Array.from(
+          new Set(
+            products.filter((p) => p.shape_category).map((p) => p.shape_category!)
+          )
+        );
+
+        // Get bestseller products
+        const bestsellerProducts = products.filter((p) => p.bestseller);
+
+        // Get latest trend products
+        const latestTrendProducts = products.filter((p) => p.latest_trend);
+
+        // Generate navigation items
+        const dynamicNavItems: NavItems = {};
+
+        // Add type categories with their available shapes
+        typeCategories.forEach((type) => {
+          // Get shapes available for this specific type
+          const shapesForType = Array.from(
+            new Set(
+              products
+                .filter((p) => 
+                  Array.isArray(p.type_category) && 
+                  p.type_category.some(t => t.toLowerCase() === type.toLowerCase()) &&                
+                  p.shape_category
+                )
+                .map((p) => p.shape_category!)
+            )
+          );
+
+          const key = type.toLowerCase().replace(/\s+/g, '');
+          if (shapesForType.length > 0) {
+            dynamicNavItems[key] = {
+              title: type,
+              items: shapesForType.slice(0, 6) // Limit to 6 shapes per type
+            };
+          }
+        });
+
+        // Add bestsellers
+        if (bestsellerProducts.length > 0) {
+          dynamicNavItems.bestseller = {
+            title: 'Bestseller',
+            items: bestsellerProducts.slice(0, 6).map((p) => p.title)
+          };
+        }
+
+        // Add latest trends
+        if (latestTrendProducts.length > 0) {
+          dynamicNavItems.latesttrends = {
+            title: 'Latest Trends',
+            items: latestTrendProducts.slice(0, 6).map((p) => p.title)
+          };
+        }
+
+        // Add shapes
+        if (shapeCategories.length > 0) {
+          dynamicNavItems.shapes = {
+            title: 'Shapes',
+            items: shapeCategories.slice(0, 6)
+          };
+        }
+
+        console.log('Generated navigation items:', dynamicNavItems);
+        setNavItems(dynamicNavItems);
+      } catch (error) {
+        console.error('Error fetching products for navigation:', error);
+        // Fallback to default navigation
+        setNavItems({
+          sunglasses: {
+            title: 'Sunglasses',
+            items: ['Aviator', 'Wayfarer', 'Round', 'Cat-Eye', 'Sports', 'Square']
+          },
+          eyeglasses: {
+            title: 'Eyeglasses',
+            items: ['Round', 'Cat-Eye', 'Wayfarer', 'Aviator', 'Square']
+          },
+          computerGlasses: {
+            title: 'Computer Glasses',
+            items: ['Round', 'Wayfarer', 'Sports', 'Square']
+          }
+        });
+      }
+    };
+
+    fetchProductsAndGenerateNav();
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -53,33 +159,6 @@ const Navbar: React.FC = () => {
     setUserDropdownOpen(false);
   };
 
-  const navItems: NavItems = {
-    sunglasses: {
-      title: 'Sunglasses',
-      items: ['Aviator', 'Wayfarer', 'Round', 'Cat-Eye', 'Sports', 'Square']
-    },
-    eyeglasses: {
-      title: 'Eyeglasses',
-      items: ['Round', 'Cat-Eye', 'Wayfarer', 'Aviator', 'Square']
-    },
-    computerGlasses: {
-      title: 'Computer Glasses',
-      items: ['Round', 'Wayfarer', 'Sports', 'Square']
-    },
-    bestseller: {
-      title: 'Bestseller',
-      items: ['Top Rated', 'Most Popular', 'Customer Choice', 'Editor Pick', 'Trending', 'New Arrivals']
-    },
-    offers: {
-      title: 'Offers',
-      items: ['Flash Sale', 'Buy 1 Get 1', 'Student Discount', 'First Order', 'Clearance', 'Bundle Deals']
-    },
-    upcoming: {
-      title: 'Upcoming',
-      items: ['Pre-Order', 'Limited Edition', 'New Collection', 'Fashion Week', 'Celebrity Line', 'Tech Innovation']
-    }
-  };
-
   const handleDropdownEnter = (key: string): void => {
     setActiveDropdown(key);
   };
@@ -95,6 +174,23 @@ const Navbar: React.FC = () => {
 
   const toggleMobileMenu = (): void => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleNavItemClick = (key: string, item: string) => {
+    // Handle navigation based on the type
+    if (key === 'bestseller' || key === 'latesttrends') {
+      // Navigate to products page with filter
+      window.location.href = `/products?${key}=${encodeURIComponent(item)}`;
+    } else if (key === 'shapes') {
+      // Navigate to shape products page
+      window.location.href = `/shape-products?shape=${encodeURIComponent(item.toLowerCase())}`;
+    } else {
+      // For product types (eyeglasses, sunglasses, computer glasses, etc.)
+      // Navigate to products page with type and shape
+      const productType = key; // This is the type like 'eyeglasses', 'sunglasses', etc.
+      const shape = item.toLowerCase().replace(/\s+/g, '-');
+      window.location.href = `/products?type=${encodeURIComponent(productType)}&shape=${encodeURIComponent(shape)}`;
+    }
   };
 
   return (
@@ -226,7 +322,11 @@ const Navbar: React.FC = () => {
                 style={{ color: colors.muted }}
               >
                 <Heart size={24} className="group-hover:text-red-500 group-hover:scale-110 transition-all duration-300" />
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">3</span>
+                {isLoggedIn && favoritesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">
+                    {favoritesCount}
+                  </span>
+                )}
               </Link>
               
               <Link 
@@ -356,17 +456,17 @@ const Navbar: React.FC = () => {
                         </div>
                         <div className="space-y-1">
                           {item.items.map((subItem: string, index: number) => (
-                            <Link
+                            <button
                               key={index}
-                              href={`/${key.toLowerCase()}/${subItem.toLowerCase()}`}
-                              className="block px-4 py-3 text-sm font-medium rounded-2xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300 hover-lift"
+                              onClick={() => handleNavItemClick(key, subItem)}
+                              className="block w-full text-left px-4 py-3 text-sm font-medium rounded-2xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300 hover-lift"
                               style={{ 
                                 color: colors.text,
                                 animationDelay: `${index * 50}ms`
                               }}
                             >
                               {subItem}
-                            </Link>
+                            </button>
                           ))}
                         </div>
                       </div>
@@ -401,107 +501,51 @@ const Navbar: React.FC = () => {
                   </button>
                 </form>
 
-                {/* Mobile Icons - Simplified */}
-                <div className="flex justify-around py-2">
-                  {[
-                    { href: '/favorites', icon: Heart, label: 'Favorites', count: 3, color: 'text-red-500' },
-                    { href: '/cart', icon: ShoppingCart, label: 'Cart', count: 2, color: 'text-blue-500' },
-                    { href: user ? '/profile' : '/login', icon: User, label: user ? 'Profile' : 'Account', count: 0, color: 'text-purple-500' }
-                  ].map((item) => (
-                    <Link 
-                      key={item.label}
-                      href={item.href}
-                      className="flex flex-col items-center space-y-1 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-                    >
-                      <div className="relative">
-                        <item.icon size={24} className={item.color} />
-                        {item.count > 0 && (
-                          <span className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
-                            {item.count}
-                          </span>
-                        )}
+                {/* Mobile Navigation Items */}
+                <div className="space-y-2">
+                  {Object.entries(navItems).map(([key, item]) => (
+                    <div key={key} className="space-y-1">
+                      <div className="text-sm font-semibold text-gray-800 px-2 py-1">
+                        {item.title}
                       </div>
-                      <span className="text-xs font-medium text-gray-600">
-                        {item.label}
-                      </span>
-                    </Link>
+                      <div className="space-y-1">
+                        {item.items.slice(0, 4).map((subItem: string, index: number) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              handleNavItemClick(key, subItem);
+                              setIsMobileMenuOpen(false);
+                            }}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                          >
+                            {subItem}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
 
-                {/* Mobile Auth Section */}
-                {user ? (
-                  <div className="border-t border-gray-100 pt-4">
-                    <div className="text-sm font-semibold text-gray-800 mb-2">
-                      Welcome, {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}!
-                    </div>
-                    <div className="space-y-2">
-                      <Link
-                        href="/profile"
-                        className="block px-4 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        My Profile
-                      </Link>
-                      <Link
-                        href="/orders"
-                        className="block px-4 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        My Orders
-                      </Link>
-                      <button
-                        onClick={() => {
-                          handleLogout();
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className="w-full flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:text-white transition-all duration-300"
-                      >
-                        <LogOut size={16} />
-                        <span>Sign Out</span>
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex space-x-3 pt-2">
+                {/* Mobile User Actions */}
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
                     <Link 
-                      href="/login"
-                      className="flex-1 px-4 py-2.5 text-sm font-semibold text-center border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-colors duration-200"
-                      style={{ color: colors.text }}
+                      href="/favorites"
+                      className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Login
+                      <Heart size={20} />
+                      <span>Favorites</span>
                     </Link>
                     <Link 
-                      href="/signup"
-                      className="flex-1 px-4 py-2.5 text-sm font-semibold text-white text-center rounded-xl hover:shadow-md transition-all duration-200"
-                      style={{ backgroundColor: colors.primary }}
+                      href="/cart"
+                      className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Sign Up
+                      <ShoppingCart size={20} />
+                      <span>Cart</span>
                     </Link>
                   </div>
-                )}
-
-              {/* Mobile Navigation Items */}
-              <div className="border-t border-gray-100 pt-6 space-y-4">
-                {Object.entries(navItems).map(([key, item], index) => (
-                  <div key={key} className="animate-slideInLeft" style={{ animationDelay: `${index * 100}ms` }}>
-                    <div className="font-bold text-base mb-3 text-gray-800 flex items-center space-x-2">
-                      <span>{item.title}</span>
-                      <div className="h-1 w-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 pl-4">
-                      {item.items.map((subItem: string, subIndex: number) => (
-                        <Link
-                          key={subIndex}
-                          href={`/${key.toLowerCase()}/${subItem.toLowerCase()}`}
-                          className="py-3 px-4 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300 text-gray-600 hover-lift"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {subItem}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                ))}
                 </div>
               </div>
             </div>

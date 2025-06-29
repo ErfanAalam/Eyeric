@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Eye, Star } from "lucide-react";
+import { Eye, Star, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
+import { useFavorites } from "../contexts/FavoritesContext";
 import {
   heroSlides,
   // brands,
@@ -23,6 +24,7 @@ import {
   // getProductCategories,
   getProducts,
 } from "../services/homeService";
+import { useHasMounted } from "../hooks/useHasMounted";
 
 // Define Product type locally
 interface Product {
@@ -262,6 +264,31 @@ const BestSellers = ({ products }: { products: Product[] }) => {
     .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
     .slice(0, 8);
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+  const router = useRouter();
+  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
+
+  const handleProductClick = (product: Product) => {
+    router.push(`/product/${product.id}`);
+  };
+
+  const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    
+    if (!isLoggedIn) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      if (isFavorite(product.id!)) {
+        await removeFromFavorites(product.id!);
+      } else {
+        await addToFavorites(product);
+      }
+    } catch (error) {
+      console.error('Error handling favorite:', error);
+    }
+  };
 
   return (
     <div className="py-16 px-4 bg-gradient-to-br from-purple-50 to-pink-50">
@@ -275,15 +302,32 @@ const BestSellers = ({ products }: { products: Product[] }) => {
               {sellers.map((item, index) => (
                 <div
                   key={item.id || index}
-                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col"
+                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col cursor-pointer"
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  onClick={() => handleProductClick(item)}
                 >
                   <div className="absolute top-3 left-3 z-10">
                     <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                       Best Seller
                     </span>
                   </div>
+                  
+                  {/* Favorite Button */}
+                  <button
+                    onClick={(e) => handleFavoriteClick(e, item)}
+                    className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all duration-300 group-hover:bg-white"
+                  >
+                    <Heart 
+                      size={20} 
+                      className={`transition-all duration-300 ${
+                        isFavorite(item.id!) 
+                          ? 'text-red-500 fill-current' 
+                          : 'text-gray-400 hover:text-red-500'
+                      }`} 
+                    />
+                  </button>
+
                   <div className="aspect-square overflow-hidden">
                     <Image
                       width={400}
@@ -341,6 +385,31 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
     .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
     .slice(0, 8);
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+  const router = useRouter();
+  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
+
+  const handleProductClick = (product: Product) => {
+    router.push(`/product/${product.id}`);
+  };
+
+  const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
+    e.stopPropagation();
+    
+    if (!isLoggedIn) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      if (isFavorite(product.id!)) {
+        await removeFromFavorites(product.id!);
+      } else {
+        await addToFavorites(product);
+      }
+    } catch (error) {
+      console.error('Error handling favorite:', error);
+    }
+  };
 
   return (
     <div className="py-16 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -354,15 +423,32 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
               {trends.map((item, index) => (
                 <div
                   key={item.id || index}
-                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col"
+                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col cursor-pointer"
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
+                  onClick={() => handleProductClick(item)}
                 >
                   <div className="absolute top-3 left-3 z-10">
                     <span className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
                       New Trend
                     </span>
                   </div>
+                  
+                  {/* Favorite Button */}
+                  <button
+                    onClick={(e) => handleFavoriteClick(e, item)}
+                    className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all duration-300 group-hover:bg-white"
+                  >
+                    <Heart 
+                      size={20} 
+                      className={`transition-all duration-300 ${
+                        isFavorite(item.id!) 
+                          ? 'text-red-500 fill-current' 
+                          : 'text-gray-400 hover:text-red-500'
+                      }`} 
+                    />
+                  </button>
+
                   <div className="aspect-square overflow-hidden">
                     <Image
                       width={400}
@@ -599,6 +685,7 @@ const HowToKnowFaceSize = () => {
 // Main Home Component
 
 export default function Home() {
+  const hasMounted = useHasMounted();
   const [products, setProducts] = React.useState<Product[]>([]);
 
   React.useEffect(() => {
@@ -608,6 +695,8 @@ export default function Home() {
     };
     fetchProducts();
   }, []);
+
+  if (!hasMounted) return null;
 
   return (
     <div className="min-h-screen">
