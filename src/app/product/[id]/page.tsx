@@ -34,7 +34,8 @@ interface Product {
   latest_trend?: boolean;
   banner_image_1?: string;
   banner_image_2?: string;
-  colors: { color: string; images: string[] }[];
+  // Accept both old and new color formats
+  colors: ({ color: string; images: string[] } | { colors: string[]; images: string[] })[];
   sizes: string[];
   frame_material?: string;
   features: string[];
@@ -44,6 +45,15 @@ interface Product {
   type_category: string[];
   created_at?: string;
   updated_at?: string;
+}
+
+// Helper to normalize color data
+function normalizeColors(colors: Product["colors"]): { colors: string[]; images: string[] }[] {
+  return colors.map((c) => {
+    if ("colors" in c) return c as { colors: string[]; images: string[] };
+    // old format: { color: string; images: string[] }
+    return { colors: [c.color], images: c.images };
+  });
 }
 
 const ProductDetailPage = () => {
@@ -160,7 +170,7 @@ const ProductDetailPage = () => {
       if (isFavorite(product.id!)) {
         await removeFromFavorites(product.id!);
       } else {
-        await addToFavorites(product);
+        await addToFavorites(product as any);
       }
     } catch (error) {
       console.error('Error handling favorite:', error);
@@ -179,7 +189,7 @@ const ProductDetailPage = () => {
       if (isFavorite(recommendation.id!)) {
         await removeFromFavorites(recommendation.id!);
       } else {
-        await addToFavorites(recommendation);
+        await addToFavorites(recommendation as any);
       }
     } catch (error) {
       console.error('Error handling favorite:', error);
@@ -350,17 +360,36 @@ const ProductDetailPage = () => {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Colors</h3>
                 <div className="flex gap-3">
-                  {product.colors.map((color, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedColor(index)}
-                      className={`w-12 h-12 rounded-full border-2 transition-all ${
-                        selectedColor === index ? 'border-blue-600 scale-110' : 'border-gray-300'
-                      }`}
-                      style={{ backgroundColor: color.color }}
-                      title={color.color}
-                    />
-                  ))}
+                  {normalizeColors(product.colors).map((colorObj, index) => {
+                    const colorArr = colorObj.colors || [];
+                    let background = "#eee";
+                    if (colorArr.length === 1) {
+                      background = colorArr[0];
+                    } else if (colorArr.length === 2) {
+                      background = `linear-gradient(90deg, ${colorArr[0]} 50%, ${colorArr[1]} 50%)`;
+                    } else if (colorArr.length > 2) {
+                      // conic-gradient for 3+ colors
+                      const stops = colorArr
+                        .map((col, i) => {
+                          const start = (i * 100) / colorArr.length;
+                          const end = ((i + 1) * 100) / colorArr.length;
+                          return `${col} ${start}%, ${col} ${end}%`;
+                        })
+                        .join(", ");
+                      background = `conic-gradient(${stops})`;
+                    }
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedColor(index)}
+                        className={`w-12 h-12 rounded-full border-2 transition-all ${
+                          selectedColor === index ? 'border-blue-600 scale-110' : 'border-gray-300'
+                        }`}
+                        style={{ background: background }}
+                        title={colorArr.join(", ")}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             )}

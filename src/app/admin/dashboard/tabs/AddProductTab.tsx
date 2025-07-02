@@ -29,7 +29,7 @@ export type Product = {
   latest_trend?: boolean;
   banner_image_1?: string;
   banner_image_2?: string;
-  colors: { color: string; images: string[] }[];
+  colors: { colors: string[]; images: string[] }[];
   sizes: string[];
   frame_material?: string;
   features: string[];
@@ -52,7 +52,7 @@ const AddProductTab = () => {
   const [bestseller, setBestseller] = useState(false);
   const [bannerImage1, setBannerImage1] = useState(null);
   const [bannerImage2, setBannerImage2] = useState(null);
-  const [colors, setColors] = useState([{ color: "", images: [] }]);
+  const [colors, setColors] = useState([{ colors: ["#000000"], images: [] }]);
   const [sizes, setSizes] = useState([]);
   const [frameMaterial, setFrameMaterial] = useState("");
   const [features, setFeatures] = useState("");
@@ -172,7 +172,7 @@ const AddProductTab = () => {
             .from("product-images")
             .upload(filePath, img);
           if (uploadError) {
-            setMessage(`Image upload failed for color ${colorObj.color}`);
+            setMessage(`Image upload failed for color entry ${idx + 1}`);
             setLoading(false);
             return null;
           }
@@ -181,7 +181,7 @@ const AddProductTab = () => {
             .getPublicUrl(filePath);
           uploadedImages.push(urlData.publicUrl);
         }
-        return { color: colorObj.color, images: uploadedImages };
+        return { colors: colorObj.colors, images: uploadedImages };
       })
     );
     if (colorUploads.some((c) => c === null)) return; // error already set
@@ -227,7 +227,7 @@ const AddProductTab = () => {
       setDiscountedPrice("");
       setBannerImage1(null);
       setBannerImage2(null);
-      setColors([{ color: "", images: [] }]);
+      setColors([{ colors: ["#000000"], images: [] }]);
       setSizes([]);
       setFrameMaterial("");
       setFeatures("");
@@ -254,9 +254,9 @@ const AddProductTab = () => {
   };
 
   // Color Handlers
-  const handleColorChange = (index: number, value: string) => {
+  const handleColorChange = (colorIndex: number, pickerIndex: number, value: string) => {
     const updatedColors = [...colors];
-    updatedColors[index].color = value;
+    updatedColors[colorIndex].colors[pickerIndex] = value;
     setColors(updatedColors);
   };
   const handleColorImagesChange = (index: number, files: FileList) => {
@@ -264,8 +264,20 @@ const AddProductTab = () => {
     updatedColors[index].images = Array.from(files);
     setColors(updatedColors);
   };
+  const addColorPicker = (colorIndex: number) => {
+    const updatedColors = [...colors];
+    updatedColors[colorIndex].colors.push("#000000");
+    setColors(updatedColors);
+  };
+  const removeColorPicker = (colorIndex: number, pickerIndex: number) => {
+    const updatedColors = [...colors];
+    if (updatedColors[colorIndex].colors.length > 1) {
+      updatedColors[colorIndex].colors.splice(pickerIndex, 1);
+      setColors(updatedColors);
+    }
+  };
   const addColorField = () => {
-    setColors([...colors, { color: "", images: [] }]);
+    setColors([...colors, { colors: ["#000000"], images: [] }]);
   };
   const removeColorField = (index: number) => {
     const updatedColors = colors.filter((_, i) => i !== index);
@@ -346,29 +358,59 @@ const AddProductTab = () => {
                     key={idx}
                     className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-2"
                   >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={colorObj.color}
-                        onChange={(e) => handleColorChange(idx, e.target.value)}
-                        placeholder="Color name (e.g., Black)"
-                        className="px-3 py-2 border border-slate-300 rounded-lg flex-1"
-                      />
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
+                      {colorObj.colors.map((color, cidx) => (
+                        <div key={cidx} className="flex items-center gap-1">
+                          <input
+                            type="color"
+                            value={color}
+                            onChange={e => handleColorChange(idx, cidx, e.target.value)}
+                            className="w-8 h-8 border-2 border-slate-300 rounded"
+                          />
+                          {colorObj.colors.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeColorPicker(idx, cidx)}
+                              className="text-xs text-red-500 px-1 hover:bg-red-50 rounded"
+                              title="Remove this color"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => addColorPicker(idx)}
+                        className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded font-semibold text-xs hover:bg-blue-200"
+                      >
+                        + Add Color
+                      </button>
                       <button
                         type="button"
                         onClick={() => removeColorField(idx)}
-                        className="text-red-500 font-bold px-2 hover:bg-red-50 rounded"
+                        className="ml-2 text-red-500 font-bold px-2 hover:bg-red-50 rounded"
+                        title="Remove this color entry"
                       >
                         X
                       </button>
+                    </div>
+                    {/* Show color swatches */}
+                    <div className="flex gap-1 mb-2">
+                      {colorObj.colors.map((color, cidx) => (
+                        <div
+                          key={cidx}
+                          className="w-6 h-6 rounded-full border border-slate-300"
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
                     </div>
                     <input
                       type="file"
                       accept="image/*"
                       multiple
-                      onChange={(e) =>
-                        handleColorImagesChange(idx, e.target.files)
-                      }
+                      onChange={e => handleColorImagesChange(idx, e.target.files)}
                       className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                     />
                     {colorObj.images.length > 0 && (
