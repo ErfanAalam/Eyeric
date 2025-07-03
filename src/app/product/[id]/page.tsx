@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { 
@@ -179,7 +179,13 @@ const ProductDetailPage = () => {
       if (isFavorite(product.id!)) {
         await removeFromFavorites(product.id!);
       } else {
-        await addToFavorites(product as any);
+        await addToFavorites({
+          ...product,
+          colors: normalizeColors(product.colors).map(c => ({
+            color: c.colors[0],
+            images: c.images,
+          })),
+        });
       }
     } catch (error) {
       console.error('Error handling favorite:', error);
@@ -198,7 +204,13 @@ const ProductDetailPage = () => {
       if (isFavorite(recommendation.id!)) {
         await removeFromFavorites(recommendation.id!);
       } else {
-        await addToFavorites(recommendation as any);
+        await addToFavorites({
+          ...recommendation,
+          colors: normalizeColors(recommendation.colors).map(c => ({
+            color: c.colors[0],
+            images: c.images,
+          })),
+        });
       }
     } catch (error) {
       console.error('Error handling favorite:', error);
