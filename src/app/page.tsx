@@ -215,7 +215,7 @@ const CategoryTabs = ({ products }: { products: Product[] }) => {
                       : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
                   }`}
                 >
-                  {category}
+                  {(category).toUpperCase()}
                 </button>
               ))}
             </div>
@@ -243,11 +243,8 @@ const CategoryTabs = ({ products }: { products: Product[] }) => {
               </div>
               <div className="p-4">
                 <h3 className="text-[12px] md:text-lg font-bold mb-1 text-gray-800">
-                  {item.title}
+                  {(item.title).toUpperCase()}
                 </h3>
-                <p className="text-[12px] md:text-sm text-gray-600">
-                  {truncateDescription(item.description)}
-                </p>
               </div>
             </div>
           ))}
@@ -541,11 +538,11 @@ const ShopByShapes = ({ products }: { products: Product[] }) => {
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 text-white">
                   <h3 className="text-xl md:text-2xl font-bold mb-2">
-                    {uniqueShapes[selectedShape].shape_category}
+                    {(uniqueShapes[selectedShape].shape_category).charAt(0).toUpperCase() + (uniqueShapes[selectedShape].shape_category).slice(1)}
                   </h3>
-                  <p className="text-sm md:text-lg opacity-90">
+                  {/* <p className="text-sm md:text-lg opacity-90">
                     {truncateDescription(uniqueShapes[selectedShape].description)}
-                  </p>
+                  </p> */}
                   <div className="mt-4 text-sm text-white/80">
                     Click to view all {String(uniqueShapes[selectedShape].shape_category)?.toLowerCase()} shaped products
                   </div>
@@ -568,7 +565,7 @@ const ShopByShapes = ({ products }: { products: Product[] }) => {
                   }`}
                 >
                   <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-1">
-                    {shape.shape_category}
+                    {(shape.shape_category).toUpperCase()}
                   </h3>                                                                                            
                 </button>
               ))}

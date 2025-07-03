@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { 
@@ -13,7 +13,10 @@ import {
   RefreshCw,
   Award,
   Eye,
-  Share2
+  Share2,
+  ArrowRight,
+  ArrowLeft,
+  X
 } from "lucide-react";
 import Navbar from "../../../../components/Navbar";
 import Footer from "../../../../components/Footer";
@@ -70,6 +73,12 @@ const ProductDetailPage = () => {
   const [selectedSize, setSelectedSize] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [hoveredRecommendation, setHoveredRecommendation] = useState<number | null>(null);
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
+  // Preview modal state
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
 
 //   if (!hasMounted) return null;
 
@@ -196,6 +205,50 @@ const ProductDetailPage = () => {
     }
   };
 
+  // Magnifier event handlers
+  const handleMouseEnter = () => setShowMagnifier(true);
+  const handleMouseLeave = () => setShowMagnifier(false);
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    const { left, top } = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
+    setMagnifierPosition({ x, y });
+  };
+
+  // Preview modal handlers
+  const handleImageClick = () => {
+    setShowPreview(true);
+    setPreviewIndex(selectedImage);
+  };
+  const handlePreviewLeft = () => {
+    setPreviewIndex((i) => Math.max(0, i - 1));
+  };
+  const handlePreviewRight = () => {
+    setPreviewIndex((i) => Math.min(productImages.length - 1, i + 1));
+  };
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchEndX - touchStartX;
+    if (diff > 50 && previewIndex > 0) {
+      setPreviewIndex(previewIndex - 1); // swipe right
+    } else if (diff < -50 && previewIndex < productImages.length - 1) {
+      setPreviewIndex(previewIndex + 1); // swipe left
+    }
+    setTouchStartX(null);
+  };
+
+  // Focus modal for keyboard navigation
+  useEffect(() => {
+    if (showPreview) {
+      const modal = document.querySelector('.z-50[tabindex="0"]');
+      if (modal) (modal as HTMLElement).focus();
+    }
+  }, [showPreview]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
@@ -256,20 +309,48 @@ const ProductDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Images */}
           <div className="space-y-4">
-            {/* Main Image */}
-            <div className="aspect-square bg-gray-100 rounded-2xl overflow-hidden">
+            {/* Main Image with Magnifier */}
+            <div
+              className="aspect-square bg-gray-100 rounded-2xl overflow-hidden relative"
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+              onMouseMove={handleMouseMove}
+            >
               {productImages.length > 0 ? (
                 <Image
                   src={productImages[selectedImage]}
                   alt={product.title}
                   width={600}
                   height={600}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover select-none"
+                  draggable={false}
+                  onClick={handleImageClick}
+                  style={{ cursor: "zoom-in" }}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">
                   <Eye className="w-16 h-16" />
                 </div>
+              )}
+              {/* Magnifier */}
+              {showMagnifier && productImages.length > 0 && (
+                <div
+                  style={{
+                    position: "absolute",
+                    pointerEvents: "none",
+                    width: 200,
+                    height: 200,
+                    top: magnifierPosition.y - 100,
+                    left: magnifierPosition.x - 100,
+                    borderRadius: "50%",
+                    border: "2px solid #ccc",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    background: `url(${productImages[selectedImage]}) no-repeat`,
+                    backgroundSize: "1200px 1200px", // 2x zoom for 600x600 image
+                    backgroundPosition: `-${magnifierPosition.x * 2 - 100}px -${magnifierPosition.y * 2 - 100}px`,
+                    zIndex: 10,
+                  }}
+                />
               )}
             </div>
 
@@ -627,6 +708,62 @@ const ProductDetailPage = () => {
       </div>
 
       <Footer />
+      {/* Fullscreen Preview Modal */}
+      {showPreview && productImages.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowLeft' && previewIndex > 0) {
+              handlePreviewLeft();
+            } else if (e.key === 'ArrowRight' && previewIndex < productImages.length - 1) {
+              handlePreviewRight();
+            } else if (e.key === 'Escape') {
+              setShowPreview(false);
+            }
+          }}
+        >
+          {/* Close button */}
+          <button
+            className="absolute top-6 right-6 text-white text-3xl"
+            onClick={() => setShowPreview(false)}
+            aria-label="Close"
+          >
+            <X className="w-10 h-10" />
+          </button>
+          {/* Left button */}
+          {previewIndex > 0 && (
+            <button
+              className="hidden md:block absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl px-4 py-2 bg-black bg-opacity-30 rounded-full hover:bg-opacity-60 transition"
+              onClick={handlePreviewLeft}
+              aria-label="Previous"
+            >
+              <ArrowLeft className="w-8 h-8 md:w-10 md:h-10" />
+            </button>
+          )}
+          {/* Image */}
+          <Image
+            width={1000}
+            height={1000}
+            src={productImages[previewIndex]}
+            alt={product.title}
+            className="max-h-[80vh] max-w-[90vw] object-contain shadow-2xl"
+            draggable={false}
+          />
+          {/* Right button */}
+          {previewIndex < productImages.length - 1 && (
+            <button
+              className="hidden md:block absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl px-4 py-2 bg-black bg-opacity-30 rounded-full hover:bg-opacity-60 transition"
+              onClick={handlePreviewRight}
+              aria-label="Next"
+            >
+            <ArrowRight className="w-8 h-8 md:w-10 md:h-10" />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

@@ -274,6 +274,89 @@ const Navbar: React.FC = () => {
               </Link>
             </div>
 
+            {/* Mobile Top Icons Row */}
+            <div className="flex md:hidden items-center space-x-2">
+              {/* Favorites Icon */}
+              <Link 
+                href="/favorites"
+                className="relative p-2 rounded-xl hover:bg-gradient-to-r hover:from-pink-50 hover:to-red-50 transition-all duration-300 group"
+                style={{ color: colors.muted }}
+              >
+                <Heart size={22} className="group-hover:text-red-500 transition-all duration-300" />
+                {isLoggedIn && favoritesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
+                    {favoritesCount}
+                  </span>
+                )}
+              </Link>
+              {/* Cart Icon */}
+              <Link 
+                href="/cart"
+                className="relative p-2 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 group"
+                style={{ color: colors.muted }}
+              >
+                <ShoppingCart size={22} className="group-hover:text-blue-500 transition-all duration-300" />
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">2</span>
+              </Link>
+              {/* User/Profile Icon */}
+              {user ? (
+                <div className="relative user-dropdown">
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center p-2 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
+                    style={{ color: colors.text }}
+                  >
+                    <User size={20} />
+                  </button>
+                  {/* User Dropdown (mobile) */}
+                  {userDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-47 glass-effect rounded-2xl shadow-2xl border border-white/20 z-50">
+                      <div className="p-3">
+                        <div className="text-xs font-semibold text-gray-800 mb-1">
+                          {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}
+                        </div>
+                        <div className="text-xs text-gray-500 mb-2">
+                          {user.email}
+                        </div>
+                        <div className="space-y-1">
+                          <Link
+                            href="/profile"
+                            className="block px-2 py-1 text-xs font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            My Profile
+                          </Link>
+                          <Link
+                            href="/orders"
+                            className="block px-2 py-1 text-xs font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                            onClick={() => setUserDropdownOpen(false)}
+                          >
+                            My Orders
+                          </Link>
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-xl hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:text-white transition-all duration-300"
+                          >
+                            <LogOut size={14} />
+                            <span>Sign Out</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link 
+                  href="/login"
+                  className="p-2 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
+                  style={{ color: colors.text }}
+                >
+                  <User size={20} />
+                </Link>
+              )}
+            </div>
+            {/* End Mobile Top Icons Row */}
+
             {/* Search Bar - Hidden on mobile */}
             <div className="hidden md:flex flex-1 max-w-2xl mx-8">
               <form onSubmit={handleSearchSubmit} className="relative w-full group">
