@@ -79,6 +79,7 @@ const ProductDetailPage = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [showSwipeHint, setShowSwipeHint] = useState(false);
 
 //   if (!hasMounted) return null;
 
@@ -258,7 +259,11 @@ const ProductDetailPage = () => {
     if (showPreview) {
       const modal = document.querySelector('.z-50[tabindex="0"]');
       if (modal) (modal as HTMLElement).focus();
+      setShowSwipeHint(true);
+      const timer = setTimeout(() => setShowSwipeHint(false), 2000);
+      return () => clearTimeout(timer);
     }
+    // eslint-disable-next-line
   }, [showPreview]);
 
   if (loading) {
@@ -764,6 +769,23 @@ const ProductDetailPage = () => {
             className="max-h-[80vh] max-w-[90vw] object-contain shadow-2xl"
             draggable={false}
           />
+          {/* Pagination Dots for Mobile */}
+          <div className="flex justify-center mt-4 md:hidden absolute bottom-16 left-1/2 -translate-x-1/2">
+            {productImages.map((_, idx) => (
+              <span
+                key={idx}
+                className={`mx-1 h-2 w-2 rounded-full inline-block transition-all duration-200 ${
+                  idx === previewIndex ? 'bg-white' : 'bg-white/40'
+                }`}
+              />
+            ))}
+          </div>
+          {/* Swipe Hint for Mobile */}
+          {showSwipeHint && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm md:hidden">
+              Swipe to see more
+            </div>
+          )}
           {/* Right button */}
           {previewIndex < productImages.length - 1 && (
             <button
@@ -771,7 +793,7 @@ const ProductDetailPage = () => {
               onClick={handlePreviewRight}
               aria-label="Next"
             >
-            <ArrowRight className="w-8 h-8 md:w-10 md:h-10" />
+              <ArrowRight className="w-8 h-8 md:w-10 md:h-10" />
             </button>
           )}
         </div>
