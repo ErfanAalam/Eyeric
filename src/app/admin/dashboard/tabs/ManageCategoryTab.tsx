@@ -6,7 +6,8 @@ import { supabase } from "../../../../../lib/supabaseClient";
 const DEFAULTS = {
   gender: ["men", "women", "kids", "unisex"],
   type: ["sunglasses", "eyeglasses", "computerglasses", "powered sunglasses"],
-  shape: ["round", "cat-eye", "aviator", "wayfarer", "oval", "rectangle", "square"]
+  shape: ["round", "cat-eye", "aviator", "wayfarer", "oval", "rectangle", "square"],
+  style: ["Half-Rim", "Full-Rim"],
 };
 
 const CATEGORY_TYPES = [
@@ -33,6 +34,14 @@ const CATEGORY_TYPES = [
     color: "from-emerald-500 to-teal-500",
     bgColor: "bg-gradient-to-br from-emerald-50 to-teal-50",
     activeColor: "border-emerald-500 bg-emerald-500"
+  },
+  { 
+    label: "Style", 
+    value: "style", 
+    icon: Shapes,
+    color: "from-yellow-500 to-amber-500",
+    bgColor: "bg-gradient-to-br from-yellow-50 to-amber-50",
+    activeColor: "border-yellow-500 bg-yellow-500"
   }
 ];
 

@@ -6,8 +6,6 @@ import {
   Package,
   FileText,
   DollarSign,
-  Users,
-  Eye,
   Shapes,
   TrendingUp,
   Award,
@@ -15,6 +13,9 @@ import {
   Check,
   Loader2,
   Glasses,
+  Users,
+  Eye,
+  Tag,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -64,6 +65,16 @@ const AddProductTab = () => {
   const [typeOptions, setTypeOptions] = useState<string[]>([]);
   const [shapeOptions, setShapeOptions] = useState<string[]>([]);
   const [isLensUsed, setIsLensUsed] = useState(false);
+  const [quantity, setQuantity] = useState("");
+  const [styleCategory, setStyleCategory] = useState("");
+  const [styleOptions, setStyleOptions] = useState<string[]>([]);
+  const [lensWidth, setLensWidth] = useState("");
+  const [bridgeWidth, setBridgeWidth] = useState("");
+  const [templeLength, setTempleLength] = useState("");
+  const [lensCategories, setLensCategories] = useState([]);
+  const [lensCategoryId, setLensCategoryId] = useState("");
+  const [specialCategories, setSpecialCategories] = useState([]);
+  const [selectedSpecialCategories, setSelectedSpecialCategories] = useState([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -83,6 +94,11 @@ const AddProductTab = () => {
         .select("name")
         .eq("category_type", "shape")
         .order("id", { ascending: true });
+      const styleRes = await supabase
+        .from("categories")
+        .select("name")
+        .eq("category_type", "style")
+        .order("id", { ascending: true });
       setGenderOptions(
         genderRes.data
           ? (genderRes.data as CategoryRow[]).map((c) => c.name)
@@ -94,8 +110,21 @@ const AddProductTab = () => {
       setShapeOptions(
         shapeRes.data ? (shapeRes.data as CategoryRow[]).map((c) => c.name) : []
       );
+      setStyleOptions(
+        styleRes.data ? (styleRes.data as CategoryRow[]).map((c) => c.name) : []
+      );
     };
     fetchCategories();
+    const fetchLensCategories = async () => {
+      const { data } = await supabase.from("lens_categories").select("*");
+      setLensCategories(data || []);
+    };
+    fetchLensCategories();
+    const fetchSpecialCategories = async () => {
+      const { data } = await supabase.from("special_product_categories").select("*");
+      setSpecialCategories(data || []);
+    };
+    fetchSpecialCategories();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -106,11 +135,12 @@ const AddProductTab = () => {
     // --- Display Order Shift Logic ---
     const displayOrderInt = order ? parseInt(order, 10) : null;
     if (displayOrderInt !== null) {
-      // Fetch all products with display_order >= new order
+      // Fetch all products with display_order >= new order, order by display_order DESC to avoid conflicts
       const { data: productsToUpdate, error: fetchError } = await supabase
         .from("products")
         .select("id, display_order")
-        .gte("display_order", displayOrderInt);
+        .gte("display_order", displayOrderInt)
+        .order("display_order", { ascending: false });
 
       if (fetchError) {
         setMessage("Failed to update display order");
@@ -118,7 +148,7 @@ const AddProductTab = () => {
         return;
       }
 
-      // Increment display_order for each
+      // Increment display_order for each (from highest to lowest)
       for (const prod of productsToUpdate) {
         await supabase
           .from("products")
@@ -196,7 +226,7 @@ const AddProductTab = () => {
     const tags = ["manufactured by Eyeric"];
 
     // Insert product
-    const { error } = await supabase.from("products").insert({
+    const { data: inserted, error } = await supabase.from("products").insert({
       title,
       description,
       original_price: parseFloat(originalPrice),
@@ -209,35 +239,60 @@ const AddProductTab = () => {
       colors: colorUploads,
       sizes,
       shape_category: shapeCategory,
+      style_category: styleCategory,
       frame_material: frameMaterial,
       features: featuresArray,
       tags,
       gender_category: selectedGenders,
       type_category: selectedTypes,
       is_lens_used: isLensUsed,
-    });
+      quantity: quantity ? parseInt(quantity, 10) : 0,
+      lens_width: lensWidth ? parseFloat(lensWidth) : null,
+      bridge_width: bridgeWidth ? parseFloat(bridgeWidth) : null,
+      temple_length: templeLength ? parseFloat(templeLength) : null,
+      lens_category_id: lensCategoryId,
+    }).select();
 
     if (error) {
       setMessage("Failed to add product");
-    } else {
-      setMessage("Product added successfully!");
-      setTitle("");
-      setDescription("");
-      setOriginalPrice("");
-      setDiscountedPrice("");
-      setBannerImage1(null);
-      setBannerImage2(null);
-      setColors([{ colors: ["#000000"], images: [] }]);
-      setSizes([]);
-      setFrameMaterial("");
-      setFeatures("");
-      setSelectedGenders([]);
-      setSelectedTypes([]);
-      setOrder("");
-      setLatestTrend(false);
-      setBestseller(false);
-      setIsLensUsed(false);
+      setLoading(false);
+      return;
     }
+
+    const newProductId = inserted && inserted[0] && inserted[0].id;
+    if (newProductId && selectedSpecialCategories.length > 0) {
+      for (const catId of selectedSpecialCategories) {
+        await supabase.from("product_special_categories").insert({
+          product_id: newProductId,
+          special_category_id: catId
+        });
+      }
+    }
+
+    setMessage("Product added successfully!");
+    setTitle("");
+    setDescription("");
+    setOriginalPrice("");
+    setDiscountedPrice("");
+    setBannerImage1(null);
+    setBannerImage2(null);
+    setColors([{ colors: ["#000000"], images: [] }]);
+    setSizes([]);
+    setFrameMaterial("");
+    setFeatures("");
+    setSelectedGenders([]);
+    setSelectedTypes([]);
+    setOrder("");
+    setLatestTrend(false);
+    setBestseller(false);
+    setIsLensUsed(false);
+    setQuantity("");
+    setStyleCategory("");
+    setLensWidth("");
+    setBridgeWidth("");
+    setTempleLength("");
+    setLensCategoryId("");
+    setSelectedSpecialCategories([]);
     setLoading(false);
   };
 
@@ -282,6 +337,11 @@ const AddProductTab = () => {
   const removeColorField = (index: number) => {
     const updatedColors = colors.filter((_, i) => i !== index);
     setColors(updatedColors);
+  };
+
+  const handleSpecialCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const options = Array.from(e.target.selectedOptions, option => option.value);
+    setSelectedSpecialCategories(options);
   };
 
   return (
@@ -550,33 +610,92 @@ const AddProductTab = () => {
               />
             </div>
 
-            {/* Sizes, Gender, Type, Shape */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {/* Sizes */}
-              <div>
-                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                  <Shapes className="w-4 h-4" /> Sizes
-                </label>
-                <div className="flex flex-col gap-2">
-                  {["Small", "Medium", "Large", "Extra Large"].map((size) => (
-                    <label
-                      key={size}
-                      className="flex items-center gap-2 text-sm bg-slate-100 px-2 py-1 rounded-lg cursor-pointer hover:bg-blue-50"
-                    >
+            {/* Lens Category Dropdown */}
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                <Tag className="w-4 h-4" /> Lens Category
+              </label>
+              <select
+                value={lensCategoryId}
+                onChange={e => setLensCategoryId(e.target.value)}
+                required
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+              >
+                <option value="">Select Lens Category</option>
+                {lensCategories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Special Product Categories */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-slate-700 mb-2">Special Product Categories</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white/80 border border-gray-200 rounded-2xl p-4">
+                {specialCategories.length === 0 ? (
+                  <div className="text-gray-400 text-sm col-span-full">No special categories found.</div>
+                ) : (
+                  specialCategories.map(cat => (
+                    <label key={cat.id} className="flex items-center gap-2 text-sm bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl px-3 py-2 cursor-pointer transition-colors">
                       <input
                         type="checkbox"
-                        checked={sizes.includes(size)}
-                        onChange={(e) => {
-                          if (e.target.checked) setSizes([...sizes, size]);
-                          else setSizes(sizes.filter((s) => s !== size));
+                        value={cat.id}
+                        checked={selectedSpecialCategories.includes(cat.id.toString())}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setSelectedSpecialCategories([...selectedSpecialCategories, cat.id.toString()]);
+                          } else {
+                            setSelectedSpecialCategories(selectedSpecialCategories.filter(id => id !== cat.id.toString()));
+                          }
                         }}
-                        className="accent-blue-600"
+                        className="accent-blue-600 w-4 h-4 rounded"
                       />
-                      {size}
+                      <span className="font-medium text-blue-700">{cat.name}</span>
+                      {cat.description && <span className="text-xs text-gray-500 ml-2">{cat.description}</span>}
                     </label>
-                  ))}
-                </div>
+                  ))
+                )}
               </div>
+            </div>
+
+            {/* Quantity, Style, Sizes, Lens/Bridge/Temple, Gender, Type, Shape */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Quantity */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  Quantity
+                </label>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                  required
+                  min="0"
+                  step="1"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                  placeholder="Enter quantity..."
+                />
+              </div>
+              {/* Style Category */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  Style Category
+                </label>
+                <select
+                  value={styleCategory}
+                  onChange={(e) => setStyleCategory(e.target.value)}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                >
+                  <option value="">Select Style</option>
+                  {styleOptions.map((style) => (
+                    <option key={style} value={style}>
+                      {style.charAt(0).toUpperCase() + style.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Gender */}
               <div>
                 <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
@@ -606,6 +725,7 @@ const AddProductTab = () => {
                   ))}
                 </div>
               </div>
+
               {/* Type */}
               <div>
                 <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
@@ -635,6 +755,72 @@ const AddProductTab = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Size Dropdown */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  <Shapes className="w-4 h-4" /> Size
+                </label>
+                <select
+                  value={sizes[0] || ""}
+                  onChange={(e) => setSizes([e.target.value])}
+                  required
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                >
+                  <option value="">Select Size</option>
+                  {["Small", "Medium", "Large", "Extra Large"].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Lens Width */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  Lens Width (mm)
+                </label>
+                <input
+                  type="number"
+                  value={lensWidth}
+                  onChange={(e) => setLensWidth(e.target.value)}
+                  min="0"
+                  step="0.1"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                  placeholder="Lens width in mm"
+                />
+              </div>
+              {/* Bridge Width */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  Bridge Width (mm)
+                </label>
+                <input
+                  type="number"
+                  value={bridgeWidth}
+                  onChange={(e) => setBridgeWidth(e.target.value)}
+                  min="0"
+                  step="0.1"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                  placeholder="Bridge width in mm"
+                />
+              </div>
+              {/* Temple Length */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  Temple Length (mm)
+                </label>
+                <input
+                  type="number"
+                  value={templeLength}
+                  onChange={(e) => setTempleLength(e.target.value)}
+                  min="0"
+                  step="0.1"
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                  placeholder="Temple length in mm"
+                />
+              </div>
+
               {/* Shape */}
               <div>
                 <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
@@ -735,25 +921,7 @@ const AddProductTab = () => {
                   <span className="text-sm font-medium">Lens Used</span>
                 </div>
               </label>
-
-              {/* <div className="flex items-center gap-2 mt-4">
-                <input
-                  type="checkbox"
-                  id="isLensUsed"
-                  checked={isLensUsed}
-                  onChange={(e) => setIsLensUsed(e.target.checked)}
-                  className="accent-blue-600"
-                />
-                <label
-                  htmlFor="isLensUsed"
-                  className="text-sm font-semibold text-slate-700"
-                >
-                  Is lens used in this product?
-                </label>
-              </div> */}
             </div>
-
-            {/* Is Lens Used Checkbox */}
 
             {/* Message */}
             {message && (

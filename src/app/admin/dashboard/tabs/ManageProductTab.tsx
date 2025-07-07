@@ -24,6 +24,13 @@ export type Product = {
   type_category: string[];
   created_at?: string;
   updated_at?: string;
+  quantity?: number;
+  style_category?: string;
+  lens_category_id?: number;
+  is_lens_used?: boolean;
+  lens_width?: number;
+  bridge_width?: number;
+  temple_length?: number;
 };
 
 const GENDER_TABS = [
@@ -56,6 +63,25 @@ const ManageProductTab = () => {
   const [editBannerImage2File, setEditBannerImage2File] = useState<File | null>(null);
   const [editColorImageFiles, setEditColorImageFiles] = useState<(File[] | null)[]>([]);
   const [activeGender, setActiveGender] = useState<string>("men");
+  const [editQuantity, setEditQuantity] = useState("");
+  const [editStyleCategory, setEditStyleCategory] = useState("");
+  const [editLensCategoryId, setEditLensCategoryId] = useState("");
+  const [editIsLensUsed, setEditIsLensUsed] = useState(false);
+  const [editLensWidth, setEditLensWidth] = useState("");
+  const [editBridgeWidth, setEditBridgeWidth] = useState("");
+  const [editTempleLength, setEditTempleLength] = useState("");
+  const [styleOptions, setStyleOptions] = useState([]);
+  const [shapeOptions, setShapeOptions] = useState([]);
+  const [typeOptions, setTypeOptions] = useState([]);
+  const [lensCategories, setLensCategories] = useState([]);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterType, setFilterType] = useState("");
+  const [filterShape, setFilterShape] = useState("");
+  const [filterStyle, setFilterStyle] = useState("");
+  const [specialCategories, setSpecialCategories] = useState([]);
+  const [filterSpecialCategories, setFilterSpecialCategories] = useState([]);
+  const [productSpecialCategories, setProductSpecialCategories] = useState({}); // { productId: [catId, ...] }
+  const [editSpecialCategories, setEditSpecialCategories] = useState<string[]>([]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -66,6 +92,40 @@ const ManageProductTab = () => {
 
   useEffect(() => {
     fetchProducts();
+  }, []);
+
+  useEffect(() => {
+    const fetchOptions = async () => {
+      const typeRes = await supabase.from("categories").select("name").eq("category_type", "type").order("id");
+      const shapeRes = await supabase.from("categories").select("name").eq("category_type", "shape").order("id");
+      const styleRes = await supabase.from("categories").select("name").eq("category_type", "style").order("id");
+      const lensCatRes = await supabase.from("lens_categories").select("*").order("id");
+      setTypeOptions(typeRes.data ? typeRes.data.map(c => c.name) : []);
+      setShapeOptions(shapeRes.data ? shapeRes.data.map(c => c.name) : []);
+      setStyleOptions(styleRes.data ? styleRes.data.map(c => c.name) : []);
+      setLensCategories(lensCatRes.data || []);
+    };
+    fetchOptions();
+  }, []);
+
+  useEffect(() => {
+    const fetchSpecialCategories = async () => {
+      const { data } = await supabase.from("special_product_categories").select("*");
+      setSpecialCategories(data || []);
+    };
+    fetchSpecialCategories();
+    // Fetch product_special_categories for all products
+    const fetchProductSpecialCategories = async () => {
+      const { data } = await supabase.from("product_special_categories").select("*");
+      // Map: productId -> [catId, ...]
+      const map = {};
+      (data || []).forEach(row => {
+        if (!map[row.product_id]) map[row.product_id] = [];
+        map[row.product_id].push(row.special_category_id);
+      });
+      setProductSpecialCategories(map);
+    };
+    fetchProductSpecialCategories();
   }, []);
 
   const showMessage = (text: string, type: "success" | "error" | "info" = "info") => {
@@ -105,6 +165,16 @@ const ManageProductTab = () => {
     setEditFeatures((product.features || []).join('; '));
     setEditLatestTrend(!!product.latest_trend);
     setEditBestseller(!!product.bestseller);
+    setEditQuantity(product.quantity?.toString() || "");
+    setEditStyleCategory(product.style_category || "");
+    setEditLensCategoryId(product.lens_category_id ? product.lens_category_id.toString() : "");
+    setEditIsLensUsed(!!product.is_lens_used);
+    setEditLensWidth(product.lens_width?.toString() || "");
+    setEditBridgeWidth(product.bridge_width?.toString() || "");
+    setEditTempleLength(product.temple_length?.toString() || "");
+    // Set special categories for this product
+    const prodCatIds = productSpecialCategories[product.id] || [];
+    setEditSpecialCategories(prodCatIds.map(String));
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -201,10 +271,33 @@ const ManageProductTab = () => {
       gender_category: editGenderCategory,
       type_category: editTypeCategory,
       shape_category: editShapeCategory,
+      quantity: editQuantity ? parseInt(editQuantity, 10) : 0,
+      style_category: editStyleCategory,
+      lens_category_id: editLensCategoryId ? parseInt(editLensCategoryId, 10) : null,
+      is_lens_used: editIsLensUsed,
+      lens_width: editLensWidth ? parseFloat(editLensWidth) : null,
+      bridge_width: editBridgeWidth ? parseFloat(editBridgeWidth) : null,
+      temple_length: editTempleLength ? parseFloat(editTempleLength) : null,
     }).eq("id", editingProduct.id);
     if (error) {
       showMessage("Failed to update product", "error");
     } else {
+      // --- Update special categories ---
+      // 1. Get current special categories for this product
+      const { data: currentRows } = await supabase.from("product_special_categories").select("special_category_id").eq("product_id", editingProduct.id);
+      const currentCatIds = (currentRows || []).map(row => row.special_category_id.toString());
+      // 2. Find to add and to remove
+      const toAdd = editSpecialCategories.filter(id => !currentCatIds.includes(id));
+      const toRemove = currentCatIds.filter(id => !editSpecialCategories.includes(id));
+      // 3. Add new
+      for (const catId of toAdd) {
+        await supabase.from("product_special_categories").insert({ product_id: editingProduct.id, special_category_id: catId });
+      }
+      // 4. Remove unchecked
+      for (const catId of toRemove) {
+        await supabase.from("product_special_categories").delete().eq("product_id", editingProduct.id).eq("special_category_id", catId);
+      }
+      // --- End special categories update ---
       showMessage("Product updated successfully!", "success");
       setEditingProduct(null);
       fetchProducts();
@@ -254,7 +347,57 @@ const ManageProductTab = () => {
               </button>
             );
           })}
+          <button
+            className="ml-4 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-all"
+            onClick={() => setFilterOpen(v => !v)}
+            type="button"
+          >
+            Filter
+          </button>
         </div>
+        {filterOpen && (
+          <div className="mb-8 flex flex-wrap gap-4 justify-center items-center bg-white/80 p-4 rounded-2xl shadow border border-blue-100">
+            <div>
+              <label className="block text-xs font-semibold mb-1">Type</label>
+              <select value={filterType} onChange={e => setFilterType(e.target.value)} className="px-3 py-2 rounded border">
+                <option value="">All</option>
+                {typeOptions.map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold mb-1">Shape</label>
+              <select value={filterShape} onChange={e => setFilterShape(e.target.value)} className="px-3 py-2 rounded border">
+                <option value="">All</option>
+                {shapeOptions.map(shape => (
+                  <option key={shape} value={shape}>{shape}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold mb-1">Style</label>
+              <select value={filterStyle} onChange={e => setFilterStyle(e.target.value)} className="px-3 py-2 rounded border">
+                <option value="">All</option>
+                {styleOptions.map(style => (
+                  <option key={style} value={style}>{style}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold mb-1">Special Categories</label>
+              <select multiple value={filterSpecialCategories} onChange={e => {
+                const options = Array.from(e.target.selectedOptions, option => option.value);
+                setFilterSpecialCategories(options);
+              }} className="px-3 py-2 rounded border">
+                {specialCategories.map(cat => (
+                  <option key={cat.id} value={cat.id}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+            <button className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 font-semibold" onClick={() => { setFilterType(""); setFilterShape(""); setFilterStyle(""); setFilterSpecialCategories([]); }}>Clear</button>
+          </div>
+        )}
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
@@ -488,6 +631,86 @@ const ManageProductTab = () => {
                   </label>
                   <input type="number" value={editOrder} onChange={e => setEditOrder(e.target.value)} required min="0" step="1" className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="Display order..." />
                 </div>
+                {/* Quantity */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                    <Tag className="w-4 h-4" /> Quantity
+                  </label>
+                  <input type="number" value={editQuantity} onChange={e => setEditQuantity(e.target.value)} min="0" step="1" className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="Enter quantity..." />
+                </div>
+                {/* Style Category */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                    <Tag className="w-4 h-4" /> Style Category
+                  </label>
+                  <select value={editStyleCategory} onChange={e => setEditStyleCategory(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300">
+                    <option value="">Select Style</option>
+                    {styleOptions.map(style => (
+                      <option key={style} value={style}>{style}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* Lens Category */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                    <Tag className="w-4 h-4" /> Lens Category
+                  </label>
+                  <select value={editLensCategoryId} onChange={e => setEditLensCategoryId(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300">
+                    <option value="">Select Lens Category</option>
+                    {lensCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+                {/* Lens Used */}
+                <div className="flex items-center gap-2 mt-4">
+                  <input type="checkbox" id="isLensUsed" checked={editIsLensUsed} onChange={e => setEditIsLensUsed(e.target.checked)} className="accent-blue-600" />
+                  <label htmlFor="isLensUsed" className="text-sm font-semibold text-slate-700">Lens Used</label>
+                </div>
+                {/* Lens Width */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">Lens Width (mm)</label>
+                  <input type="number" value={editLensWidth} onChange={e => setEditLensWidth(e.target.value)} min="0" step="0.1" className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="Lens width in mm" />
+                </div>
+                {/* Bridge Width */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">Bridge Width (mm)</label>
+                  <input type="number" value={editBridgeWidth} onChange={e => setEditBridgeWidth(e.target.value)} min="0" step="0.1" className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="Bridge width in mm" />
+                </div>
+                {/* Temple Length */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">Temple Length (mm)</label>
+                  <input type="number" value={editTempleLength} onChange={e => setEditTempleLength(e.target.value)} min="0" step="0.1" className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="Temple length in mm" />
+                </div>
+                {/* Special Product Categories */}
+                <div className="mb-6">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Special Product Categories</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white/80 border border-gray-200 rounded-2xl p-4">
+                    {specialCategories.length === 0 ? (
+                      <div className="text-gray-400 text-sm col-span-full">No special categories found.</div>
+                    ) : (
+                      specialCategories.map(cat => (
+                        <label key={cat.id} className="flex items-center gap-2 text-sm bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl px-3 py-2 cursor-pointer transition-colors">
+                          <input
+                            type="checkbox"
+                            value={cat.id}
+                            checked={editSpecialCategories.includes(cat.id.toString())}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setEditSpecialCategories([...editSpecialCategories, cat.id.toString()]);
+                              } else {
+                                setEditSpecialCategories(editSpecialCategories.filter(id => id !== cat.id.toString()));
+                              }
+                            }}
+                            className="accent-blue-600 w-4 h-4 rounded"
+                          />
+                          <span className="font-medium text-blue-700">{cat.name}</span>
+                          {cat.description && <span className="text-xs text-gray-500 ml-2">{cat.description}</span>}
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4">
                   <button type="button" onClick={handleEditSubmit} disabled={loading} className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-3 rounded-xl font-semibold disabled:opacity-50 hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 flex items-center justify-center gap-2">
@@ -508,6 +731,10 @@ const ManageProductTab = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products
             .filter(product => product.gender_category && product.gender_category.includes(activeGender))
+            .filter(product => !filterType || product.type_category.includes(filterType))
+            .filter(product => !filterShape || product.shape_category === filterShape)
+            .filter(product => !filterStyle || product.style_category === filterStyle)
+            .filter(product => filterSpecialCategories.length === 0 || (productSpecialCategories[product.id] && productSpecialCategories[product.id].some(catId => filterSpecialCategories.includes(catId.toString()))))
             .map((product) => (
               <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 p-5 flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
                 {/* Product Images */}
@@ -545,6 +772,10 @@ const ManageProductTab = () => {
                       <span key={i} className="px-2 py-1 bg-slate-50 border rounded text-xs">{c.color}</span>
                     ))}
                   </div>
+                  {productSpecialCategories[product.id] && productSpecialCategories[product.id].map(catId => {
+                    const cat = specialCategories.find(c => c.id === catId);
+                    return cat ? <span key={catId} className="px-2 py-1 bg-yellow-100 rounded text-xs">{cat.name}</span> : null;
+                  })}
                 </div>
                 {/* Action Buttons */}
                 <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100">

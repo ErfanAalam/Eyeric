@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Upload, Eye, Camera, Package, DollarSign, Tag, FileText, Star } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
 import Image from "next/image";
@@ -21,6 +21,16 @@ const AddLensTab = () => {
   const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [lensCategories, setLensCategories] = useState([]);
+  const [lensCategoryId, setLensCategoryId] = useState("");
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data } = await supabase.from("lens_categories").select("*");
+      setLensCategories(data || []);
+    };
+    fetchCategories();
+  }, []);
 
   const handleImageChange = (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -72,7 +82,8 @@ const AddLensTab = () => {
       description,
       features: featuresArray,
       original_price: parseFloat(originalPrice),
-      category
+      category,
+      lens_category_id: lensCategoryId,
     });
     
     if (error) {
@@ -170,6 +181,25 @@ const AddLensTab = () => {
                   placeholder="Enter lens title"
                   required 
                 />
+              </div>
+
+              {/* Lens Category Dropdown */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                  <Tag className="w-4 h-4" />
+                  Lens Category
+                </label>
+                <select
+                  value={lensCategoryId}
+                  onChange={e => setLensCategoryId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 bg-gray-50 focus:bg-white"
+                  required
+                >
+                  <option value="">Select Lens Category</option>
+                  {lensCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Category */}

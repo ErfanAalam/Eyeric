@@ -15,6 +15,8 @@ import ManageProductTab from "./tabs/ManageProductTab";
 import ManageCategoryTab from "./tabs/ManageCategoryTab";
 import AddLensTab from "./tabs/AddLensTab";
 import ManageLensTab from "./tabs/ManageLensTab";
+import ManageLensCategoriesTab from "./tabs/ManageLensCategoriesTab";
+import ManageSpecialProductCategoriesTab from "./tabs/ManageSpecialProductCategoriesTab";
 
 // Add Admin type
 interface AdminType {
@@ -42,6 +44,7 @@ const Sidebar = ({
     { id: "categories", label: "Categories", icon: "🎨" },
     { id: "products", label: "Products", icon: "🛍️", dropdown: true },
     { id: "lenses", label: "Lenses", icon: "👓", dropdown: true },
+    { id: "special-categories", label: "Special Product Categories", icon: "⭐" },
     { id: "users", label: "Customers", icon: "👥" },
     { id: "slides", label: "Media", icon: "🖼️" },
     { id: "invite", label: "Team", icon: "👨‍💼" },
@@ -213,6 +216,17 @@ const Sidebar = ({
                     >
                       <span className="text-xs">🛠️</span>
                       <span>Manage Lenses</span>
+                    </button>
+                    <button
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left text-sm transition-all ${
+                        currentTab === "lenses-categories"
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
+                      onClick={() => handleLensesSubTab("lenses-categories")}
+                    >
+                      <span className="text-xs">📂</span>
+                      <span>Manage Lens Categories</span>
                     </button>
                   </div>
                 )}
@@ -572,6 +586,10 @@ const AdminDashboard = () => {
               {tab === "lenses-add" && <AddLensTab />}
 
               {tab === "lenses-manage" && <ManageLensTab />}
+
+              {tab === "lenses-categories" && <ManageLensCategoriesTab />}
+
+              {tab === "special-categories" && <ManageSpecialProductCategoriesTab />}
             </div>
           </div>
         </main>
