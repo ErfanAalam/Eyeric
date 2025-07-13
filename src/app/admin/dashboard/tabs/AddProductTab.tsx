@@ -39,12 +39,19 @@ const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
     );
   }
 
-  const productsToUpdate = Array.isArray(data) ? data.filter(isValidProduct) : [];
+  const productsToUpdate = Array.isArray(data)
+    ? (data as unknown[]).reduce<{ id: string; value: number }[]>((acc, item) => {
+        if (isValidProduct(item)) {
+          acc.push({ id: item.id, value: item[columnName] as number });
+        }
+        return acc;
+      }, [])
+    : [];
 
   for (const prod of productsToUpdate) {
     await supabase
       .from("products")
-      .update({ [columnName]: (prod[columnName] as number) + 1 })
+      .update({ [columnName]: prod.value + 1 })
       .eq("id", prod.id);
   }
 };
