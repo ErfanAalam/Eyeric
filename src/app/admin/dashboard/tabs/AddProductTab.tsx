@@ -20,7 +20,7 @@ import Image from "next/image";
 
 // Helper function to shift display orders for a specific category
 const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
-  const { data: productsToUpdate, error: fetchError } = await supabase
+  const { data, error: fetchError } = await supabase
     .from("products")
     .select(`id, ${columnName}`)
     .gte(columnName, newOrder)
@@ -30,11 +30,21 @@ const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
     throw new Error(`Failed to update ${columnName}`);
   }
 
-  // Increment display_order for each (from highest to lowest)
-  for (const prod of productsToUpdate as Array<{ id: string; [key: string]: number }>) {
+  function isValidProduct(obj: unknown): obj is { id: string; [key: string]: unknown } {
+    if (typeof obj !== 'object' || obj === null) return false;
+    const o = obj as Record<string, unknown>;
+    return (
+      typeof o.id === 'string' &&
+      typeof o[columnName] === 'number'
+    );
+  }
+
+  const productsToUpdate = Array.isArray(data) ? data.filter(isValidProduct) : [];
+
+  for (const prod of productsToUpdate) {
     await supabase
       .from("products")
-      .update({ [columnName]: prod[columnName] + 1 })
+      .update({ [columnName]: (prod[columnName] as number) + 1 })
       .eq("id", prod.id);
   }
 };
