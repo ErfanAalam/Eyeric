@@ -9,7 +9,7 @@ import Image from "next/image";
 import { useAuth } from "../contexts/AuthContext";
 import { useFavorites } from "../contexts/FavoritesContext";
 import {
-  heroSlides,
+  // heroSlides, // Removed unused import
   // brands,
   // productTypes,
   // features,
@@ -17,7 +17,7 @@ import {
   makeInIndia,
 } from "../data/homeData";
 import {
-  getHeroSlides,
+  // getHeroSlides, // Removed unused import
   getProducts,
   getSlides,
   getCategoryBanners,
@@ -47,6 +47,12 @@ interface Product {
   type_category: string[];
   created_at?: string;
   updated_at?: string;
+}
+
+// Define Slide type for hero slider
+interface Slide {
+  image_url?: string;
+  image?: string;
 }
 
 // Utility function to truncate description to 5 words
@@ -80,7 +86,7 @@ const WelcomeSection = () => {
 };
 
 // Hero Slider Component
-const HeroSlider = ({ slides }: { slides: any[] }) => {
+const HeroSlider = ({ slides }: { slides: Slide[] }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => {
@@ -132,7 +138,12 @@ const HeroSlider = ({ slides }: { slides: any[] }) => {
 };
 
 // Category Tabs Component
-const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; categoryBanners: any[] }) => {
+interface CategoryBanner {
+  gender?: string;
+  type_category?: string;
+  image_url: string;
+}
+const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; categoryBanners: CategoryBanner[] }) => {
   const [activeTab, setActiveTab] = useState("men");
   const router = useRouter();
 
@@ -159,7 +170,7 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
       .map((type) => {
         // Find a banner for this gender/type
         const banner = categoryBanners.find(
-          (b: any) => b.gender?.toLowerCase() === gender && b.type_category?.toLowerCase() === type.toLowerCase()
+          (b: CategoryBanner) => b.gender?.toLowerCase() === gender && b.type_category?.toLowerCase() === type.toLowerCase()
         );
         // Fallback to product image if no banner
         const match = products.find(
@@ -501,7 +512,11 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
 };
 
 // Shop by Shapes Section
-const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBanners: any[] }) => {
+interface ShapeBanner {
+  shape?: string;
+  image_url: string;
+}
+const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBanners: ShapeBanner[] }) => {
   // Get unique shapes from products
   const uniqueShapes: Product[] = [
     ...new Map(
@@ -513,7 +528,7 @@ const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBa
   const [selectedShape, setSelectedShape] = useState(0);
   const router = useRouter();
   const getShapeBanner = (shape: string) =>
-    shapeBanners.find((b: any) => b.shape?.toLowerCase() === shape?.toLowerCase());
+    shapeBanners.find((b: ShapeBanner) => b.shape?.toLowerCase() === shape?.toLowerCase());
 
   const handleShapeClick = (shape: string) => {
     const formattedShape = shape.toLowerCase().replace(/\s+/g, "-");
@@ -699,9 +714,9 @@ const HowToKnowFaceSize = () => {
 export default function Home() {
   const hasMounted = useHasMounted();
   const [products, setProducts] = React.useState<Product[]>([]);
-  const [slides, setSlides] = React.useState<any[]>([]);
-  const [categoryBanners, setCategoryBanners] = React.useState<any[]>([]);
-  const [shapeBanners, setShapeBanners] = React.useState<any[]>([]);
+  const [slides, setSlides] = React.useState<Slide[]>([]);
+  const [categoryBanners, setCategoryBanners] = React.useState<CategoryBanner[]>([]);
+  const [shapeBanners, setShapeBanners] = React.useState<ShapeBanner[]>([]);
 
   React.useEffect(() => {
     const fetchAll = async () => {

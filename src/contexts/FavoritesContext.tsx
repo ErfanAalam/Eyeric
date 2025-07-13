@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from './AuthContext';
 
@@ -53,21 +53,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [loading, setLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
 
-  // Load favorites from database when user logs in
-  useEffect(() => {
-    if (authLoading) return; // Wait for auth to finish loading
-    if (user) {
-      console.log('User logged in, loading favorites for user:', user.id);
-      loadFavoritesFromDatabase();
-    } else {
-      console.log('User logged out, clearing favorites');
-      // Clear favorites when user logs out
-      setFavorites([]);
-      setLoading(false);
-    }
-  }, [user, authLoading]);
-
-  const loadFavoritesFromDatabase = async () => {
+  const loadFavoritesFromDatabase = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -102,7 +88,20 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Load favorites from database when user logs in
+  useEffect(() => {
+    if (authLoading) return; // Wait for auth to finish loading
+    if (user) {
+      loadFavoritesFromDatabase();
+    } else {
+      console.log('User logged out, clearing favorites');
+      // Clear favorites when user logs out
+      setFavorites([]);
+      setLoading(false);
+    }
+  }, [user, authLoading, loadFavoritesFromDatabase]);
 
   const updateFavoritesInDatabase = async (favoritesList: Product[]) => {
     if (!user) return;

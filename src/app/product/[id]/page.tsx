@@ -263,7 +263,6 @@ const ProductDetailPage = () => {
       const timer = setTimeout(() => setShowSwipeHint(false), 2000);
       return () => clearTimeout(timer);
     }
-    // eslint-disable-next-line
   }, [showPreview]);
 
   if (loading) {
