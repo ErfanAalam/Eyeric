@@ -9,7 +9,6 @@ import {
   Shapes,
   TrendingUp,
   Award,
-  ArrowUpDown,
   Check,
   Loader2,
   Glasses,
@@ -18,6 +17,27 @@ import {
   Tag,
 } from "lucide-react";
 import Image from "next/image";
+
+// Helper function to shift display orders for a specific category
+const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
+  const { data: productsToUpdate, error: fetchError } = await supabase
+    .from("products")
+    .select(`id, ${columnName}`)
+    .gte(columnName, newOrder)
+    .order(columnName, { ascending: false });
+
+  if (fetchError) {
+    throw new Error(`Failed to update ${columnName}`);
+  }
+
+  // Increment display_order for each (from highest to lowest)
+  for (const prod of productsToUpdate as Array<{ id: string; [key: string]: number }>) {
+    await supabase
+      .from("products")
+      .update({ [columnName]: prod[columnName] + 1 })
+      .eq("id", prod.id);
+  }
+};
 
 export type Product = {
   id?: string;
@@ -47,10 +67,25 @@ const AddProductTab = () => {
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [order, setOrder] = useState("");
   const [shapeCategory, setShapeCategory] = useState("");
   const [latestTrend, setLatestTrend] = useState(false);
   const [bestseller, setBestseller] = useState(false);
+  
+  // Category-specific display orders
+  const [mensDisplayOrder, setMensDisplayOrder] = useState("");
+  const [womensDisplayOrder, setWomensDisplayOrder] = useState("");
+  const [kidsDisplayOrder, setKidsDisplayOrder] = useState("");
+  const [sunglassesDisplayOrder, setSunglassesDisplayOrder] = useState("");
+  const [eyeglassesDisplayOrder, setEyeglassesDisplayOrder] = useState("");
+  const [computerglassesDisplayOrder, setComputerglassesDisplayOrder] = useState("");
+  const [poweredSunglassesDisplayOrder, setPoweredSunglassesDisplayOrder] = useState("");
+  const [roundDisplayOrder, setRoundDisplayOrder] = useState("");
+  const [catEyeDisplayOrder, setCatEyeDisplayOrder] = useState("");
+  const [aviatorDisplayOrder, setAviatorDisplayOrder] = useState("");
+  const [wayfarerDisplayOrder, setWayfarerDisplayOrder] = useState("");
+  const [ovalDisplayOrder, setOvalDisplayOrder] = useState("");
+  const [rectangleDisplayOrder, setRectangleDisplayOrder] = useState("");
+  const [squareDisplayOrder, setSquareDisplayOrder] = useState("");
   const [bannerImage1, setBannerImage1] = useState(null);
   const [bannerImage2, setBannerImage2] = useState(null);
   const [colors, setColors] = useState([{ colors: ["#000000"], images: [] }]);
@@ -132,29 +167,83 @@ const AddProductTab = () => {
     setLoading(true);
     setMessage("");
 
-    // --- Display Order Shift Logic ---
-    const displayOrderInt = order ? parseInt(order, 10) : null;
-    if (displayOrderInt !== null) {
-      // Fetch all products with display_order >= new order, order by display_order DESC to avoid conflicts
-      const { data: productsToUpdate, error: fetchError } = await supabase
-        .from("products")
-        .select("id, display_order")
-        .gte("display_order", displayOrderInt)
-        .order("display_order", { ascending: false });
-
-      if (fetchError) {
-        setMessage("Failed to update display order");
-        setLoading(false);
-        return;
-      }
-
-      // Increment display_order for each (from highest to lowest)
-      for (const prod of productsToUpdate) {
-        await supabase
-          .from("products")
-          .update({ display_order: prod.display_order + 1 })
-          .eq("id", prod.id);
-      }
+      // --- Category-specific Display Order Shift Logic ---
+    const categoryDisplayOrders: Record<string, number> = {};
+    
+    // Gender categories
+    if (selectedGenders.includes("men") && mensDisplayOrder) {
+      const order = parseInt(mensDisplayOrder, 10);
+      categoryDisplayOrders.mens_display_order = order;
+      await shiftDisplayOrders("mens_display_order", order);
+    }
+    if (selectedGenders.includes("women") && womensDisplayOrder) {
+      const order = parseInt(womensDisplayOrder, 10);
+      categoryDisplayOrders.womens_display_order = order;
+      await shiftDisplayOrders("womens_display_order", order);
+    }
+    if (selectedGenders.includes("kids") && kidsDisplayOrder) {
+      const order = parseInt(kidsDisplayOrder, 10);
+      categoryDisplayOrders.kids_display_order = order;
+      await shiftDisplayOrders("kids_display_order", order);
+    }
+    
+    // Type categories
+    if (selectedTypes.includes("sunglasses") && sunglassesDisplayOrder) {
+      const order = parseInt(sunglassesDisplayOrder, 10);
+      categoryDisplayOrders.sunglasses_display_order = order;
+      await shiftDisplayOrders("sunglasses_display_order", order);
+    }
+    if (selectedTypes.includes("eyeglasses") && eyeglassesDisplayOrder) {
+      const order = parseInt(eyeglassesDisplayOrder, 10);
+      categoryDisplayOrders.eyeglasses_display_order = order;
+      await shiftDisplayOrders("eyeglasses_display_order", order);
+    }
+    if (selectedTypes.includes("computerglasses") && computerglassesDisplayOrder) {
+      const order = parseInt(computerglassesDisplayOrder, 10);
+      categoryDisplayOrders.computerglasses_display_order = order;
+      await shiftDisplayOrders("computerglasses_display_order", order);
+    }
+    if (selectedTypes.includes("powered sunglasses") && poweredSunglassesDisplayOrder) {
+      const order = parseInt(poweredSunglassesDisplayOrder, 10);
+      categoryDisplayOrders.powered_sunglasses_display_order = order;
+      await shiftDisplayOrders("powered_sunglasses_display_order", order);
+    }
+    
+    // Shape categories
+    if (shapeCategory === "round" && roundDisplayOrder) {
+      const order = parseInt(roundDisplayOrder, 10);
+      categoryDisplayOrders.round_display_order = order;
+      await shiftDisplayOrders("round_display_order", order);
+    }
+    if (shapeCategory === "cat-eye" && catEyeDisplayOrder) {
+      const order = parseInt(catEyeDisplayOrder, 10);
+      categoryDisplayOrders.cat_eye_display_order = order;
+      await shiftDisplayOrders("cat_eye_display_order", order);
+    }
+    if (shapeCategory === "aviator" && aviatorDisplayOrder) {
+      const order = parseInt(aviatorDisplayOrder, 10);
+      categoryDisplayOrders.aviator_display_order = order;
+      await shiftDisplayOrders("aviator_display_order", order);
+    }
+    if (shapeCategory === "wayfarer" && wayfarerDisplayOrder) {
+      const order = parseInt(wayfarerDisplayOrder, 10);
+      categoryDisplayOrders.wayfarer_display_order = order;
+      await shiftDisplayOrders("wayfarer_display_order", order);
+    }
+    if (shapeCategory === "oval" && ovalDisplayOrder) {
+      const order = parseInt(ovalDisplayOrder, 10);
+      categoryDisplayOrders.oval_display_order = order;
+      await shiftDisplayOrders("oval_display_order", order);
+    }
+    if (shapeCategory === "rectangle" && rectangleDisplayOrder) {
+      const order = parseInt(rectangleDisplayOrder, 10);
+      categoryDisplayOrders.rectangle_display_order = order;
+      await shiftDisplayOrders("rectangle_display_order", order);
+    }
+    if (shapeCategory === "square" && squareDisplayOrder) {
+      const order = parseInt(squareDisplayOrder, 10);
+      categoryDisplayOrders.square_display_order = order;
+      await shiftDisplayOrders("square_display_order", order);
     }
 
     // Upload banner images
@@ -225,13 +314,12 @@ const AddProductTab = () => {
     // Always include the tag
     const tags = ["manufactured by Eyeric"];
 
-    // Insert product
+    // Insert product with category-specific display orders
     const { data: inserted, error } = await supabase.from("products").insert({
       title,
       description,
       original_price: parseFloat(originalPrice),
       discounted_price: discountedPrice ? parseFloat(discountedPrice) : null,
-      display_order: order ? parseInt(order, 10) : null,
       bestseller,
       latest_trend: latestTrend,
       banner_image_1: bannerImage1Url,
@@ -251,6 +339,7 @@ const AddProductTab = () => {
       bridge_width: bridgeWidth ? parseFloat(bridgeWidth) : null,
       temple_length: templeLength ? parseFloat(templeLength) : null,
       lens_category_id: lensCategoryId,
+      ...categoryDisplayOrders, // Spread all category display orders
     }).select();
 
     if (error) {
@@ -282,7 +371,6 @@ const AddProductTab = () => {
     setFeatures("");
     setSelectedGenders([]);
     setSelectedTypes([]);
-    setOrder("");
     setLatestTrend(false);
     setBestseller(false);
     setIsLensUsed(false);
@@ -293,6 +381,23 @@ const AddProductTab = () => {
     setTempleLength("");
     setLensCategoryId("");
     setSelectedSpecialCategories([]);
+    
+    // Reset category-specific display orders
+    setMensDisplayOrder("");
+    setWomensDisplayOrder("");
+    setKidsDisplayOrder("");
+    setSunglassesDisplayOrder("");
+    setEyeglassesDisplayOrder("");
+    setComputerglassesDisplayOrder("");
+    setPoweredSunglassesDisplayOrder("");
+    setRoundDisplayOrder("");
+    setCatEyeDisplayOrder("");
+    setAviatorDisplayOrder("");
+    setWayfarerDisplayOrder("");
+    setOvalDisplayOrder("");
+    setRectangleDisplayOrder("");
+    setSquareDisplayOrder("");
+    
     setLoading(false);
   };
 
@@ -588,21 +693,238 @@ const AddProductTab = () => {
               </div>
             </div>
 
-            {/* Display Order */}
-            <div>
-              <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                <ArrowUpDown className="w-4 h-4" /> Display Order
-              </label>
-              <input
-                type="number"
-                value={order}
-                onChange={(e) => setOrder(e.target.value)}
-                required
-                min="0"
-                step="1"
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                placeholder="Display order..."
-              />
+            {/* Category-specific Display Orders */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Category Display Orders</h3>
+              
+              {/* Gender Display Orders */}
+              {selectedGenders.length > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+                  <h4 className="text-md font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                    <Users className="w-4 h-4" /> Gender Display Orders
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {selectedGenders.includes("men") && (
+                      <div>
+                        <label className="text-sm font-medium text-blue-700 mb-2 block">Men Display Order</label>
+                        <input
+                          type="number"
+                          value={mensDisplayOrder}
+                          onChange={(e) => setMensDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          placeholder="Enter position for men..."
+                        />
+                      </div>
+                    )}
+                    {selectedGenders.includes("women") && (
+                      <div>
+                        <label className="text-sm font-medium text-blue-700 mb-2 block">Women Display Order</label>
+                        <input
+                          type="number"
+                          value={womensDisplayOrder}
+                          onChange={(e) => setWomensDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          placeholder="Enter position for women..."
+                        />
+                      </div>
+                    )}
+                    {selectedGenders.includes("kids") && (
+                      <div>
+                        <label className="text-sm font-medium text-blue-700 mb-2 block">Kids Display Order</label>
+                        <input
+                          type="number"
+                          value={kidsDisplayOrder}
+                          onChange={(e) => setKidsDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                          placeholder="Enter position for kids..."
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Type Display Orders */}
+              {selectedTypes.length > 0 && (
+                <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-6">
+                  <h4 className="text-md font-semibold text-indigo-900 mb-4 flex items-center gap-2">
+                    <Eye className="w-4 h-4" /> Type Display Orders
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {selectedTypes.includes("sunglasses") && (
+                      <div>
+                        <label className="text-sm font-medium text-indigo-700 mb-2 block">Sunglasses Display Order</label>
+                        <input
+                          type="number"
+                          value={sunglassesDisplayOrder}
+                          onChange={(e) => setSunglassesDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                          placeholder="Enter position for sunglasses..."
+                        />
+                      </div>
+                    )}
+                    {selectedTypes.includes("eyeglasses") && (
+                      <div>
+                        <label className="text-sm font-medium text-indigo-700 mb-2 block">Eyeglasses Display Order</label>
+                        <input
+                          type="number"
+                          value={eyeglassesDisplayOrder}
+                          onChange={(e) => setEyeglassesDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                          placeholder="Enter position for eyeglasses..."
+                        />
+                      </div>
+                    )}
+                    {selectedTypes.includes("computerglasses") && (
+                      <div>
+                        <label className="text-sm font-medium text-indigo-700 mb-2 block">Computer Glasses Display Order</label>
+                        <input
+                          type="number"
+                          value={computerglassesDisplayOrder}
+                          onChange={(e) => setComputerglassesDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                          placeholder="Enter position for computer glasses..."
+                        />
+                      </div>
+                    )}
+                    {selectedTypes.includes("powered sunglasses") && (
+                      <div>
+                        <label className="text-sm font-medium text-indigo-700 mb-2 block">Powered Sunglasses Display Order</label>
+                        <input
+                          type="number"
+                          value={poweredSunglassesDisplayOrder}
+                          onChange={(e) => setPoweredSunglassesDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                          placeholder="Enter position for powered sunglasses..."
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Shape Display Orders */}
+              {shapeCategory && (
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-6">
+                  <h4 className="text-md font-semibold text-green-900 mb-4 flex items-center gap-2">
+                    <Shapes className="w-4 h-4" /> Shape Display Orders
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {shapeCategory === "round" && (
+                      <div>
+                        <label className="text-sm font-medium text-green-700 mb-2 block">Round Display Order</label>
+                        <input
+                          type="number"
+                          value={roundDisplayOrder}
+                          onChange={(e) => setRoundDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                          placeholder="Enter position for round shape..."
+                        />
+                      </div>
+                    )}
+                    {shapeCategory === "cat-eye" && (
+                      <div>
+                        <label className="text-sm font-medium text-green-700 mb-2 block">Cat-Eye Display Order</label>
+                        <input
+                          type="number"
+                          value={catEyeDisplayOrder}
+                          onChange={(e) => setCatEyeDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                          placeholder="Enter position for cat-eye shape..."
+                        />
+                      </div>
+                    )}
+                    {shapeCategory === "aviator" && (
+                      <div>
+                        <label className="text-sm font-medium text-green-700 mb-2 block">Aviator Display Order</label>
+                        <input
+                          type="number"
+                          value={aviatorDisplayOrder}
+                          onChange={(e) => setAviatorDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                          placeholder="Enter position for aviator shape..."
+                        />
+                      </div>
+                    )}
+                    {shapeCategory === "wayfarer" && (
+                      <div>
+                        <label className="text-sm font-medium text-green-700 mb-2 block">Wayfarer Display Order</label>
+                        <input
+                          type="number"
+                          value={wayfarerDisplayOrder}
+                          onChange={(e) => setWayfarerDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                          placeholder="Enter position for wayfarer shape..."
+                        />
+                      </div>
+                    )}
+                    {shapeCategory === "oval" && (
+                      <div>
+                        <label className="text-sm font-medium text-green-700 mb-2 block">Oval Display Order</label>
+                        <input
+                          type="number"
+                          value={ovalDisplayOrder}
+                          onChange={(e) => setOvalDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                          placeholder="Enter position for oval shape..."
+                        />
+                      </div>
+                    )}
+                    {shapeCategory === "rectangle" && (
+                      <div>
+                        <label className="text-sm font-medium text-green-700 mb-2 block">Rectangle Display Order</label>
+                        <input
+                          type="number"
+                          value={rectangleDisplayOrder}
+                          onChange={(e) => setRectangleDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                          placeholder="Enter position for rectangle shape..."
+                        />
+                      </div>
+                    )}
+                    {shapeCategory === "square" && (
+                      <div>
+                        <label className="text-sm font-medium text-green-700 mb-2 block">Square Display Order</label>
+                        <input
+                          type="number"
+                          value={squareDisplayOrder}
+                          onChange={(e) => setSquareDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-green-300 rounded-lg focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-200"
+                          placeholder="Enter position for square shape..."
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Lens Category Dropdown */}

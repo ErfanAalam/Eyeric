@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Edit3, Trash2, Package, Save, X, Upload, Tag, FileText, Plus, Check } from "lucide-react";
+import { Edit3, Trash2, Package, Save, X, Upload, Tag, FileText, Plus, Check, Shapes } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
 import Image from "next/image";
 
@@ -70,9 +70,10 @@ const ManageProductTab = () => {
   const [editLensWidth, setEditLensWidth] = useState("");
   const [editBridgeWidth, setEditBridgeWidth] = useState("");
   const [editTempleLength, setEditTempleLength] = useState("");
-  const [styleOptions, setStyleOptions] = useState([]);
-  const [shapeOptions, setShapeOptions] = useState([]);
-  const [typeOptions, setTypeOptions] = useState([]);
+  const [genderOptions, setGenderOptions] = useState<string[]>([]);
+  const [typeOptions, setTypeOptions] = useState<string[]>([]);
+  const [shapeOptions, setShapeOptions] = useState<string[]>([]);
+  const [styleOptions, setStyleOptions] = useState<string[]>([]);
   const [lensCategories, setLensCategories] = useState([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterType, setFilterType] = useState("");
@@ -96,14 +97,14 @@ const ManageProductTab = () => {
 
   useEffect(() => {
     const fetchOptions = async () => {
+      const genderRes = await supabase.from("categories").select("name").eq("category_type", "gender").order("id");
       const typeRes = await supabase.from("categories").select("name").eq("category_type", "type").order("id");
       const shapeRes = await supabase.from("categories").select("name").eq("category_type", "shape").order("id");
       const styleRes = await supabase.from("categories").select("name").eq("category_type", "style").order("id");
-      const lensCatRes = await supabase.from("lens_categories").select("*").order("id");
+      setGenderOptions(genderRes.data ? genderRes.data.map(c => c.name) : []);
       setTypeOptions(typeRes.data ? typeRes.data.map(c => c.name) : []);
       setShapeOptions(shapeRes.data ? shapeRes.data.map(c => c.name) : []);
       setStyleOptions(styleRes.data ? styleRes.data.map(c => c.name) : []);
-      setLensCategories(lensCatRes.data || []);
     };
     fetchOptions();
   }, []);
@@ -329,73 +330,79 @@ const ManageProductTab = () => {
                 key={tab.value}
                 onClick={() => setActiveGender(tab.value)}
                 className={`
-                  group relative px-2 md:px-6 py-4 rounded-2xl font-semibold transition-all duration-300 
+                  group relative px-4 py-2 rounded-full font-semibold transition-all duration-300 
                   transform hover:scale-105 hover:shadow-lg
                   ${isActive 
                     ? `bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-xl shadow-pink-200` 
-                    : 'bg-white/70 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200'
+                    : 'bg-white/90 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200'
                   }
                 `}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="flex items-center gap-3 text-sm md:text-base">
-                  <span className="capitalize">{tab.label}</span>
-                </div>
-                {isActive && (
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-white/20 to-transparent animate-pulse" />
-                )}
+                <span className="capitalize flex items-center gap-2">
+                  {tab.label}
+                </span>
               </button>
             );
           })}
           <button
-            className="ml-4 px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-all"
+            className="ml-4 px-4 py-2 rounded-full bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition-all flex items-center gap-2"
             onClick={() => setFilterOpen(v => !v)}
             type="button"
           >
+            <Tag className="w-4 h-4" />
             Filter
           </button>
         </div>
+        {/* 1. FILTER BAR UI */}
         {filterOpen && (
-          <div className="mb-8 flex flex-wrap gap-4 justify-center items-center bg-white/80 p-4 rounded-2xl shadow border border-blue-100">
-            <div>
-              <label className="block text-xs font-semibold mb-1">Type</label>
-              <select value={filterType} onChange={e => setFilterType(e.target.value)} className="px-3 py-2 rounded border">
+          <div className="mb-8 flex flex-nowrap gap-4 overflow-x-auto justify-center items-center bg-white/90 p-4 rounded-2xl shadow-lg border border-blue-100">
+            <div className="min-w-[160px]">
+              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Type</label>
+              <select value={filterType} onChange={e => setFilterType(e.target.value)} className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
                 <option value="">All</option>
                 {typeOptions.map(type => (
                   <option key={type} value={type}>{type}</option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1">Shape</label>
-              <select value={filterShape} onChange={e => setFilterShape(e.target.value)} className="px-3 py-2 rounded border">
+            <div className="min-w-[160px]">
+              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Shapes className="w-3 h-3" />Shape</label>
+              <select value={filterShape} onChange={e => setFilterShape(e.target.value)} className="px-4 py-2 rounded-full border border-green-200 bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-200">
                 <option value="">All</option>
                 {shapeOptions.map(shape => (
                   <option key={shape} value={shape}>{shape}</option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1">Style</label>
-              <select value={filterStyle} onChange={e => setFilterStyle(e.target.value)} className="px-3 py-2 rounded border">
+            <div className="min-w-[160px]">
+              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Style</label>
+              <select value={filterStyle} onChange={e => setFilterStyle(e.target.value)} className="px-4 py-2 rounded-full border border-purple-200 bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-200">
                 <option value="">All</option>
                 {styleOptions.map(style => (
                   <option key={style} value={style}>{style}</option>
                 ))}
               </select>
             </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1">Special Categories</label>
-              <select multiple value={filterSpecialCategories} onChange={e => {
+            <div className="min-w-[180px]">
+              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Special</label>
+              <select  value={filterSpecialCategories} onChange={e => {
                 const options = Array.from(e.target.selectedOptions, option => option.value);
-                setFilterSpecialCategories(options);
-              }} className="px-3 py-2 rounded border">
+                if(e.target.value == ""){
+                  setFilterSpecialCategories([])
+                }else{
+                  setFilterSpecialCategories(options);
+                }
+              }} className="px-4 py-2 rounded-full border border-yellow-200 bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-200 h-[38px]">
+                <option value="">All</option>
                 {specialCategories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
             </div>
-            <button className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 font-semibold" onClick={() => { setFilterType(""); setFilterShape(""); setFilterStyle(""); setFilterSpecialCategories([]); }}>Clear</button>
+            <button className="px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 font-semibold flex items-center gap-2 shadow" onClick={() => { setFilterType(""); setFilterShape(""); setFilterStyle(""); setFilterSpecialCategories([]); }}>
+              <X className="w-4 h-4" /> Clear All
+            </button>
           </div>
         )}
         {/* Header */}
@@ -562,7 +569,7 @@ const ManageProductTab = () => {
                       <Tag className="w-4 h-4" /> Gender
                     </label>
                     <div className="flex flex-col gap-2">
-                      {['men', 'women', 'kids', 'unisex'].map(gender => (
+                      {genderOptions.map(gender => (
                         <label key={gender} className="flex items-center gap-2 text-sm bg-slate-100 px-2 py-1 rounded-lg cursor-pointer hover:bg-blue-50">
                           <input type="checkbox" checked={editGenderCategory.includes(gender)} onChange={e => { if (e.target.checked) setEditGenderCategory([...editGenderCategory, gender]); else setEditGenderCategory(editGenderCategory.filter(g => g !== gender)); }} className="accent-blue-600" />
                           {gender.charAt(0).toUpperCase() + gender.slice(1)}
@@ -576,7 +583,7 @@ const ManageProductTab = () => {
                       <Tag className="w-4 h-4" /> Type
                     </label>
                     <div className="flex flex-col gap-2">
-                      {['sunglasses', 'eyeglasses', 'computerglasses', 'powered sunglasses'].map(type => (
+                      {typeOptions.map(type => (
                         <label key={type} className="flex items-center gap-2 text-sm bg-slate-100 px-2 py-1 rounded-lg cursor-pointer hover:bg-blue-50">
                           <input type="checkbox" checked={editTypeCategory.includes(type)} onChange={e => { if (e.target.checked) setEditTypeCategory([...editTypeCategory, type]); else setEditTypeCategory(editTypeCategory.filter(t => t !== type)); }} className="accent-indigo-600" />
                           {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -591,13 +598,9 @@ const ManageProductTab = () => {
                     </label>
                     <select value={editShapeCategory} onChange={e => setEditShapeCategory(e.target.value)} required className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300">
                       <option value="">Select Shape</option>
-                      <option value="round">Round</option>
-                      <option value="cat-eye">Cat-Eye</option>
-                      <option value="aviator">Aviator</option>
-                      <option value="wayfarer">Wayfarer</option>
-                      <option value="oval">Oval</option>
-                      <option value="rectangle">Rectangle</option>
-                      <option value="square">Square</option>
+                      {shapeOptions.map(shape => (
+                        <option key={shape} value={shape}>{shape.charAt(0).toUpperCase() + shape.slice(1)}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -727,7 +730,7 @@ const ManageProductTab = () => {
           </div>
         )}
 
-        {/* Products Grid */}
+        {/* 2. PRODUCT CARD MINIMALISM */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products
             .filter(product => product.gender_category && product.gender_category.includes(activeGender))
@@ -736,49 +739,29 @@ const ManageProductTab = () => {
             .filter(product => !filterStyle || product.style_category === filterStyle)
             .filter(product => filterSpecialCategories.length === 0 || (productSpecialCategories[product.id] && productSpecialCategories[product.id].some(catId => filterSpecialCategories.includes(catId.toString()))))
             .map((product) => (
-              <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 hover:border-slate-300 p-5 flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
-                {/* Product Images */}
-                <div className="relative mb-4 overflow-hidden rounded-xl flex gap-2">
+              <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 hover:border-blue-400 p-5 flex flex-col items-center justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 min-h-[340px] max-h-[340px] min-w-[240px] max-w-[260px] mx-auto">
+                {/* Product Image */}
+                <div className="relative mb-4 w-32 h-32 flex items-center justify-center overflow-hidden rounded-xl bg-slate-100">
                   {product.banner_image_1 ? (
-                    <Image height={96} width={96} src={product.banner_image_1} alt={product.title} className="w-24 h-24 object-cover rounded-xl shadow" />
-                  ) : null}
-                  {product.banner_image_2 ? (
-                    <Image height={96} width={96} src={product.banner_image_2} alt={product.title} className="w-24 h-24 object-cover rounded-xl shadow" />
-                  ) : null}
+                    <Image height={128} width={128} src={product.banner_image_1} alt={product.title} className="w-32 h-32 object-cover rounded-xl shadow" />
+                  ) : (
+                    <div className="w-32 h-32 flex items-center justify-center text-slate-300">No Image</div>
+                  )}
                 </div>
                 {/* Product Info */}
-                {/* "text-lg font-semibold text-blue-600 line-through" */}
-                <div className="flex-1 space-y-2">
-                  <h3 className="font-bold text-lg text-slate-800 line-clamp-2">{product.title}</h3>
-                  <p className="text-slate-600 text-sm line-clamp-3">{product.description}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg font-semibold text-blue-600 line-through">₹{product.original_price.toLocaleString()}</span>
-                    {product.discounted_price && <span className="text-xl font-bold text-emerald-600">₹{product.discounted_price.toLocaleString()}</span>}
+                <div className="flex-1 flex flex-col items-center justify-center w-full">
+                  <h3 className="font-bold text-base text-slate-800 text-center line-clamp-2 mb-1">{product.title}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-base font-semibold text-blue-600 line-through">₹{product.original_price.toLocaleString()}</span>
+                    {product.discounted_price && <span className="text-lg font-bold text-emerald-600">₹{product.discounted_price.toLocaleString()}</span>}
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    <span className="px-2 py-1 bg-slate-100 rounded text-xs">Order: {product.display_order ?? '-'}</span>
-                    <span className="px-2 py-1 bg-blue-100 rounded text-xs">{product.gender_category.join(", ")}</span>
-                    <span className="px-2 py-1 bg-green-100 rounded text-xs">{product.type_category.join(", ")}</span>
-                    <span className="px-2 py-1 bg-purple-100 rounded text-xs">{product.shape_category}</span>
-                    {product.latest_trend && <span className="px-2 py-1 bg-pink-100 rounded text-xs">Latest Trend</span>}
-                    {product.bestseller && <span className="px-2 py-1 bg-yellow-100 rounded text-xs">Bestseller</span>}
+                  <div className="flex gap-2 mt-1">
+                    {product.latest_trend && <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-semibold">Trend</span>}
+                    {product.bestseller && <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">Bestseller</span>}
                   </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {product.sizes && product.sizes.length > 0 && <span className="px-2 py-1 bg-slate-200 rounded text-xs">Sizes: {product.sizes.join(", ")}</span>}
-                    {product.features && product.features.length > 0 && <span className="px-2 py-1 bg-slate-200 rounded text-xs">Features: {product.features.join(", ")}</span>}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {product.colors && product.colors.map((c, i) => (
-                      <span key={i} className="px-2 py-1 bg-slate-50 border rounded text-xs">{c.color}</span>
-                    ))}
-                  </div>
-                  {productSpecialCategories[product.id] && productSpecialCategories[product.id].map(catId => {
-                    const cat = specialCategories.find(c => c.id === catId);
-                    return cat ? <span key={catId} className="px-2 py-1 bg-yellow-100 rounded text-xs">{cat.name}</span> : null;
-                  })}
                 </div>
                 {/* Action Buttons */}
-                <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100">
+                <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100 w-full">
                   <button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg" onClick={() => startEdit(product)} disabled={loading}>
                     <Edit3 className="w-4 h-4" />
                     Edit

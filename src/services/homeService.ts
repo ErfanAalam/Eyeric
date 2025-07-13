@@ -69,4 +69,38 @@ export const getProducts = async (): Promise<Product[]> => {
     return [];
   }
   return data as Product[];
+};
+
+export const getSlides = async () => {
+  const { data, error } = await supabase
+    .from('slide')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('Error fetching slides:', error);
+    return [];
+  }
+  return data;
+};
+
+export const getCategoryBanners = async () => {
+  const { data, error } = await supabase
+    .from('category_banners')
+    .select('*');
+  if (error) {
+    console.error('Error fetching category banners:', error);
+    return [];
+  }
+  return data;
+};
+
+export const getShapeBanners = async () => {
+  const { data, error } = await supabase
+    .from('shape_banners')
+    .select('*');
+  if (error) {
+    console.error('Error fetching shape banners:', error);
+    return [];
+  }
+  return data;
 }; 

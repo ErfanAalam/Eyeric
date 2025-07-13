@@ -8,7 +8,7 @@ import OverviewTab from "./tabs/OverviewTab";
 import OrdersTab from "./tabs/OrdersTab";
 import ProductsTab from "./tabs/ProductsTab";
 import UsersTab from "./tabs/UsersTab";
-import SlidesTab from "./tabs/SlidesTab";
+import MediaTab from "./tabs/MediaTab";
 import InviteTab from "./tabs/InviteTab";
 import AddProductTab from "./tabs/AddProductTab";
 import ManageProductTab from "./tabs/ManageProductTab";
@@ -46,7 +46,7 @@ const Sidebar = ({
     { id: "lenses", label: "Lenses", icon: "👓", dropdown: true },
     { id: "special-categories", label: "Special Product Categories", icon: "⭐" },
     { id: "users", label: "Customers", icon: "👥" },
-    { id: "slides", label: "Media", icon: "🖼️" },
+    { id: "media", label: "Media", icon: "🖼️" },
     { id: "invite", label: "Team", icon: "👨‍💼" },
   ];
 
@@ -275,44 +275,14 @@ const AdminDashboard = () => {
   const [tab, setTab] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Slide management state
-  const [slides, setSlides] = useState<
-    { id: string; image_url: string; created_at: string }[]
-  >([]);
-  const [slideLoading, setSlideLoading] = useState(false);
-  const [slideMsg, setSlideMsg] = useState("");
-
+  // Add Admin state
+  const [admins, setAdmins] = useState<AdminType[]>([]);
   const [users, setUsers] = useState<
     { id: string; email: string; created_at: string }[]
   >([]);
 
-  // Add Admin state
-  const [admins, setAdmins] = useState<AdminType[]>([]);
-
   React.useEffect(() => {
-    if (tab === "slides") fetchSlides();
     if (tab === "invite") fetchAdmins();
-  }, [tab]);
-
-  async function fetchSlides() {
-    setSlideLoading(true);
-    const { data, error } = await supabase
-      .from("slide")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setSlides(data);
-    setSlideLoading(false);
-  }
-
-  async function fetchUsers() {
-    const { data, error } = await supabase
-      .from("user")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (!error && data) setUsers(data);
-  }
-
-  React.useEffect(() => {
     if (tab === "users") fetchUsers();
   }, [tab]);
 
@@ -324,38 +294,12 @@ const AdminDashboard = () => {
     if (!error && data) setAdmins(data);
   }
 
-  async function handleSlideUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSlideLoading(true);
-    setSlideMsg("");
-    const filePath = `${Date.now()}_${file.name}`;
-    const { error: storageError } = await supabase.storage
-      .from("slides")
-      .upload(filePath, file);
-    if (storageError) {
-      setSlideMsg("Upload failed");
-      setSlideLoading(false);
-      return;
-    }
-    const { data: urlData } = supabase.storage
-      .from("slides")
-      .getPublicUrl(filePath);
-    await supabase.from("slide").insert({ image_url: urlData.publicUrl });
-    setSlideMsg("Slide uploaded!");
-    setSlideLoading(false);
-    fetchSlides();
-  }
-
-  async function handleSlideDelete(id: string, imageUrl: string) {
-    setSlideLoading(true);
-    setSlideMsg("");
-    const path = imageUrl.split("/slides/")[1];
-    await supabase.storage.from("slides").remove([path]);
-    await supabase.from("slide").delete().eq("id", id);
-    setSlideMsg("Slide deleted!");
-    setSlideLoading(false);
-    fetchSlides();
+  async function fetchUsers() {
+    const { data, error } = await supabase
+      .from("user")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) setUsers(data);
   }
 
   const handleInviteAdmin = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -549,14 +493,8 @@ const AdminDashboard = () => {
 
               {tab === "users" && <UsersTab users={users} />}
 
-              {tab === "slides" && (
-                <SlidesTab
-                  slides={slides}
-                  slideLoading={slideLoading}
-                  slideMsg={slideMsg}
-                  handleSlideUpload={handleSlideUpload}
-                  handleSlideDelete={handleSlideDelete}
-                />
+              {tab === "media" && (
+                <MediaTab />
               )}
 
               {tab === "invite" && (

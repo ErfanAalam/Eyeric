@@ -18,11 +18,10 @@ import {
 } from "../data/homeData";
 import {
   getHeroSlides,
-  // getBrands,
-  // getProductTypes,
-  // getFeatures,
-  // getProductCategories,
   getProducts,
+  getSlides,
+  getCategoryBanners,
+  getShapeBanners,
 } from "../services/homeService";
 import { useHasMounted } from "../hooks/useHasMounted";
 
@@ -81,27 +80,14 @@ const WelcomeSection = () => {
 };
 
 // Hero Slider Component
-const HeroSlider = () => {
+const HeroSlider = ({ slides }: { slides: any[] }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [slides, setSlides] = useState(heroSlides);
-
-  useEffect(() => {
-    const fetchSlides = async () => {
-      const data = await getHeroSlides();
-      if (data.length > 0) {
-        setSlides(data);
-      }
-    };
-    fetchSlides();
-  }, []);
-
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
   }, [slides.length]);
-
   return (
     <div className="relative md:h-[50vh] h-[30vh] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {slides.map((slide, index) => (
@@ -113,17 +99,21 @@ const HeroSlider = () => {
               : "opacity-0 scale-105"
           }`}
         >
-          <Image
-            src={slide.image}
-            alt="slide"
-            width={24000}
-            height={16000}
-            className="w-full h-full object-center"
-            quality={100}
-          />
+          <div className="w-full h-full aspect-video bg-gray-200">
+            <Image
+              src={slide.image_url || slide.image}
+              alt="slide"
+              fill
+              style={{ objectFit: 'cover', objectPosition: 'center' }}
+              className="w-full h-full object-cover object-center"
+              quality={90}
+              sizes="(max-width: 768px) 100vw, 100vw"
+              placeholder="blur"
+              blurDataURL="/placeholder.png"
+            />
+          </div>
         </div>
       ))}
-
       <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
         {slides.map((_, index) => (
           <button
@@ -142,7 +132,7 @@ const HeroSlider = () => {
 };
 
 // Category Tabs Component
-const CategoryTabs = ({ products }: { products: Product[] }) => {
+const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; categoryBanners: any[] }) => {
   const [activeTab, setActiveTab] = useState("men");
   const router = useRouter();
 
@@ -167,7 +157,11 @@ const CategoryTabs = ({ products }: { products: Product[] }) => {
           : true
       )
       .map((type) => {
-        // Find a product for this gender/type to get an image/description
+        // Find a banner for this gender/type
+        const banner = categoryBanners.find(
+          (b: any) => b.gender?.toLowerCase() === gender && b.type_category?.toLowerCase() === type.toLowerCase()
+        );
+        // Fallback to product image if no banner
         const match = products.find(
           (p) =>
             Array.isArray(p.gender_category) &&
@@ -175,7 +169,13 @@ const CategoryTabs = ({ products }: { products: Product[] }) => {
             Array.isArray(p.type_category) &&
             p.type_category.map((t) => t.toLowerCase()).includes(type.toLowerCase())
         );
-        return match
+        return banner
+          ? {
+              title: type,
+              image: banner.image_url,
+              description: match ? truncateDescription(match.description || "") : "",
+            }
+          : match
           ? {
               title: type,
               image: match.banner_image_1 || match.banner_image_2 || "",
@@ -229,16 +229,20 @@ const CategoryTabs = ({ products }: { products: Product[] }) => {
               onClick={() => handleCategoryClick(activeTab, item.title)}
               className="group relative overflow-hidden max-h-[320px] max-w-[300px] flex flex-col justify-between rounded-xl bg-white/30 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
             >
-              <div className="aspect-[4/3] overflow-hidden">
-                {item.image && (
+              <div className="aspect-[4/3] w-full bg-gray-100 overflow-hidden flex items-center justify-center">
+                {item.image ? (
                   <Image
-                    width={400}
-                    height={300}
-                    loading="lazy"
+                    fill
                     src={item.image}
                     alt={item.title}
-                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    className="object-cover object-center w-full h-full transition-transform duration-300 group-hover:scale-110"
+                    quality={90}
+                    sizes="(max-width: 768px) 100vw, 400px"
+                    placeholder="blur"
+                    blurDataURL="/placeholder.png"
                   />
+                ) : (
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">No Image</div>
                 )}
               </div>
               <div className="p-4">
@@ -497,7 +501,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
 };
 
 // Shop by Shapes Section
-const ShopByShapes = ({ products }: { products: Product[] }) => {
+const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBanners: any[] }) => {
   // Get unique shapes from products
   const uniqueShapes: Product[] = [
     ...new Map(
@@ -508,6 +512,8 @@ const ShopByShapes = ({ products }: { products: Product[] }) => {
   ];
   const [selectedShape, setSelectedShape] = useState(0);
   const router = useRouter();
+  const getShapeBanner = (shape: string) =>
+    shapeBanners.find((b: any) => b.shape?.toLowerCase() === shape?.toLowerCase());
 
   const handleShapeClick = (shape: string) => {
     const formattedShape = shape.toLowerCase().replace(/\s+/g, "-");
@@ -528,14 +534,23 @@ const ShopByShapes = ({ products }: { products: Product[] }) => {
                 className="relative overflow-hidden rounded-3xl shadow-2xl bg-white/30 backdrop-blur-sm border border-white/50 cursor-pointer hover:shadow-3xl transition-all duration-500"
                 onClick={() => handleShapeClick(String(uniqueShapes[selectedShape].shape_category))}
               >
-                <Image
-                  width={600}
-                  height={400}
-                  loading="lazy"
-                  src={uniqueShapes[selectedShape].banner_image_1 || uniqueShapes[selectedShape].banner_image_2 || ''}
-                  alt={String(uniqueShapes[selectedShape].shape_category)}
-                  className="w-full h-64 md:h-96 object-cover transition-all duration-500"
-                />
+                <div className="aspect-[4/3] w-full bg-gray-100">
+                  <Image
+                    fill
+                    src={
+                      getShapeBanner(String(uniqueShapes[selectedShape].shape_category))?.image_url ||
+                      uniqueShapes[selectedShape].banner_image_1 ||
+                      uniqueShapes[selectedShape].banner_image_2 ||
+                      ''
+                    }
+                    alt={String(uniqueShapes[selectedShape].shape_category)}
+                    className="object-cover object-center w-full h-full transition-all duration-500"
+                    quality={90}
+                    sizes="(max-width: 768px) 100vw, 600px"
+                    placeholder="blur"
+                    blurDataURL="/placeholder.png"
+                  />
+                </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 text-white">
                   <h3 className="text-xl md:text-2xl font-bold mb-2">
                     {(uniqueShapes[selectedShape].shape_category).charAt(0).toUpperCase() + (uniqueShapes[selectedShape].shape_category).slice(1)}
@@ -684,13 +699,24 @@ const HowToKnowFaceSize = () => {
 export default function Home() {
   const hasMounted = useHasMounted();
   const [products, setProducts] = React.useState<Product[]>([]);
+  const [slides, setSlides] = React.useState<any[]>([]);
+  const [categoryBanners, setCategoryBanners] = React.useState<any[]>([]);
+  const [shapeBanners, setShapeBanners] = React.useState<any[]>([]);
 
   React.useEffect(() => {
-    const fetchProducts = async () => {
-      const data = await getProducts();
-      setProducts(data);
+    const fetchAll = async () => {
+      const [productsData, slidesData, categoryBannersData, shapeBannersData] = await Promise.all([
+        getProducts(),
+        getSlides(),
+        getCategoryBanners(),
+        getShapeBanners(),
+      ]);
+      setProducts(productsData);
+      setSlides(slidesData);
+      setCategoryBanners(categoryBannersData);
+      setShapeBanners(shapeBannersData);
     };
-    fetchProducts();
+    fetchAll();
   }, []);
 
   if (!hasMounted) return null;
@@ -699,12 +725,12 @@ export default function Home() {
     <div className="min-h-screen">
       <Navbar />
       <WelcomeSection />
-      <HeroSlider />
-      <CategoryTabs products={products} />
+      <HeroSlider slides={slides} />
+      <CategoryTabs products={products} categoryBanners={categoryBanners} />
       <VisionCareSection />
       <BestSellers products={products} />
       <LatestTrends products={products} />
-      <ShopByShapes products={products} />
+      <ShopByShapes products={products} shapeBanners={shapeBanners} />
       <HowToKnowFaceSize />
       <MakeInIndia />
       <Footer />

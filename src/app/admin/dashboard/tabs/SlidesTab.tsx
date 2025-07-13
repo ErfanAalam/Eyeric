@@ -1,17 +1,132 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { supabase } from "../../../../../lib/supabaseClient";
+import imageCompression from "browser-image-compression";
 
 type Slide = { id: string; image_url: string; created_at: string };
 
 type SlidesTabProps = {
-  slides: Slide[];
-  slideLoading: boolean;
-  slideMsg: string;
-  handleSlideUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSlideDelete: (id: string, imageUrl: string) => void;
+  slides?: Slide[];
+  slideLoading?: boolean;
+  slideMsg?: string;
+  handleSlideUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSlideDelete?: (id: string, imageUrl: string) => void;
 };
 
-const SlidesTab = ({ slides, slideLoading, slideMsg, handleSlideUpload, handleSlideDelete }: SlidesTabProps) => (
+const SlidesTab = (props: SlidesTabProps) => {
+  // If props are not provided, manage state internally
+  const [slides, setSlides] = useState<Slide[]>(props.slides || []);
+  const [slideLoading, setSlideLoading] = useState<boolean>(props.slideLoading || false);
+  const [slideMsg, setSlideMsg] = useState<string>(props.slideMsg || "");
+
+  useEffect(() => {
+    if (!props.slides) fetchSlides();
+    // eslint-disable-next-line
+  }, []);
+
+  async function fetchSlides() {
+    setSlideLoading(true);
+    const { data, error } = await supabase
+      .from("slide")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) setSlides(data);
+    setSlideLoading(false);
+  }
+
+  async function handleSlideUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (props.handleSlideUpload) return props.handleSlideUpload(e);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSlideLoading(true);
+    setSlideMsg("");
+
+    // Aspect ratio validation (16:9)
+    const isValidAspectRatio = await new Promise<boolean>((resolve) => {
+      const img = new window.Image();
+      img.onload = function () {
+        const aspect = img.width / img.height;
+        // Allow a small tolerance for floating point errors
+        resolve(Math.abs(aspect - 16 / 9) < 0.02);
+      };
+      img.onerror = function () {
+        resolve(false);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+    if (!isValidAspectRatio) {
+      setSlideMsg("Image must have a 16:9 aspect ratio (e.g., 1600x900, 1920x1080). Upload canceled.");
+      setSlideLoading(false);
+      return;
+    }
+
+    // Resize and compress the image before upload
+    const options = {
+      maxWidthOrHeight: 1600, // 16:9 aspect ratio, so width 1600, height 900
+      maxWidth: 1600,
+      maxHeight: 900,
+      useWebWorker: true,
+      initialQuality: 0.7,
+      fileType: "image/jpeg",
+    };
+    let compressedFile: File;
+    try {
+      compressedFile = await imageCompression(file, options);
+    } catch {
+      setSlideMsg("Image compression failed");
+      setSlideLoading(false);
+      return;
+    }
+
+    const filePath = `${Date.now()}_${file.name}`;
+    const { error: storageError } = await supabase.storage
+      .from("slides")
+      .upload(filePath, compressedFile);
+    if (storageError) {
+      setSlideMsg("Upload failed");
+      setSlideLoading(false);
+      return;
+    }
+    const { data: urlData } = supabase.storage
+      .from("slides")
+      .getPublicUrl(filePath);
+    await supabase.from("slide").insert({ image_url: urlData.publicUrl });
+    setSlideMsg("Slide uploaded!");
+    setSlideLoading(false);
+    fetchSlides();
+  }
+
+  async function handleSlideDelete(id: string, imageUrl: string) {
+    if (props.handleSlideDelete) return props.handleSlideDelete(id, imageUrl);
+    setSlideLoading(true);
+    setSlideMsg("");
+    try {
+      // Parse the path after the bucket name
+      const url = new URL(imageUrl);
+      // The path is everything after '/storage/v1/object/public/slides/'
+      const pathPrefix = "/storage/v1/object/public/slides/";
+      const idx = url.pathname.indexOf(pathPrefix);
+      if (idx === -1) throw new Error("Invalid image URL format");
+      const path = url.pathname.substring(idx + pathPrefix.length);
+      console.log("Deleting from bucket, path:", path); // Debug log
+      const { error: removeError } = await supabase.storage.from("slides").remove([path]);
+      if (removeError) {
+        console.error("Supabase remove error:", removeError); // Debug log
+        setSlideMsg("Failed to delete image from storage");
+        setSlideLoading(false);
+        return;
+      }
+      await supabase.from("slide").delete().eq("id", id);
+      setSlideMsg("Slide deleted!");
+    } catch (err) {
+      console.error("Delete slide/image error:", err); // Debug log
+      setSlideMsg("Failed to delete slide or image");
+    }
+    setSlideLoading(false);
+    fetchSlides();
+  }
+
+  return (
   <div className="p-6 lg:p-8">
     <div className="mb-8">
       <h3 className="text-xl font-semibold text-slate-800 mb-4 flex items-center gap-2">
@@ -90,5 +205,6 @@ const SlidesTab = ({ slides, slideLoading, slideMsg, handleSlideUpload, handleSl
     )}
   </div>
 );
+};
 
 export default SlidesTab; 
