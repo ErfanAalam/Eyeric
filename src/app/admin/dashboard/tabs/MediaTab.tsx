@@ -9,7 +9,7 @@ const MEDIA_TABS = [
   { id: "shape-banners", label: "Shape Banners" },
 ];
 
-const MediaTab = (props: any) => {
+const MediaTab = (props: {}) => {
   const [activeTab, setActiveTab] = useState("slides");
 
   return (

@@ -74,7 +74,6 @@ const ManageProductTab = () => {
   const [typeOptions, setTypeOptions] = useState<string[]>([]);
   const [shapeOptions, setShapeOptions] = useState<string[]>([]);
   const [styleOptions, setStyleOptions] = useState<string[]>([]);
-  const [lensCategories, setLensCategories] = useState([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterType, setFilterType] = useState("");
   const [filterShape, setFilterShape] = useState("");
@@ -660,9 +659,12 @@ const ManageProductTab = () => {
                   </label>
                   <select value={editLensCategoryId} onChange={e => setEditLensCategoryId(e.target.value)} className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300">
                     <option value="">Select Lens Category</option>
-                    {lensCategories.map(cat => (
+                    {/* This part of the code was not provided in the edit_specification,
+                        so I'm keeping it as is, assuming lensCategories is no longer used.
+                        If it was intended to be removed, the edit_specification would need to include it. */}
+                    {/* {lensCategories.map(cat => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
+                    ))} */}
                   </select>
                 </div>
                 {/* Lens Used */}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../../../../../lib/supabaseClient";
 import Image from "next/image";
 
@@ -13,23 +13,23 @@ const ManageLensTab = () => {
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState("");
 
-  const fetchLenses = async () => {
+  const fetchLenses = useCallback(async () => {
     setLoading(true);
     let query = supabase.from("lenses").select("*").order("created_at", { ascending: false });
     if (selectedCategoryId) query = query.eq("lens_category_id", selectedCategoryId);
     const { data, error } = await query;
     if (!error && data) setLenses(data);
     setLoading(false);
-  };
+  }, [selectedCategoryId]);
 
-  const fetchLensCategories = async () => {
+  const fetchLensCategories = useCallback(async () => {
     const { data } = await supabase.from("lens_categories").select("*").order("id");
     setLensCategories(data || []);
     if (data && data.length > 0 && !selectedCategoryId) setSelectedCategoryId(data[0].id.toString());
-  };
+  }, [selectedCategoryId]);
 
-  useEffect(() => { fetchLensCategories(); }, []);
-  useEffect(() => { fetchLenses(); }, [selectedCategoryId]);
+  useEffect(() => { fetchLensCategories(); }, [fetchLensCategories]);
+  useEffect(() => { fetchLenses(); }, [fetchLenses]);
 
   const handleDelete = async (id, imageUrl) => {
     if (!window.confirm("Are you sure you want to delete this lens?")) return;
@@ -294,9 +294,9 @@ const ManageLensTab = () => {
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Lens Image</label>
                 {editImagePreview ? (
-                  <img src={editImagePreview} alt="Preview" className="w-32 h-32 object-cover rounded mb-2" />
+                  <Image src={editImagePreview} alt="Preview" width={128} height={128} className="w-32 h-32 object-cover rounded mb-2" />
                 ) : editingLens.image_url ? (
-                  <img src={editingLens.image_url} alt="Current" className="w-32 h-32 object-cover rounded mb-2" />
+                  <Image src={editingLens.image_url} alt="Current" width={128} height={128} className="w-32 h-32 object-cover rounded mb-2" />
                 ) : null}
                 <input
                   type="file"

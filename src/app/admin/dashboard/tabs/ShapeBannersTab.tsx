@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../../../lib/supabaseClient";
+import Image from "next/image";
 
 interface Banner {
   id: string;
@@ -8,27 +9,28 @@ interface Banner {
   created_at: string;
 }
 
+interface Category {
+  name: string;
+}
+
 const ShapeBannersTab = () => {
   const [shapes, setShapes] = useState<string[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
-  const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const [uploading, setUploading] = useState<{[key:string]:boolean}>({});
 
   useEffect(() => {
     const fetchShapes = async () => {
       const shapeRes = await supabase.from("categories").select("name").eq("category_type", "shape").order("id");
-      setShapes(shapeRes.data ? shapeRes.data.map((c: any) => c.name) : []);
+      setShapes(shapeRes.data ? shapeRes.data.map((c: Category) => c.name) : []);
     };
     fetchShapes();
     fetchBanners();
   }, []);
 
   async function fetchBanners() {
-    setLoading(true);
-    const { data, error } = await supabase.from("shape-banners").select("*");
+    const { data } = await supabase.from("shape-banners").select("*");
     setBanners(data || []);
-    setLoading(false);
   }
 
   function getBanner(shape: string) {
@@ -94,7 +96,7 @@ const ShapeBannersTab = () => {
         return (
           <div key={shape} className="p-6 bg-white rounded-xl shadow border border-gray-100 flex flex-col items-center">
             <div className="font-semibold text-lg capitalize mb-2">{shape}</div>
-            {banner && <img src={banner.image_url} alt="banner" className="h-24 mb-2 rounded shadow" />}
+            {banner && <Image src={banner.image_url} alt="banner" width={96} height={96} className="h-24 mb-2 rounded shadow" />}
             <div className="flex gap-2">
               {!banner && (
                 <label className="px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer">

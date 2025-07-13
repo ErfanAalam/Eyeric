@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../../../../lib/supabaseClient";
+import Image from "next/image";
 
 interface Banner {
   id: string;
@@ -119,7 +120,7 @@ const CategoryBannersTab = () => {
             <div key={type} className="mb-6 p-4 bg-white rounded-xl shadow border border-gray-100 flex items-center justify-between">
               <div>
                 <div className="font-semibold text-lg capitalize">{activeGender} - {type}</div>
-                {banner && <img src={banner.image_url} alt="banner" className="h-24 mt-2 rounded shadow" />}
+                {banner && <Image height={500} width={500} src={banner.image_url} alt="banner" className="h-24 mt-2 rounded shadow" />}
               </div>
               <div className="flex items-center gap-2">
                 {!banner && (
