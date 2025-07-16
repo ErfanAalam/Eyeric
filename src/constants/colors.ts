@@ -7,6 +7,9 @@ const colors = {
   background: '#f9fafb',    // Gray-50
   text: '#111827',          // Gray-900
   muted: '#6b7280',         // Gray-500
+  // secondary: '#34699A',     // Purple-600
+  // accent: '#58A0C8', 
+  // primary: '#113F67', 
 
   success: '#10b981',       // Green-500
   error: '#ef4444',         // Red-500

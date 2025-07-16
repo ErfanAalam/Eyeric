@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import Image from "next/image";
-import { useAuth } from "../contexts/AuthContext";
+// import { useAuth } from "../contexts/AuthContext";
 import { useFavorites } from "../contexts/FavoritesContext";
 import {
   // heroSlides, // Removed unused import
@@ -64,26 +64,26 @@ function truncateDescription(desc: string): string {
 }
 
 // Welcome Section Component
-const WelcomeSection = () => {
-  const { user, userProfile } = useAuth();
+// const WelcomeSection = () => {
+//   const { user, userProfile } = useAuth();
 
-  if (!user) return null;
+//   if (!user) return null;
 
-  return (
-    <div className="bg-gradient-to-r from-blue-50 to-purple-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center">
-          <h1 className="text-2xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Welcome back, {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}! 👋
-          </h1>
-          <p className="text-gray-600 text-sm md:text-base">
-            Discover the latest trends in eyewear and find your perfect style
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
+//   return (
+//     <div className="bg-gradient-to-r from-blue-50 to-purple-50 py-8 px-4">
+//       <div className="max-w-7xl mx-auto">
+//         <div className="text-center">
+//           <h1 className="text-2xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+//             Welcome back, {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}! 👋
+//           </h1>
+//           <p className="text-gray-600 text-sm md:text-base">
+//             Discover the latest trends in eyewear and find your perfect style
+//           </p>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 // Hero Slider Component
 const HeroSlider = ({ slides }: { slides: Slide[] }) => {
@@ -95,7 +95,7 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
     return () => clearInterval(timer);
   }, [slides.length]);
   return (
-    <div className="relative md:h-[50vh] h-[30vh] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="relative md:h-[65vh] h-[30vh] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {slides.map((slide, index) => (
         <div
           key={index}
@@ -739,7 +739,7 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <WelcomeSection />
+      {/* <WelcomeSection /> */}
       <HeroSlider slides={slides} />
       <CategoryTabs products={products} categoryBanners={categoryBanners} />
       <VisionCareSection />

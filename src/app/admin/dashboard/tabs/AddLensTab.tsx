@@ -7,6 +7,7 @@ import Image from "next/image";
 const CATEGORIES = [
   "single vision",
   "progressive", 
+  'progressive + Biofocal',
   "zero power",
   "frame only"
 ];

@@ -78,6 +78,7 @@ const ManageProductTab = () => {
   const [filterType, setFilterType] = useState("");
   const [filterShape, setFilterShape] = useState("");
   const [filterStyle, setFilterStyle] = useState("");
+  const [filterQuantity, setFilterQuantity] = useState("");
   const [specialCategories, setSpecialCategories] = useState([]);
   const [filterSpecialCategories, setFilterSpecialCategories] = useState([]);
   const [productSpecialCategories, setProductSpecialCategories] = useState({}); // { productId: [catId, ...] }
@@ -399,7 +400,18 @@ const ManageProductTab = () => {
                 ))}
               </select>
             </div>
-            <button className="px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 font-semibold flex items-center gap-2 shadow" onClick={() => { setFilterType(""); setFilterShape(""); setFilterStyle(""); setFilterSpecialCategories([]); }}>
+            <div className="min-w-[160px]">
+              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Quantity</label>
+              <input
+                type="number"
+                value={filterQuantity}
+                onChange={e => setFilterQuantity(e.target.value)}
+                className="px-4 py-2 rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                placeholder="Quantity..."
+                min="0"
+              />
+            </div>
+            <button className="px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 font-semibold flex items-center gap-2 shadow" onClick={() => { setFilterType(""); setFilterShape(""); setFilterStyle(""); setFilterSpecialCategories([]); setFilterQuantity(""); }}>
               <X className="w-4 h-4" /> Clear All
             </button>
           </div>
@@ -740,6 +752,7 @@ const ManageProductTab = () => {
             .filter(product => !filterShape || product.shape_category === filterShape)
             .filter(product => !filterStyle || product.style_category === filterStyle)
             .filter(product => filterSpecialCategories.length === 0 || (productSpecialCategories[product.id] && productSpecialCategories[product.id].some(catId => filterSpecialCategories.includes(catId.toString()))))
+            .filter(product => !filterQuantity || (product.quantity !== undefined && product.quantity !== null && product.quantity.toString() === filterQuantity))
             .map((product) => (
               <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 hover:border-blue-400 p-5 flex flex-col items-center justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 min-h-[340px] max-h-[340px] min-w-[240px] max-w-[260px] mx-auto">
                 {/* Product Image */}
@@ -761,6 +774,8 @@ const ManageProductTab = () => {
                     {product.latest_trend && <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-semibold">Trend</span>}
                     {product.bestseller && <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">Bestseller</span>}
                   </div>
+                  {/* Quantity Display */}
+                  <div className="mt-2 text-xs text-slate-600 font-medium">Quantity: {product.quantity ?? 0}</div>
                 </div>
                 {/* Action Buttons */}
                 <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100 w-full">
