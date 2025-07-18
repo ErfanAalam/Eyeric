@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import AddCouponTab from "./AddCouponTab";
 import ManageCouponTab from "./ManageCouponTab";
