@@ -165,7 +165,7 @@ const ShapeProductsContent = () => {
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading products...</p>
           </div>
         </div>
@@ -241,8 +241,8 @@ const ShapeProductsContent = () => {
             {filteredProducts.length === 0 ? (
               <div className="text-center py-16">
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-white/20 max-w-md mx-auto">
-                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-full flex items-center justify-center">
-                    <SlidersHorizontal className="w-10 h-10 text-indigo-500" />
+                  <div className="w-20 h-20 mx-auto mb-6 bg-primary rounded-full flex items-center justify-center">
+                    <SlidersHorizontal className="w-10 h-10 text-text" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-3">
                     No products found
@@ -273,7 +273,7 @@ const ShapeProductsContent = () => {
                     </button>
                     {/* Sale Badge */}
                     {product.discounted_price && (
-                      <span className="absolute top-3 left-3 z-10 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Sale</span>
+                      <span className="absolute top-3 left-3 z-10 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full">Sale</span>
                     )}
                     {/* Product Image */}
                     <div className="aspect-[4/3] w-full overflow-hidden">
@@ -292,12 +292,12 @@ const ShapeProductsContent = () => {
                         {product.discounted_price && (
                           <span className="text-gray-400 line-through text-sm">₹{product.original_price}</span>
                         )}
-                        <span className="text-blue-600 font-bold text-lg">₹{product.discounted_price || product.original_price}</span>
+                        <span className="text-text font-bold text-lg">₹{product.discounted_price || product.original_price}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
                         <span className="cursor-pointer hover:underline">Compare</span>
                       </div>
-                      <button className="mt-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full py-2 px-4 font-semibold shadow transition-all text-sm">
+                      <button className="mt-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/80 text-white rounded-full py-2 px-4 font-semibold shadow transition-all text-sm">
                         <ShoppingBag className="w-4 h-4" /> Add to Cart
                       </button>
                     </div>

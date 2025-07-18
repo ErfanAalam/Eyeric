@@ -80,6 +80,7 @@ const ProductDetailPage = () => {
   const [previewIndex, setPreviewIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const imageContainerRef = React.useRef<HTMLDivElement>(null);
 
 //   if (!hasMounted) return null;
 
@@ -322,11 +323,12 @@ const ProductDetailPage = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative">
           {/* Product Images */}
-          <div className="space-y-4">
+          <div className="space-y-4 relative">
             {/* Main Image with Magnifier */}
             <div
+              ref={imageContainerRef}
               className="aspect-square bg-gray-100 rounded-2xl overflow-hidden relative"
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
@@ -348,28 +350,7 @@ const ProductDetailPage = () => {
                   <Eye className="w-16 h-16" />
                 </div>
               )}
-              {/* Magnifier */}
-              {showMagnifier && productImages.length > 0 && (
-                <div
-                  style={{
-                    position: "absolute",
-                    pointerEvents: "none",
-                    width: 200,
-                    height: 200,
-                    top: magnifierPosition.y - 100,
-                    left: magnifierPosition.x - 100,
-                    borderRadius: "50%",
-                    border: "2px solid #ccc",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                    background: `url(${productImages[selectedImage]}) no-repeat`,
-                    backgroundSize: "1200px 1200px", // 2x zoom for 600x600 image
-                    backgroundPosition: `-${magnifierPosition.x * 2 - 100}px -${magnifierPosition.y * 2 - 100}px`,
-                    zIndex: 10,
-                  }}
-                />
-              )}
             </div>
-
             {/* Thumbnail Images */}
             {productImages.length > 1 && (
               <div className="flex space-x-2 overflow-x-auto">
@@ -391,6 +372,26 @@ const ProductDetailPage = () => {
                   </button>
                 ))}
               </div>
+            )}
+            {/* Magnifier Square (desktop only) */}
+            {showMagnifier && productImages.length > 0 && (
+              <div
+                className="hidden md:block"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: "calc(100% + 32px)", // 32px gap to the right
+                  width: 550,
+                  height: 550,
+                  border: "2px solid #ccc",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                  background: `url(${productImages[selectedImage]}) no-repeat`,
+                  backgroundSize: "1200px 1200px", // 2x zoom for 600x600 image
+                  backgroundPosition: `-${magnifierPosition.x * 2 - 125}px -${magnifierPosition.y * 2 - 125}px`,
+                  zIndex: 20,
+                  backgroundColor: "#fff",
+                }}
+              />
             )}
           </div>
 
@@ -535,13 +536,13 @@ const ProductDetailPage = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-4">
-              <button className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+              <button className="flex-1 bg-primary/80 text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2">
                 <ShoppingBag className="w-5 h-5" />
                 Add to Cart
               </button>
               <button 
                 onClick={handleFavoriteClick}
-                className={`w-14 h-14 border border-gray-300 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors ${
+                className={`w-14 h-14 border border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors ${
                   isFavorite(product.id!) ? 'bg-red-50 border-red-300' : ''
                 }`}
               >
@@ -551,7 +552,7 @@ const ProductDetailPage = () => {
                   }`} 
                 />
               </button>
-              <button className="w-14 h-14 border border-gray-300 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors">
+              <button className="w-14 h-14 border border-gray-300 rounded-xl flex items-center cursor-pointer justify-center hover:bg-gray-50 transition-colors">
                 <Share2 className="w-6 h-6 text-gray-600" />
               </button>
             </div>
@@ -641,7 +642,7 @@ const ProductDetailPage = () => {
         {/* Recommendations Section */}
         {recommendations.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 bg-text bg-clip-text text-transparent">
               More {product.shape_category} Styles
             </h2>
             <div className="relative">
@@ -658,7 +659,7 @@ const ProductDetailPage = () => {
                       {/* Sale Badge */}
                       {item.discounted_price && (
                         <div className="absolute top-3 left-3 z-10">
-                          <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                          <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold">
                             Sale
                           </span>
                         </div>
@@ -706,10 +707,10 @@ const ProductDetailPage = () => {
                           </div>
                         </div>
                         <div className="mt-auto flex items-center justify-between">
-                          <span className="text-md md:text-xl font-bold text-blue-600">
+                          <span className="text-md md:text-xl font-bold text-text">
                             ₹{item.discounted_price || item.original_price}
                           </span>
-                          <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                          <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
                             View Details
                           </button>
                         </div>

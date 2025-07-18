@@ -24,6 +24,7 @@ import {
   getShapeBanners,
 } from "../services/homeService";
 import { useHasMounted } from "../hooks/useHasMounted";
+import colors from '../constants/colors';
 
 // Define Product type locally
 interface Product {
@@ -63,27 +64,7 @@ function truncateDescription(desc: string): string {
   return words.slice(0, 4).join(' ') + '...';
 }
 
-// Welcome Section Component
-// const WelcomeSection = () => {
-//   const { user, userProfile } = useAuth();
-
-//   if (!user) return null;
-
-//   return (
-//     <div className="bg-gradient-to-r from-blue-50 to-purple-50 py-8 px-4">
-//       <div className="max-w-7xl mx-auto">
-//         <div className="text-center">
-//           <h1 className="text-2xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-//             Welcome back, {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}! 👋
-//           </h1>
-//           <p className="text-gray-600 text-sm md:text-base">
-//             Discover the latest trends in eyewear and find your perfect style
-//           </p>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
+console.log(colors)
 
 // Hero Slider Component
 const HeroSlider = ({ slides }: { slides: Slide[] }) => {
@@ -207,9 +188,9 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
   };
 
   return (
-    <div className="py-10 px-4 bg-gradient-to-br from-gray-50 to-blue-50">
+    <div  className="py-10 px-4 bg-background text-text">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-8 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <h2 className={`text-2xl md:text-4xl font-bold text-center mb-8 bg-text bg-clip-text text-transparent`}>
           Shop by Categories
         </h2>
         {/* Tab Navigation */}
@@ -222,7 +203,7 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
                   onClick={() => setActiveTab(category)}
                   className={`px-3 sm:px-4 md:px-6 py-2 rounded-full text-xs sm:text-sm md:text-base font-semibold transition-all duration-300 capitalize m-0.5 ${
                     activeTab === category
-                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105"
+                      ? `bg-primary text-white shadow-lg transform scale-105`
                       : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
                   }`}
                 >
@@ -303,9 +284,9 @@ const BestSellers = ({ products }: { products: Product[] }) => {
   };
 
   return (
-    <div className="py-16 px-4 bg-gradient-to-br from-purple-50 to-pink-50">
+    <div className="py-16 px-4 bg-background text-text">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-text bg-clip-text text-transparent">
           Best Sellers
         </h2>
         <div className="relative">
@@ -320,7 +301,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                   onClick={() => handleProductClick(item)}
                 >
                   <div className="absolute top-3 left-3 z-10">
-                    <span className="bg-gradient-to-r from-red-500 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold">
                       Best Seller
                     </span>
                   </div>
@@ -372,10 +353,10 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                       </div>
                     </div>
                     <div className="mt-auto flex items-center justify-between">
-                      <span className="text-md md:text-xl font-bold text-purple-600">
+                      <span className="text-md md:text-xl font-bold text-text">
                         ₹{item.discounted_price || item.original_price}
                       </span>
-                      <button className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                      <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
                         Add to Cart
                       </button>
                     </div>
@@ -424,9 +405,9 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
   };
 
   return (
-    <div className="py-16 px-4 bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div className="py-16 px-4 bg-backgrond text-text`">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-text bg-clip-text text-transparent">
           Latest Trends
         </h2>
         <div className="relative">
@@ -441,7 +422,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                   onClick={() => handleProductClick(item)}
                 >
                   <div className="absolute top-3 left-3 z-10">
-                    <span className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold">
                       New Trend
                     </span>
                   </div>
@@ -493,10 +474,10 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                       </div>
                     </div>
                     <div className="mt-auto flex items-center justify-between">
-                      <span className="text-md md:text-xl font-bold text-blue-600">
+                      <span className="text-md md:text-xl font-bold text-text">
                         ₹{item.discounted_price || item.original_price}
                       </span>
-                      <button className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                      <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
                         Add to Cart
                       </button>
                     </div>
@@ -536,9 +517,9 @@ const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBa
   };
 
   return (
-    <div className="py-16 px-4 bg-gradient-to-br from-indigo-50 to-purple-50">
+    <div className="bg-background text-text py-16 px-4">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-text bg-clip-text text-transparent">
           Shop by Shapes
         </h2>
         <div className="flex flex-col items-center">
@@ -566,14 +547,14 @@ const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBa
                     blurDataURL="/placeholder.png"
                   />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 text-white">
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 text-text">
                   <h3 className="text-xl md:text-2xl font-bold mb-2">
                     {(uniqueShapes[selectedShape].shape_category).charAt(0).toUpperCase() + (uniqueShapes[selectedShape].shape_category).slice(1)}
                   </h3>
                   {/* <p className="text-sm md:text-lg opacity-90">
                     {truncateDescription(uniqueShapes[selectedShape].description)}
                   </p> */}
-                  <div className="mt-4 text-sm text-white/80">
+                  <div className="mt-4 text-sm text-text/80">
                     Click to view all {String(uniqueShapes[selectedShape].shape_category)?.toLowerCase()} shaped products
                   </div>
                 </div>
@@ -610,7 +591,7 @@ const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBa
 // Vision Care Section
 const VisionCareSection = () => {
   return (
-    <div className="relative py-16 md:py-24 flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+    <div className="relative py-16 md:py-24 flex items-center justify-center overflow-hidden bg-text">
       <div className="absolute inset-0 bg-black/30" />
       <Image
         width={1200}
@@ -639,14 +620,14 @@ const VisionCareSection = () => {
 
 // Make In India Banner Section
 const MakeInIndia = () => (
-  <div className="py-12 bg-[#f5f1e6] flex flex-col items-center text-center">
+  <div style={{ background: colors.background, color: colors.text }} className="py-12 flex flex-col items-center text-center">
     <div className="mb-2 text-sm md:text-base text-gray-700">Styled By {makeInIndia.styledBy}</div>
     <h2 className="text-2xl md:text-4xl font-serif font-semibold mb-2 text-gray-900">{makeInIndia.title}</h2>
     <div className="font-bold text-lg md:text-xl mb-6 text-gray-800">
       {makeInIndia.subtitle}
     </div>
     <a href={makeInIndia.buttonUrl}>
-      <button className="bg-black text-white px-8 py-3 rounded-md text-base font-medium hover:bg-gray-900 transition-all">
+      <button className="bg-primary text-white px-8 py-3 rounded-md text-base font-medium hover:bg-gray-900 transition-all">
         {makeInIndia.buttonText}
       </button>
     </a>
@@ -656,10 +637,10 @@ const MakeInIndia = () => (
 const HowToKnowFaceSize = () => {
   const router = useRouter();
   return (
-    <div className="py-16 px-4 bg-gradient-to-br from-teal-50 to-blue-50">
+    <div style={{ background: colors.background, color: colors.text }} className="py-16 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
-          <h2 className="text-2xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
+          <h2 className="text-2xl md:text-4xl font-bold mb-4 bg-text bg-clip-text text-transparent">
             Find Your Perfect Fit
           </h2>
           <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
@@ -695,7 +676,7 @@ const HowToKnowFaceSize = () => {
 
         <div className="text-center">
           <button
-            className="bg-gradient-to-r from-teal-600 to-blue-600 text-white px-8 py-3 rounded-full text-base font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            className="bg-primary text-white px-8 py-3 rounded-full text-base font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
             onClick={() => router.push("/size-guide")}
           >
             View Size Guide

@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+/* globals.css */
+:root {
+    --font-body: var(--font-poppins);
+  }
+  
+  body {
+    font-family: var(--font-body), sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  @theme  {
+    --color-primary: #008080;
+    --color-secondary: #008080;
+    --color-accent: #008080;
+    --color-background: #ffffff;
+    --color-text: #333333;
+    --color-muted: #6b7280;
+    --color-button: #008080;
+    --color-success: #10b981;
+    --color-error: #ef4444;
+    --color-warning: #facc15;
+    --color-info: #3b82f6;
+  }
+  

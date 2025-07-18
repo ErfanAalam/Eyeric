@@ -6,9 +6,8 @@ import { Search, Heart, ShoppingCart, User, Menu, X, ChevronDown, Sparkles, LogO
 import { useAuth } from '../src/contexts/AuthContext';
 import { useFavorites } from '../src/contexts/FavoritesContext';
 import { getProducts } from '../src/services/homeService';
-
-// Import your colors
 import colors from '@/constants/colors';
+
 
 interface NavItem {
   title: string;
@@ -212,14 +211,14 @@ const Navbar: React.FC = () => {
         }
         
         .gradient-text {
-          background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.accent});
+          background: #008080;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
         
         .search-glow {
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+          box-shadow: 0 0 20px rgba(0, 128, 128, 0.3);
         }
         
         .hover-lift {
@@ -258,7 +257,7 @@ const Navbar: React.FC = () => {
             <div className="flex-shrink-0 flex items-center group">
               <Link href="/" className="flex items-center space-x-2 hover-lift">
                 <div className="relative">
-                  <div className="text-3xl font-black gradient-text tracking-tight">
+                  <div className={`text-3xl tracking-tight font-bold text-primary`}>
                     EYERIC
                   </div>
                   <div className="absolute -top-1 -right-1">
@@ -268,7 +267,7 @@ const Navbar: React.FC = () => {
                     />
                   </div>
                 </div>
-                <div className="hidden sm:block text-xs text-gray-500 font-medium">
+                <div className={`hidden sm:block text-xs font-medium`} style={{color:colors.text}}>
                   Premium Eyewear
                 </div>
               </Link>
@@ -321,21 +320,21 @@ const Navbar: React.FC = () => {
                         <div className="space-y-1">
                           <Link
                             href="/profile"
-                            className="block px-2 py-1 text-xs font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                            className={`block px-2 py-1 text-xs font-medium rounded-xl hover:bg-primary hover:text-text transition-all duration-300`}
                             onClick={() => setUserDropdownOpen(false)}
                           >
                             My Profile
                           </Link>
                           <Link
                             href="/orders"
-                            className="block px-2 py-1 text-xs font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                            className={`block px-2 py-1 text-xs font-medium rounded-xl hover:bg-primary hover:text-text transition-all duration-300`}
                             onClick={() => setUserDropdownOpen(false)}
                           >
                             My Orders
                           </Link>
                           <button
                             onClick={handleLogout}
-                            className="w-full flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-xl hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:text-white transition-all duration-300"
+                            className={`w-full flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-xl hover:bg-primary hover:text-text transition-all duration-300`}
                           >
                             <LogOut size={14} />
                             <span>Sign Out</span>
@@ -348,7 +347,7 @@ const Navbar: React.FC = () => {
               ) : (
                 <Link 
                   href="/login"
-                  className="p-2 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
+                  className={`p-2 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-primary transition-all duration-300`}
                   style={{ color: colors.text }}
                 >
                   <User size={20} />
@@ -426,8 +425,7 @@ const Navbar: React.FC = () => {
                 <div className="relative user-dropdown">
                   <button
                     onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center space-x-2 px-4 py-2.5 text-sm font-semibold border-2 border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 hover-lift"
-                    style={{ color: colors.text }}
+                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-semibold border-2 border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-primary transition-all hover:text-white duration-300 hover-lift`}
                   >
                     <User size={20} />
                     <span className="hidden sm:block">
@@ -449,21 +447,21 @@ const Navbar: React.FC = () => {
                         <div className="space-y-2">
                           <Link
                             href="/profile"
-                            className="block px-3 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                            className={`block px-3 py-2 text-sm font-medium rounded-xl hover:bg-primary hover:text-white transition-all duration-300`}
                             onClick={() => setUserDropdownOpen(false)}
                           >
                             My Profile
                           </Link>
                           <Link
                             href="/orders"
-                            className="block px-3 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300"
+                            className={`block px-3 py-2 text-sm font-medium rounded-xl hover:bg-primary hover:text-white transition-all duration-300`}
                             onClick={() => setUserDropdownOpen(false)}
                           >
                             My Orders
                           </Link>
                           <button
                             onClick={handleLogout}
-                            className="w-full flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-xl hover:bg-gradient-to-r hover:from-red-500 hover:to-pink-500 hover:text-white transition-all duration-300"
+                            className={`w-full flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-xl hover:bg-primary hover:text-white transition-all duration-300`}
                           >
                             <LogOut size={16} />
                             <span>Sign Out</span>
@@ -523,10 +521,10 @@ const Navbar: React.FC = () => {
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <button 
-                    className="flex items-center space-x-2 px-4 py-3 text-sm font-semibold rounded-2xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 hover-lift group"
+                    className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold rounded-2xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 hover-lift group`}
                     style={{ color: colors.text }}
                   >
-                    <span className="group-hover:text-blue-600 transition-colors">{item.title}</span>
+                    <span className={`group-hover:text-primary transition-colors`}>{item.title}</span>
                     <ChevronDown size={16} className={`transition-transform duration-300 ${activeDropdown === key ? 'rotate-180' : ''} group-hover:text-blue-600`} />
                   </button>
 
@@ -542,9 +540,8 @@ const Navbar: React.FC = () => {
                             <button
                               key={index}
                               onClick={() => handleNavItemClick(key, subItem)}
-                              className="block w-full text-left px-4 py-3 text-sm font-medium rounded-2xl hover:bg-gradient-to-r hover:from-blue-500 hover:to-purple-500 hover:text-white transition-all duration-300 hover-lift"
+                              className={`block w-full text-left px-4 py-3 text-sm font-medium rounded-2xl hover:bg-primary hover:text-white transition-all duration-300 hover-lift`}
                               style={{ 
-                                color: colors.text,
                                 animationDelay: `${index * 50}ms`
                               }}
                             >
@@ -588,7 +585,7 @@ const Navbar: React.FC = () => {
                 <div className="space-y-2">
                   {Object.entries(navItems).map(([key, item]) => (
                     <div key={key} className="space-y-1">
-                      <div className="text-sm font-semibold text-gray-800 px-2 py-1">
+                      <div className="text-sm font-semibold px-2 py-1" style={{ color: colors.text }}>
                         {item.title}
                       </div>
                       <div className="space-y-1">
@@ -599,7 +596,13 @@ const Navbar: React.FC = () => {
                               handleNavItemClick(key, subItem);
                               setIsMobileMenuOpen(false);
                             }}
-                            className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="block w-full text-left px-4 py-2 text-sm rounded-lg transition-colors"
+                            style={{
+                              color: colors.text,
+                              background: 'none',
+                            }}
+                            onMouseOver={e => (e.currentTarget.style.background = colors.primary + '22')}
+                            onMouseOut={e => (e.currentTarget.style.background = 'none')}
                           >
                             {subItem}
                           </button>
@@ -614,16 +617,22 @@ const Navbar: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <Link 
                       href="/favorites"
-                      className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                      style={{ color: colors.muted }}
                       onClick={() => setIsMobileMenuOpen(false)}
+                      onMouseOver={e => (e.currentTarget.style.background = colors.primary + '22')}
+                      onMouseOut={e => (e.currentTarget.style.background = 'none')}
                     >
                       <Heart size={20} />
                       <span>Favorites</span>
                     </Link>
                     <Link 
                       href="/cart"
-                      className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                      className="flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors"
+                      style={{ color: colors.muted }}
                       onClick={() => setIsMobileMenuOpen(false)}
+                      onMouseOver={e => (e.currentTarget.style.background = colors.primary + '22')}
+                      onMouseOut={e => (e.currentTarget.style.background = 'none')}
                     >
                       <ShoppingCart size={20} />
                       <span>Cart</span>
