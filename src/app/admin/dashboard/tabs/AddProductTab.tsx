@@ -127,6 +127,8 @@ const AddProductTab = () => {
   const [lensCategoryId, setLensCategoryId] = useState("");
   const [specialCategories, setSpecialCategories] = useState([]);
   const [selectedSpecialCategories, setSelectedSpecialCategories] = useState([]);
+  const [allCoupons, setAllCoupons] = useState([]);
+  const [selectedCoupons, setSelectedCoupons] = useState([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -177,6 +179,11 @@ const AddProductTab = () => {
       setSpecialCategories(data || []);
     };
     fetchSpecialCategories();
+    const fetchCoupons = async () => {
+      const { data } = await supabase.from("coupons").select("id, code, discount_type, discount_value, is_active");
+      setAllCoupons(data || []);
+    };
+    fetchCoupons();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -375,6 +382,13 @@ const AddProductTab = () => {
       }
     }
 
+    // --- Coupon assignment ---
+    if (newProductId && selectedCoupons.length > 0) {
+      for (const couponId of selectedCoupons) {
+        await supabase.from("product_coupons").insert({ product_id: newProductId, coupon_id: couponId });
+      }
+    }
+
     setMessage("Product added successfully!");
     setTitle("");
     setDescription("");
@@ -398,6 +412,7 @@ const AddProductTab = () => {
     setTempleLength("");
     setLensCategoryId("");
     setSelectedSpecialCategories([]);
+    setSelectedCoupons([]);
     
     // Reset category-specific display orders
     setMensDisplayOrder("");
@@ -986,6 +1001,38 @@ const AddProductTab = () => {
                       />
                       <span className="font-medium text-blue-700">{cat.name}</span>
                       {cat.description && <span className="text-xs text-gray-500 ml-2">{cat.description}</span>}
+                    </label>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Coupon Selection */}
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                Coupons Applicable to this Product
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-blue-50 border border-blue-100 rounded-xl p-4">
+                {allCoupons.length === 0 ? (
+                  <div className="text-gray-400 text-sm col-span-full">No coupons found.</div>
+                ) : (
+                  allCoupons.filter(c => c.is_active).map(coupon => (
+                    <label key={coupon.id} className="flex items-center gap-2 text-sm bg-white px-3 py-2 rounded-lg cursor-pointer hover:bg-blue-100 border border-blue-100">
+                      <input
+                        type="checkbox"
+                        value={coupon.id}
+                        checked={selectedCoupons.includes(coupon.id)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setSelectedCoupons([...selectedCoupons, coupon.id]);
+                          } else {
+                            setSelectedCoupons(selectedCoupons.filter(id => id !== coupon.id));
+                          }
+                        }}
+                        className="accent-blue-600 w-4 h-4 rounded"
+                      />
+                      <span className="font-medium text-blue-700">{coupon.code}</span>
+                      <span className="text-xs text-gray-500 ml-2">{coupon.discount_type === 'flat' ? `₹${coupon.discount_value} off` : coupon.discount_type === 'percentage' ? `${coupon.discount_value}% off` : coupon.discount_type}</span>
                     </label>
                   ))
                 )}
