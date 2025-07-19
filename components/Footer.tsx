@@ -244,14 +244,14 @@ const Footer: React.FC = () => {
         }
         
         .gradient-text {
-          background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.accent});
+          background: #FFFFFF;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
         }
         
         .gradient-border {
-          background: linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.accent});
+          background: #FFFFFF;
           padding: 2px;
           border-radius: 1rem;
         }
@@ -304,7 +304,7 @@ const Footer: React.FC = () => {
         }
       `}</style>
 
-      <footer className="relative bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900 text-white overflow-hidden">
+      <footer className="relative bg-primary text-white overflow-hidden">
         {/* Floating Background Shapes */}
         <div className="floating-shapes absolute inset-0 pointer-events-none"></div>
         
@@ -321,7 +321,7 @@ const Footer: React.FC = () => {
                     style={{ animationDelay: `${index * 150}ms` }}
                   >
                     <div className="glass-effect rounded-2xl p-6 mb-4 group-hover:bg-white/10 transition-all duration-300">
-                      <div className="mx-auto w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                      <div className="mx-auto w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
                         <feature.icon size={24} className="text-white" />
                       </div>
                       <h3 className="font-bold text-sm mb-2">{feature.title}</h3>
@@ -354,7 +354,7 @@ const Footer: React.FC = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Enter your email"
-                        className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl focus:outline-none focus:border-blue-400 focus:bg-white/15 transition-all duration-300 text-white placeholder-gray-400"
+                        className="w-full px-6 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl focus:outline-none focus:border-blue-400 focus:bg-white/15 transition-all duration-300 text-white placeholder-white"
                         required
                       />
                     </div>
@@ -363,7 +363,7 @@ const Footer: React.FC = () => {
                       className={`px-8 py-4 rounded-2xl font-semibold transition-all duration-300 hover-lift flex items-center justify-center space-x-2 ${
                         isSubscribed 
                           ? 'newsletter-success' 
-                          : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
+                          : 'bg-background hover:from-blue-600 hover:to-purple-600 text-text'
                       }`}
                     >
                       {isSubscribed ? (
@@ -494,7 +494,7 @@ const Footer: React.FC = () => {
         {showScrollTop && (
           <button
             onClick={scrollToTop}
-            className="fixed bottom-8 right-8 z-50 p-4 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 animate-glow hover-lift"
+            className="fixed bottom-8 right-8 z-50 p-4 bg-primary text-white rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 animate-glow hover-lift"
             aria-label="Scroll to top"
           >
             <ChevronUp size={24} />

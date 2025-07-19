@@ -44,7 +44,7 @@ const Profile = () => {
         {/* Profile Header */}
         <div className="bg-white rounded-3xl shadow-2xl p-8 mb-8">
           <div className="text-center mb-8">
-            <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
               <User size={40} className="text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -122,7 +122,7 @@ const Profile = () => {
 
           {/* Action Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
-            <button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-2xl font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300">
+            <button className="flex-1 bg-primary text-white py-3 px-6 rounded-2xl font-semibold hover:bg-priamry/80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300">
               Edit Profile
             </button>
             <Link 

@@ -17,6 +17,7 @@ import AddLensTab from "./tabs/AddLensTab";
 import ManageLensTab from "./tabs/ManageLensTab";
 import ManageLensCategoriesTab from "./tabs/ManageLensCategoriesTab";
 import ManageSpecialProductCategoriesTab from "./tabs/ManageSpecialProductCategoriesTab";
+import CouponPage from "../coupon/page";
 
 // Add Admin type
 interface AdminType {
@@ -38,12 +39,14 @@ const Sidebar = ({
 }) => {
   const [productsDropdown, setProductsDropdown] = useState(false);
   const [lensesDropdown, setLensesDropdown] = useState(false);
+  const [couponsDropdown, setCouponsDropdown] = useState(false);
   const tabs = [
     { id: "overview", label: "Dashboard", icon: "📊" },
     { id: "orders", label: "Orders", icon: "📦" },
     { id: "categories", label: "Categories", icon: "🎨" },
     { id: "products", label: "Products", icon: "🛍️", dropdown: true },
     { id: "lenses", label: "Lenses", icon: "👓", dropdown: true },
+    { id: "coupons", label: "Coupons", icon: "🏷️", dropdown: true },
     { id: "special-categories", label: "Special Product Categories", icon: "⭐" },
     { id: "users", label: "Customers", icon: "👥" },
     { id: "media", label: "Media", icon: "🖼️" },
@@ -59,10 +62,15 @@ const Sidebar = ({
       setLensesDropdown((prev) => !prev);
       return;
     }
+    if (tabId === "coupons") {
+      setCouponsDropdown((prev) => !prev);
+      return;
+    }
     setTab(tabId);
     setIsOpen(false);
     setProductsDropdown(false);
     setLensesDropdown(false);
+    setCouponsDropdown(false);
   };
 
   const handleProductSubTab = (subTab: string) => {
@@ -77,6 +85,14 @@ const Sidebar = ({
     setIsOpen(false);
     setLensesDropdown(false);
     setProductsDropdown(false);
+  };
+
+  const handleCouponSubTab = (subTab: string) => {
+    setTab(subTab);
+    setIsOpen(false);
+    setCouponsDropdown(false);
+    setProductsDropdown(false);
+    setLensesDropdown(false);
   };
 
   return (
@@ -141,7 +157,7 @@ const Sidebar = ({
               <div key={tab.id} className="space-y-1">
                 <button
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left font-medium transition-all duration-200 group ${
-                    (tab.id === "products" && currentTab.startsWith("products")) || (tab.id === "lenses" && currentTab.startsWith("lenses"))
+                    (tab.id === "products" && currentTab.startsWith("products")) || (tab.id === "lenses" && currentTab.startsWith("lenses")) || (tab.id === "coupons" && currentTab.startsWith("coupons"))
                       ? "bg-blue-50 text-blue-700 border border-blue-200"
                       : "text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   }`}
@@ -153,7 +169,7 @@ const Sidebar = ({
                   </div>
                   <svg
                     className={`w-4 h-4 transition-transform duration-200 ${
-                      (tab.id === "products" && productsDropdown) || (tab.id === "lenses" && lensesDropdown) ? "rotate-180" : ""
+                      (tab.id === "products" && productsDropdown) || (tab.id === "lenses" && lensesDropdown) || (tab.id === "coupons" && couponsDropdown) ? "rotate-180" : ""
                     }`}
                     fill="none"
                     stroke="currentColor"
@@ -227,6 +243,32 @@ const Sidebar = ({
                     >
                       <span className="text-xs">📂</span>
                       <span>Manage Lens Categories</span>
+                    </button>
+                  </div>
+                )}
+                {tab.id === "coupons" && couponsDropdown && (
+                  <div className="ml-6 space-y-1 border-l border-gray-200 pl-4">
+                    <button
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left text-sm transition-all ${
+                        currentTab === "coupons-add"
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
+                      onClick={() => handleCouponSubTab("coupons-add")}
+                    >
+                      <span className="text-xs">➕</span>
+                      <span>Add Coupon</span>
+                    </button>
+                    <button
+                      className={`w-full flex items-center space-x-2 px-3 py-2 rounded-md text-left text-sm transition-all ${
+                        currentTab === "coupons-manage"
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      }`}
+                      onClick={() => handleCouponSubTab("coupons-manage")}
+                    >
+                      <span className="text-xs">🛠️</span>
+                      <span>Manage Coupons</span>
                     </button>
                   </div>
                 )}
@@ -528,6 +570,9 @@ const AdminDashboard = () => {
               {tab === "lenses-categories" && <ManageLensCategoriesTab />}
 
               {tab === "special-categories" && <ManageSpecialProductCategoriesTab />}
+
+              {tab === "coupons-add" && <CouponPage initialTab="add" />}
+              {tab === "coupons-manage" && <CouponPage initialTab="manage" />}
             </div>
           </div>
         </main>

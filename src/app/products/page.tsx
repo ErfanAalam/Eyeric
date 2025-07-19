@@ -84,11 +84,6 @@ const ProductsContent = () => {
     // Normalization helper
     const normalize = (str: string) => str.toLowerCase().replace(/[\s-]/g, '');
 
-    console.log("Category:", category);
-    console.log("Type:", type);
-    console.log("Shape:", shape);
-    console.log("All Products:", allProducts);
-
     // Debug: Log all unique shapes in the database
     const allShapes = Array.from(new Set(allProducts.filter(p => p.shape_category).map(p => p.shape_category)));
     console.log("All shapes in database:", allShapes);
@@ -114,17 +109,6 @@ const ProductsContent = () => {
       // Handle shape filtering - normalize both the URL shape and product shape
       const shapeMatch = !shape || 
         (product.shape_category && normalize(product.shape_category) === normalize(shape));
-      
-      console.log("Product:", product.title);
-      console.log("Product types:", product.type_category);
-      console.log("Product shape:", product.shape_category);
-      console.log("Normalized product shape:", product.shape_category && normalize(product.shape_category));
-      console.log("Requested type:", type);
-      console.log("Requested shape:", shape);
-      console.log("Normalized URL shape:", shape && normalize(shape));
-      console.log("Category Match:", categoryMatch);
-      console.log("Type Match:", typeMatch);
-      console.log("Shape Match:", shapeMatch);
       
       return categoryMatch && typeMatch && shapeMatch;
     });
@@ -210,7 +194,7 @@ const ProductsContent = () => {
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center py-16">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading products...</p>
           </div>
         </div>
@@ -237,7 +221,7 @@ const ProductsContent = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2 pr-8 font-medium text-sm shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2 pr-8 font-medium text-sm shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="featured">Best selling</option>
                 <option value="price-low">Price: Low to High</option>
@@ -286,7 +270,7 @@ const ProductsContent = () => {
             {filteredProducts.length === 0 ? (
               <div className="text-center py-16">
                 <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-white/20 max-w-md mx-auto">
-                  <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-indigo-100 to-purple-100 rounded-full flex items-center justify-center">
+                  <div className="w-20 h-20 mx-auto mb-6 bg-primary rounded-full flex items-center justify-center">
                     <SlidersHorizontal className="w-10 h-10 text-indigo-500" />
                   </div>
                   <h3 className="text-2xl font-bold text-gray-800 mb-3">
@@ -318,7 +302,7 @@ const ProductsContent = () => {
                     </button>
                     {/* Sale Badge */}
                     {product.discounted_price && (
-                      <span className="absolute top-3 left-3 z-10 bg-blue-600 text-white text-xs font-semibold px-3 py-1 rounded-full">Sale</span>
+                      <span className="absolute top-3 left-3 z-10 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full">Sale</span>
                     )}
                     {/* Product Image */}
                     <div className="aspect-[4/3] w-full overflow-hidden">
@@ -337,12 +321,12 @@ const ProductsContent = () => {
                         {product.discounted_price && (
                           <span className="text-gray-400 line-through text-sm">₹{product.original_price}</span>
                         )}
-                        <span className="text-blue-600 font-bold text-lg">₹{product.discounted_price || product.original_price}</span>
+                        <span className="text-text font-bold text-lg">₹{product.discounted_price || product.original_price}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
                         <span className="cursor-pointer hover:underline">Compare</span>
                       </div>
-                      <button className="mt-auto flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full py-2 px-4 font-semibold shadow transition-all text-sm">
+                      <button className="mt-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/80 text-white rounded-full py-2 px-4 font-semibold shadow transition-all text-sm">
                         <ShoppingBag className="w-4 h-4" /> Add to Cart
                       </button>
                     </div>

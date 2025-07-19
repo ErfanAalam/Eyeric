@@ -83,6 +83,9 @@ const ManageProductTab = () => {
   const [filterSpecialCategories, setFilterSpecialCategories] = useState([]);
   const [productSpecialCategories, setProductSpecialCategories] = useState({}); // { productId: [catId, ...] }
   const [editSpecialCategories, setEditSpecialCategories] = useState<string[]>([]);
+  const [allCoupons, setAllCoupons] = useState([]);
+  const [editCoupons, setEditCoupons] = useState([]);
+  const [productCoupons, setProductCoupons] = useState({}); // { productId: [couponId, ...] }
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -127,6 +130,22 @@ const ManageProductTab = () => {
       setProductSpecialCategories(map);
     };
     fetchProductSpecialCategories();
+    const fetchCoupons = async () => {
+      const { data } = await supabase.from("coupons").select("id, code, discount_type, discount_value, is_active");
+      setAllCoupons(data || []);
+    };
+    fetchCoupons();
+    // Fetch product_coupons for all products
+    const fetchProductCoupons = async () => {
+      const { data } = await supabase.from("product_coupons").select("product_id, coupon_id");
+      const map = {};
+      (data || []).forEach(row => {
+        if (!map[row.product_id]) map[row.product_id] = [];
+        map[row.product_id].push(row.coupon_id);
+      });
+      setProductCoupons(map);
+    };
+    fetchProductCoupons();
   }, []);
 
   const showMessage = (text: string, type: "success" | "error" | "info" = "info") => {
@@ -176,6 +195,9 @@ const ManageProductTab = () => {
     // Set special categories for this product
     const prodCatIds = productSpecialCategories[product.id] || [];
     setEditSpecialCategories(prodCatIds.map(String));
+    // Set coupons for this product
+    const prodCouponIds = productCoupons[product.id] || [];
+    setEditCoupons(prodCouponIds.map(String));
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
@@ -299,6 +321,22 @@ const ManageProductTab = () => {
         await supabase.from("product_special_categories").delete().eq("product_id", editingProduct.id).eq("special_category_id", catId);
       }
       // --- End special categories update ---
+      // --- Update coupons ---
+      // 1. Get current coupons for this product
+      const { data: currentCouponRows } = await supabase.from("product_coupons").select("coupon_id").eq("product_id", editingProduct.id);
+      const currentCouponIds = (currentCouponRows || []).map(row => row.coupon_id.toString());
+      // 2. Find to add and to remove
+      const toAddCoupons = editCoupons.filter(id => !currentCouponIds.includes(id));
+      const toRemoveCoupons = currentCouponIds.filter(id => !editCoupons.includes(id));
+      // 3. Add new
+      for (const couponId of toAddCoupons) {
+        await supabase.from("product_coupons").insert({ product_id: editingProduct.id, coupon_id: couponId });
+      }
+      // 4. Remove unchecked
+      for (const couponId of toRemoveCoupons) {
+        await supabase.from("product_coupons").delete().eq("product_id", editingProduct.id).eq("coupon_id", couponId);
+      }
+      // --- End coupon update ---
       showMessage("Product updated successfully!", "success");
       setEditingProduct(null);
       fetchProducts();
@@ -723,6 +761,37 @@ const ManageProductTab = () => {
                           />
                           <span className="font-medium text-blue-700">{cat.name}</span>
                           {cat.description && <span className="text-xs text-gray-500 ml-2">{cat.description}</span>}
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+                {/* Coupon Selection */}
+                <div>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                    Coupons Applicable to this Product
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-blue-50 border border-blue-100 rounded-xl p-4">
+                    {allCoupons.length === 0 ? (
+                      <div className="text-gray-400 text-sm col-span-full">No coupons found.</div>
+                    ) : (
+                      allCoupons.filter(c => c.is_active).map(coupon => (
+                        <label key={coupon.id} className="flex items-center gap-2 text-sm bg-white px-3 py-2 rounded-lg cursor-pointer hover:bg-blue-100 border border-blue-100">
+                          <input
+                            type="checkbox"
+                            value={coupon.id}
+                            checked={editCoupons.includes(coupon.id)}
+                            onChange={e => {
+                              if (e.target.checked) {
+                                setEditCoupons([...editCoupons, coupon.id]);
+                              } else {
+                                setEditCoupons(editCoupons.filter(id => id !== coupon.id));
+                              }
+                            }}
+                            className="accent-blue-600 w-4 h-4 rounded"
+                          />
+                          <span className="font-medium text-blue-700">{coupon.code}</span>
+                          <span className="text-xs text-gray-500 ml-2">{coupon.discount_type === 'flat' ? `₹${coupon.discount_value} off` : coupon.discount_type === 'percentage' ? `${coupon.discount_value}% off` : coupon.discount_type}</span>
                         </label>
                       ))
                     )}

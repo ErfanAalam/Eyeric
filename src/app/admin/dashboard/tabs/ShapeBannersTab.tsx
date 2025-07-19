@@ -29,7 +29,7 @@ const ShapeBannersTab = () => {
   }, []);
 
   async function fetchBanners() {
-    const { data } = await supabase.from("shape-banners").select("*");
+    const { data } = await supabase.from("shape_banners").select("*");
     setBanners(data || []);
   }
 
@@ -48,7 +48,7 @@ const ShapeBannersTab = () => {
       return;
     }
     const { data: urlData } = supabase.storage.from("shape-banners").getPublicUrl(filePath);
-    const { error: dbError } = await supabase.from("shape-banners").insert({
+    const { error: dbError } = await supabase.from("shape_banners").insert({
       shape,
       image_url: urlData.publicUrl
     });
@@ -69,7 +69,7 @@ const ShapeBannersTab = () => {
       return;
     }
     const { data: urlData } = supabase.storage.from("shape-banners").getPublicUrl(filePath);
-    const { error: dbError } = await supabase.from("shape-banners").update({
+    const { error: dbError } = await supabase.from("shape_banners").update({
       image_url: urlData.publicUrl
     }).eq("id", bannerId);
     if (dbError) setMsg("DB update failed");

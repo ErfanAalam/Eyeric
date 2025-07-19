@@ -126,7 +126,7 @@ export default function FilterSidebar({
                 type="checkbox"
                 checked={localShapes.includes(shape.toLowerCase())}
                 onChange={() => handleShapeToggle(shape.toLowerCase())}
-                className="accent-blue-600"
+                className="accent-blue-60"
               />
               {shape}
             </label>
@@ -158,13 +158,13 @@ export default function FilterSidebar({
       </details>
       <div className="flex flex-col gap-2 pt-2">
         <button
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+          className="w-full bg-primary text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
           onClick={handleApply}
         >
           Apply Filters
         </button>
         <button
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+          className="w-full bg-primary text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
           onClick={handleClear}
         >
           Clear Filters
