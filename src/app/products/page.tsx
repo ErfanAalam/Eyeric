@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ChevronDown, Heart, ShoppingBag, SlidersHorizontal, Filter } from "lucide-react";
+import { Search } from "lucide-react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import FilterSidebar from '../../../components/FilterSidebar';
@@ -48,6 +49,7 @@ const ProductsContent = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("featured");
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
+  const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
 
@@ -184,7 +186,17 @@ const ProductsContent = () => {
         ));
       const priceMatch = (product.discounted_price || product.original_price) >= priceRange.min && 
                         (product.discounted_price || product.original_price) <= priceRange.max;
-      return shapeMatch && styleMatch && priceMatch;
+      // Search filter
+      const query = searchQuery.toLowerCase();
+      const matchesQuery =
+        product.title.toLowerCase().includes(query) ||
+        product.description.toLowerCase().includes(query) ||
+        (product.gender_category && product.gender_category.join(" ").toLowerCase().includes(query)) ||
+        (product.type_category && product.type_category.join(" ").toLowerCase().includes(query)) ||
+        (product.shape_category && product.shape_category.toLowerCase().includes(query)) ||
+        (product.original_price && product.original_price.toString().includes(query)) ||
+        (product.discounted_price && product.discounted_price.toString().includes(query));
+      return shapeMatch && styleMatch && priceMatch && (!searchQuery || matchesQuery);
     })
   );
 
@@ -209,8 +221,16 @@ const ProductsContent = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Breadcrumb and Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
-          <div className="text-gray-400 text-sm mb-2 md:mb-0">
-            Home / <span className="text-black font-semibold">{category}&apos;s {type}</span>
+          {/* Search Bar replaces breadcrumb */}
+          <div className="w-full md:w-1/2 mb-2 md:mb-0 relative">
+            <input
+              type="text"
+              placeholder="Search by name, price, category, gender, etc."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary pr-10"
+            />
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
           </div>
           <div className="flex items-center gap-4 w-full justify-between sm:justify-end">
             <span className="text-gray-600 text-sm">{filteredProducts.length} products</span>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { SlidersHorizontal, X } from "lucide-react";
+import { X } from "lucide-react";
+import "./FilterSidebar.css";
 
 const GENDERS = ["Men", "Women", "Kids"];
 
@@ -73,8 +74,9 @@ export default function FilterSidebar({
       <details open className="group border-b pb-2">
         <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
           GENDER
-          <span className="transition-transform group-open:rotate-45">
-            <SlidersHorizontal className="w-4 h-4" />
+          <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
+            <span className="group-open:hidden">+</span>
+            <span className="hidden group-open:inline">−</span>
           </span>
         </summary>
         <div className="mt-2 space-y-2 pl-2">
@@ -93,8 +95,9 @@ export default function FilterSidebar({
       <details className="group border-b pb-2">
         <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
           STYLE
-          <span className="transition-transform group-open:rotate-45">
-            <SlidersHorizontal className="w-4 h-4" />
+          <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
+            <span className="group-open:hidden">+</span>
+            <span className="hidden group-open:inline">−</span>
           </span>
         </summary>
         <div className="mt-2 space-y-2 pl-2">
@@ -115,8 +118,9 @@ export default function FilterSidebar({
       <details className="group border-b pb-2">
         <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
           FACE SHAPE
-          <span className="transition-transform group-open:rotate-45">
-            <SlidersHorizontal className="w-4 h-4" />
+          <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
+            <span className="group-open:hidden">+</span>
+            <span className="hidden group-open:inline">−</span>
           </span>
         </summary>
         <div className="mt-2 space-y-2 pl-2">
@@ -137,8 +141,9 @@ export default function FilterSidebar({
       <details open className="group border-b pb-2">
         <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
           PRICE
-          <span className="transition-transform group-open:rotate-45">
-            <SlidersHorizontal className="w-4 h-4" />
+          <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
+            <span className="group-open:hidden">+</span>
+            <span className="hidden group-open:inline">−</span>
           </span>
         </summary>
         <div className="mt-2 pl-2">
@@ -148,7 +153,7 @@ export default function FilterSidebar({
             max={maxPrice}
             value={currentPrice.max}
             onChange={e => onPriceChange({ ...currentPrice, max: Number(e.target.value) })}
-            className="w-full"
+            className="w-full price-slider"
           />
           <div className="flex justify-between text-sm text-gray-600">
             <span>₹{currentPrice.min}</span>

@@ -1,0 +1,31 @@
+.price-slider {
+  accent-color: #008080; /* fallback for modern browsers */
+}
+
+.price-slider::-webkit-slider-thumb {
+  background: #008080;
+}
+.price-slider::-moz-range-thumb {
+  background: #008080;
+}
+.price-slider::-ms-thumb {
+  background: #008080;
+}
+
+.price-slider::-webkit-slider-runnable-track {
+  background: #00808033;
+}
+.price-slider::-moz-range-track {
+  background: #00808033;
+}
+.price-slider::-ms-fill-lower {
+  background: #00808033;
+}
+.price-slider::-ms-fill-upper {
+  background: #00808033;
+}
+
+.price-slider:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #2563eb55;
+} 

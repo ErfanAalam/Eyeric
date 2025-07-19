@@ -48,6 +48,9 @@ interface Product {
   type_category: string[];
   created_at?: string;
   updated_at?: string;
+  lens_width?: number;
+  bridge_width?: number;
+  temple_length?: number;
 }
 
 // Helper to normalize color data
@@ -70,7 +73,7 @@ const ProductDetailPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(0);
+  // const [selectedSize, setSelectedSize] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [hoveredRecommendation, setHoveredRecommendation] = useState<number | null>(null);
   const [showMagnifier, setShowMagnifier] = useState(false);
@@ -80,6 +83,8 @@ const ProductDetailPage = () => {
   const [previewIndex, setPreviewIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
   const imageContainerRef = React.useRef<HTMLDivElement>(null);
 
 //   if (!hasMounted) return null;
@@ -248,9 +253,21 @@ const ProductDetailPage = () => {
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchEndX - touchStartX;
     if (diff > 50 && previewIndex > 0) {
-      setPreviewIndex(previewIndex - 1); // swipe right
+      setSwipeDirection("right");
+      setIsAnimating(true);
+      setTimeout(() => {
+        setPreviewIndex((prev) => prev - 1);
+        setIsAnimating(false);
+        setSwipeDirection(null);
+      }, 300);
     } else if (diff < -50 && previewIndex < productImages.length - 1) {
-      setPreviewIndex(previewIndex + 1); // swipe left
+      setSwipeDirection("left");
+      setIsAnimating(true);
+      setTimeout(() => {
+        setPreviewIndex((prev) => prev + 1);
+        setIsAnimating(false);
+        setSwipeDirection(null);
+      }, 300);
     }
     setTouchStartX(null);
   };
@@ -335,16 +352,25 @@ const ProductDetailPage = () => {
               onMouseMove={handleMouseMove}
             >
               {productImages.length > 0 ? (
-                <Image
-                  src={productImages[selectedImage]}
-                  alt={product.title}
-                  width={600}
-                  height={600}
-                  className="w-full h-full object-cover select-none"
-                  draggable={false}
-                  onClick={handleImageClick}
-                  style={{ cursor: "zoom-in" }}
-                />
+                <>
+                  <Image
+                    src={productImages[selectedImage]}
+                    alt={product.title}
+                    width={600}
+                    height={600}
+                    className="w-full h-full object-cover select-none"
+                    draggable={false}
+                    onClick={handleImageClick}
+                    style={{ cursor: "zoom-in" }}
+                  />
+                  <button
+                    onClick={() => { /* TODO: add share logic */ }}
+                    className="absolute top-3 right-3 z-10 bg-white rounded-full p-2 shadow hover:bg-gray-100 transition"
+                    aria-label="Share"
+                  >
+                    <Share2 className="w-6 h-6 text-gray-600" />
+                  </button>
+                </>
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-400">
                   <Eye className="w-16 h-16" />
@@ -492,8 +518,44 @@ const ProductDetailPage = () => {
               </div>
             )}
 
+            {/* Frame Measurements */}
+            {(product.lens_width || product.bridge_width || product.temple_length) && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">SIZE : {(product.sizes[0]).toString().toUpperCase()}</h3>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {/* Lens Width */}
+                  {product.lens_width && (
+                    <div className="flex flex-col items-center bg-gray-50 rounded-lg p-6 min-w-[140px] shadow-sm">
+                      {/* Placeholder SVG for lens width */}
+                      <svg width="40" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2"><path d="M4 12C4 7.02944 8.02944 3 13 3H27C31.9706 3 36 7.02944 36 12C36 16.9706 31.9706 21 27 21H13C8.02944 21 4 16.9706 4 12Z" stroke="#888" strokeWidth="2"/><path d="M10 12H30" stroke="#888" strokeWidth="2" markerStart="url(#arrow)" markerEnd="url(#arrow)"/><defs><marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,3 L6,0 L6,6 Z" fill="#888" /></marker></defs></svg>
+                      <span className="text-xs text-gray-500">LENS WIDTH</span>
+                      <span className="text-xl font-bold mt-1">{product.lens_width}mm</span>
+                    </div>
+                  )}
+                  {/* Bridge Width */}
+                  {product.bridge_width && (
+                    <div className="flex flex-col items-center bg-gray-50 rounded-lg p-6 min-w-[140px] shadow-sm">
+                      {/* Placeholder SVG for bridge width */}
+                      <svg width="40" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2"><path d="M12 12C12 9.23858 14.2386 7 17 7H23C25.7614 7 28 9.23858 28 12" stroke="#888" strokeWidth="2"/><path d="M16 16H24" stroke="#888" strokeWidth="2" markerStart="url(#arrow2)" markerEnd="url(#arrow2)"/><defs><marker id="arrow2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,3 L6,0 L6,6 Z" fill="#888" /></marker></defs></svg>
+                      <span className="text-xs text-gray-500">BRIDGE WIDTH</span>
+                      <span className="text-xl font-bold mt-1">{product.bridge_width}mm</span>
+                    </div>
+                  )}
+                  {/* Temple Length */}
+                  {product.temple_length && (
+                    <div className="flex flex-col items-center bg-gray-50 rounded-lg p-6 min-w-[140px] shadow-sm">
+                      {/* Placeholder SVG for temple length */}
+                      <svg width="40" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2"><path d="M6 12C6 8 10 8 14 8H26C30 8 34 8 34 12C34 16 30 16 26 16H14C10 16 6 16 6 12Z" stroke="#888" strokeWidth="2"/><path d="M32 20L36 20" stroke="#888" strokeWidth="2" markerStart="url(#arrow3)" markerEnd="url(#arrow3)"/><defs><marker id="arrow3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,3 L6,0 L6,6 Z" fill="#888" /></marker></defs></svg>
+                      <span className="text-xs text-gray-500">TEMPLE LENGTH</span>
+                      <span className="text-xl font-bold mt-1">{product.temple_length}mm</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Sizes */}
-            {product.sizes && product.sizes.length > 0 && (
+            {/* {product.sizes && product.sizes.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Sizes</h3>
                 <div className="flex gap-3">
@@ -512,7 +574,7 @@ const ProductDetailPage = () => {
                   ))}
                 </div>
               </div>
-            )}
+            )} */}
 
             {/* Quantity */}
             <div>
@@ -551,9 +613,6 @@ const ProductDetailPage = () => {
                     isFavorite(product.id!) ? 'text-red-500 fill-current' : 'text-gray-600'
                   }`} 
                 />
-              </button>
-              <button className="w-14 h-14 border border-gray-300 rounded-xl flex items-center cursor-pointer justify-center hover:bg-gray-50 transition-colors">
-                <Share2 className="w-6 h-6 text-gray-600" />
               </button>
             </div>
 
@@ -734,9 +793,21 @@ const ProductDetailPage = () => {
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft' && previewIndex > 0) {
-              handlePreviewLeft();
+              setSwipeDirection("right");
+              setIsAnimating(true);
+              setTimeout(() => {
+                handlePreviewLeft();
+                setIsAnimating(false);
+                setSwipeDirection(null);
+              }, 300);
             } else if (e.key === 'ArrowRight' && previewIndex < productImages.length - 1) {
-              handlePreviewRight();
+              setSwipeDirection("left");
+              setIsAnimating(true);
+              setTimeout(() => {
+                handlePreviewRight();
+                setIsAnimating(false);
+                setSwipeDirection(null);
+              }, 300);
             } else if (e.key === 'Escape') {
               setShowPreview(false);
             }
@@ -744,7 +815,7 @@ const ProductDetailPage = () => {
         >
           {/* Close button */}
           <button
-            className="absolute top-6 right-6 text-white text-3xl"
+            className="absolute top-6 right-6 text-white text-3xl z-20"
             onClick={() => setShowPreview(false)}
             aria-label="Close"
           >
@@ -761,14 +832,26 @@ const ProductDetailPage = () => {
             </button>
           )}
           {/* Image */}
-          <Image
-            width={1000}
-            height={1000}
-            src={productImages[previewIndex]}
-            alt={product.title}
-            className="max-h-[80vh] max-w-[90vw] object-contain shadow-2xl"
-            draggable={false}
-          />
+          <div
+            className={`relative w-screen h-screen flex items-center justify-center transition-transform duration-300 z-0 ${
+              isAnimating
+                ? swipeDirection === "left"
+                  ? "-translate-x-full"
+                  : swipeDirection === "right"
+                  ? "translate-x-full"
+                  : "translate-x-0"
+                : "translate-x-0"
+            }`}
+            style={{ willChange: 'transform' }}
+          >
+            <Image
+              fill
+              src={productImages[previewIndex]}
+              alt={product.title}
+              className="object-contain"
+              draggable={false}
+            />
+          </div>
           {/* Pagination Dots for Mobile */}
           <div className="flex justify-center mt-4 md:hidden absolute bottom-16 left-1/2 -translate-x-1/2">
             {productImages.map((_, idx) => (
