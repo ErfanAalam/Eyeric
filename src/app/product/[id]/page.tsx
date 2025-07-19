@@ -16,7 +16,10 @@ import {
   Share2,
   ArrowRight,
   ArrowLeft,
-  X
+  X,
+  Ruler,
+  Divide,
+  MoveHorizontal
 } from "lucide-react";
 import Navbar from "../../../../components/Navbar";
 import Footer from "../../../../components/Footer";
@@ -526,8 +529,7 @@ const ProductDetailPage = () => {
                   {/* Lens Width */}
                   {product.lens_width && (
                     <div className="flex flex-col items-center bg-gray-50 rounded-lg p-6 min-w-[140px] shadow-sm">
-                      {/* Placeholder SVG for lens width */}
-                      <svg width="40" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2"><path d="M4 12C4 7.02944 8.02944 3 13 3H27C31.9706 3 36 7.02944 36 12C36 16.9706 31.9706 21 27 21H13C8.02944 21 4 16.9706 4 12Z" stroke="#888" strokeWidth="2"/><path d="M10 12H30" stroke="#888" strokeWidth="2" markerStart="url(#arrow)" markerEnd="url(#arrow)"/><defs><marker id="arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,3 L6,0 L6,6 Z" fill="#888" /></marker></defs></svg>
+                      <Ruler className="w-10 h-10 mb-2 text-blue-500" />
                       <span className="text-xs text-gray-500">LENS WIDTH</span>
                       <span className="text-xl font-bold mt-1">{product.lens_width}mm</span>
                     </div>
@@ -535,8 +537,7 @@ const ProductDetailPage = () => {
                   {/* Bridge Width */}
                   {product.bridge_width && (
                     <div className="flex flex-col items-center bg-gray-50 rounded-lg p-6 min-w-[140px] shadow-sm">
-                      {/* Placeholder SVG for bridge width */}
-                      <svg width="40" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2"><path d="M12 12C12 9.23858 14.2386 7 17 7H23C25.7614 7 28 9.23858 28 12" stroke="#888" strokeWidth="2"/><path d="M16 16H24" stroke="#888" strokeWidth="2" markerStart="url(#arrow2)" markerEnd="url(#arrow2)"/><defs><marker id="arrow2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,3 L6,0 L6,6 Z" fill="#888" /></marker></defs></svg>
+                      <Divide className="w-10 h-10 mb-2 text-green-500" />
                       <span className="text-xs text-gray-500">BRIDGE WIDTH</span>
                       <span className="text-xl font-bold mt-1">{product.bridge_width}mm</span>
                     </div>
@@ -544,8 +545,7 @@ const ProductDetailPage = () => {
                   {/* Temple Length */}
                   {product.temple_length && (
                     <div className="flex flex-col items-center bg-gray-50 rounded-lg p-6 min-w-[140px] shadow-sm">
-                      {/* Placeholder SVG for temple length */}
-                      <svg width="40" height="24" viewBox="0 0 40 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2"><path d="M6 12C6 8 10 8 14 8H26C30 8 34 8 34 12C34 16 30 16 26 16H14C10 16 6 16 6 12Z" stroke="#888" strokeWidth="2"/><path d="M32 20L36 20" stroke="#888" strokeWidth="2" markerStart="url(#arrow3)" markerEnd="url(#arrow3)"/><defs><marker id="arrow3" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,3 L6,0 L6,6 Z" fill="#888" /></marker></defs></svg>
+                      <MoveHorizontal className="w-10 h-10 mb-2 text-purple-500" />
                       <span className="text-xs text-gray-500">TEMPLE LENGTH</span>
                       <span className="text-xl font-bold mt-1">{product.temple_length}mm</span>
                     </div>
