@@ -17,6 +17,7 @@ import {
   Tag,
 } from "lucide-react";
 import Image from "next/image";
+import Select from 'react-select';
 
 // Helper function to shift display orders for a specific category
 const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
@@ -980,31 +981,31 @@ const AddProductTab = () => {
             {/* Special Product Categories */}
             <div className="mb-6">
               <label className="block text-sm font-bold text-slate-700 mb-2">Special Product Categories</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 bg-white/80 border border-gray-200 rounded-2xl p-4">
-                {specialCategories.length === 0 ? (
-                  <div className="text-gray-400 text-sm col-span-full">No special categories found.</div>
-                ) : (
-                  specialCategories.map(cat => (
-                    <label key={cat.id} className="flex items-center gap-2 text-sm bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-xl px-3 py-2 cursor-pointer transition-colors">
-                      <input
-                        type="checkbox"
-                        value={cat.id}
-                        checked={selectedSpecialCategories.includes(cat.id.toString())}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setSelectedSpecialCategories([...selectedSpecialCategories, cat.id.toString()]);
-                          } else {
-                            setSelectedSpecialCategories(selectedSpecialCategories.filter(id => id !== cat.id.toString()));
-                          }
-                        }}
-                        className="accent-blue-600 w-4 h-4 rounded"
-                      />
-                      <span className="font-medium text-blue-700">{cat.name}</span>
-                      {cat.description && <span className="text-xs text-gray-500 ml-2">{cat.description}</span>}
-                    </label>
-                  ))
-                )}
-              </div>
+              <Select
+                isMulti
+                options={specialCategories.map(cat => ({
+                  value: cat.id.toString(),
+                  label: cat.name + (cat.description ? ` - ${cat.description}` : "")
+                }))}
+                value={specialCategories
+                  .filter(cat => selectedSpecialCategories.includes(cat.id.toString()))
+                  .map(cat => ({
+                    value: cat.id.toString(),
+                    label: cat.name + (cat.description ? ` - ${cat.description}` : "")
+                  }))}
+                onChange={selected => {
+                  setSelectedSpecialCategories(selected ? selected.map(opt => opt.value) : []);
+                }}
+                classNamePrefix="react-select"
+                placeholder="Select special categories..."
+                closeMenuOnSelect={false}
+                hideSelectedOptions={false}
+                styles={{
+                  menu: base => ({ ...base, zIndex: 100 }),
+                  control: base => ({ ...base, minHeight: 48, borderRadius: '1rem' }),
+                  multiValue: base => ({ ...base, borderRadius: '0.5rem', background: '#e0e7ff' }),
+                }}
+              />
             </div>
 
             {/* Coupon Selection */}
@@ -1012,31 +1013,31 @@ const AddProductTab = () => {
               <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                 Coupons Applicable to this Product
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-blue-50 border border-blue-100 rounded-xl p-4">
-                {allCoupons.length === 0 ? (
-                  <div className="text-gray-400 text-sm col-span-full">No coupons found.</div>
-                ) : (
-                  allCoupons.filter(c => c.is_active).map(coupon => (
-                    <label key={coupon.id} className="flex items-center gap-2 text-sm bg-white px-3 py-2 rounded-lg cursor-pointer hover:bg-blue-100 border border-blue-100">
-                      <input
-                        type="checkbox"
-                        value={coupon.id}
-                        checked={selectedCoupons.includes(coupon.id)}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setSelectedCoupons([...selectedCoupons, coupon.id]);
-                          } else {
-                            setSelectedCoupons(selectedCoupons.filter(id => id !== coupon.id));
-                          }
-                        }}
-                        className="accent-blue-600 w-4 h-4 rounded"
-                      />
-                      <span className="font-medium text-blue-700">{coupon.code}</span>
-                      <span className="text-xs text-gray-500 ml-2">{coupon.discount_type === 'flat' ? `₹${coupon.discount_value} off` : coupon.discount_type === 'percentage' ? `${coupon.discount_value}% off` : coupon.discount_type}</span>
-                    </label>
-                  ))
-                )}
-              </div>
+              <Select
+                isMulti
+                options={allCoupons.filter(c => c.is_active).map(coupon => ({
+                  value: coupon.id.toString(),
+                  label: `${coupon.code} - ${coupon.discount_type === 'flat' ? `₹${coupon.discount_value} off` : coupon.discount_type === 'percentage' ? `${coupon.discount_value}% off` : coupon.discount_type}`
+                }))}
+                value={allCoupons
+                  .filter(coupon => selectedCoupons.includes(coupon.id))
+                  .map(coupon => ({
+                    value: coupon.id.toString(),
+                    label: `${coupon.code} - ${coupon.discount_type === 'flat' ? `₹${coupon.discount_value} off` : coupon.discount_type === 'percentage' ? `${coupon.discount_value}% off` : coupon.discount_type}`
+                  }))}
+                onChange={selected => {
+                  setSelectedCoupons(selected ? selected.map(opt => opt.value) : []);
+                }}
+                classNamePrefix="react-select"
+                placeholder="Select coupons..."
+                closeMenuOnSelect={false}
+                hideSelectedOptions={false}
+                styles={{
+                  menu: base => ({ ...base, zIndex: 100 }),
+                  control: base => ({ ...base, minHeight: 48, borderRadius: '1rem' }),
+                  multiValue: base => ({ ...base, borderRadius: '0.5rem', background: '#e0e7ff' }),
+                }}
+              />
             </div>
 
             {/* Quantity, Style, Sizes, Lens/Bridge/Temple, Gender, Type, Shape */}

@@ -1,10 +1,5 @@
 import { Eye, Glasses, Sun, Shield, Clock, Users, Heart } from "lucide-react";
 import { CategoryData, Brand, BestSeller, Shape, ProductType, Feature, ProductCategory, Slide } from "../types/data";
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Hero Slider Data
 export const heroSlides: Slide[] = [
@@ -18,15 +13,15 @@ export const heroSlides: Slide[] = [
     image: "https://yourspex.com/cdn/shop/files/Free_Home_eye_test-01_b0e90012-3b11-4a29-80c4-96462bc93cd7.jpg?v=1749553388&width=750",
   },
 ];
-export async function getHeroSlides() {
-  const { data, error } = await supabase
-    .from('slide')
-    .select('*')
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  // Return in the format expected by the homepage slider
-  return (data || []).map(slide => ({ image: slide.image_url }));
-}
+// export async function getHeroSlides() {
+//   const { data, error } = await supabase
+//     .from('slide')
+//     .select('*')
+//     .order('created_at', { ascending: false });
+//   if (error) throw error;
+//   // Return in the format expected by the homepage slider
+//   return (data || []).map(slide => ({ image: slide.image_url }));
+// }
 
 // Category Data
 export const categoryData: CategoryData = {

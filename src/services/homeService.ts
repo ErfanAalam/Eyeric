@@ -103,4 +103,18 @@ export const getShapeBanners = async () => {
     return [];
   }
   return data;
+};
+
+// Fetch lenses by lens_category_id
+export const getLensesByCategory = async (lens_category_id: number) => {
+  const { data, error } = await supabase
+    .from('lenses')
+    .select('*')
+    .eq('lens_category_id', lens_category_id)
+    .order('created_at', { ascending: false });
+  if (error) {
+    console.error('Error fetching lenses:', error);
+    return [];
+  }
+  return data;
 }; 

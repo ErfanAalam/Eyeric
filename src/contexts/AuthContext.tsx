@@ -129,6 +129,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session:', session);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth event:', event, 'Session:', session);
+      }
+    );
+    return () => subscription.unsubscribe();
+  }, []);
+
   const value = {
     user,
     userProfile,

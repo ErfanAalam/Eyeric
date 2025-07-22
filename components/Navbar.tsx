@@ -7,7 +7,7 @@ import { useAuth } from '../src/contexts/AuthContext';
 import { useFavorites } from '../src/contexts/FavoritesContext';
 import { getProducts } from '../src/services/homeService';
 import colors from '@/constants/colors';
-
+import { useCart } from '../src/contexts/CartContext';
 
 interface NavItem {
   title: string;
@@ -29,7 +29,8 @@ const Navbar: React.FC = () => {
   
   const { user, userProfile, signOut } = useAuth();
   const { favoritesCount, isLoggedIn } = useFavorites();
-
+  const { cartItems } = useCart();
+  const cartCount = cartItems.length;
   // Fetch products and generate navigation items
   useEffect(() => {
     const fetchProductsAndGenerateNav = async () => {
@@ -295,7 +296,7 @@ const Navbar: React.FC = () => {
                 style={{ color: colors.muted }}
               >
                 <ShoppingCart size={22} className="group-hover:text-blue-500 transition-all duration-300" />
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">2</span>
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">{cartCount}</span>
               </Link>
               {/* User/Profile Icon */}
               {user ? (
@@ -417,7 +418,7 @@ const Navbar: React.FC = () => {
                 style={{ color: colors.muted }}
               >
                 <ShoppingCart size={24} className="group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300" />
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">2</span>
+                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">{cartCount}</span>
               </Link>
 
               {/* User Authentication Section */}

@@ -58,7 +58,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     try {
       setLoading(true);
-      console.log('Loading favorites from database for user:', user.id);
+      // console.log('Loading favorites from database for user:', user.id);
       
       // Get user's favorites from database
       const { data: userData, error: userError } = await supabase
@@ -67,7 +67,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .eq('id', user.id)
         .single();
 
-      console.log('User data result:', { userData, userError });
+      // console.log('User data result:', { userData, userError });
 
       if (userError) {
         console.error('Error fetching user favorites:', userError);
@@ -76,7 +76,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       if (userData?.favorite_products) {
-        console.log('Found favorites in user table:', userData.favorite_products);
+        // console.log('Found favorites in user table:', userData.favorite_products);
         setFavorites(userData.favorite_products);
       } else {
         console.log('No favorites found in user table');
@@ -117,6 +117,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .select();
 
     console.log('Supabase update result:', { data, error });
+
 
 
       if (error) {

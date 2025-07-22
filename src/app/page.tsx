@@ -64,7 +64,7 @@ function truncateDescription(desc: string): string {
   return words.slice(0, 4).join(' ') + '...';
 }
 
-console.log(colors)
+// console.log(colors)
 
 // Hero Slider Component
 const HeroSlider = ({ slides }: { slides: Slide[] }) => {
@@ -219,9 +219,9 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
             <div
               key={index}
               onClick={() => handleCategoryClick(activeTab, item.title)}
-              className="group relative overflow-hidden max-h-[320px] max-w-[300px] flex flex-col justify-between rounded-xl bg-white/30 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
+              className="group relative overflow-hidden max-h-[520px] max-w-[300px] flex flex-col justify-between rounded-xl bg-white/30 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 cursor-pointer"
             >
-              <div className="aspect-[4/3] w-full bg-gray-100 overflow-hidden flex items-center justify-center">
+              <div className="aspect-[4/3] w-full h-full md:h-[300px] bg-gray-100 overflow-hidden flex items-center justify-center relative">
                 {item.image ? (
                   <Image
                     fill
@@ -233,6 +233,7 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
                     placeholder="blur"
                     blurDataURL="/placeholder.png"
                   />
+                  
                 ) : (
                   <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">No Image</div>
                 )}
@@ -356,8 +357,8 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                       <span className="text-md md:text-xl font-bold text-text">
                         ₹{item.discounted_price || item.original_price}
                       </span>
-                      <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-                        Add to Cart
+                      <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105" onClick={() => handleProductClick(item)}>
+                        Buy Now
                       </button>
                     </div>
                   </div>
@@ -477,8 +478,8 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                       <span className="text-md md:text-xl font-bold text-text">
                         ₹{item.discounted_price || item.original_price}
                       </span>
-                      <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
-                        Add to Cart
+                      <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105" onClick={() => handleProductClick(item)}>
+                        Buy Now
                       </button>
                     </div>
                   </div>

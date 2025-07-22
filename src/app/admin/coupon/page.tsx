@@ -18,7 +18,7 @@ const CouponPage = ({ initialTab = "add" }) => {
 
   return (
     <div>
-      <h1>Coupon Management</h1>
+      {/* <h1>Coupon Management</h1> */}
       <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem" }}>
         {CouponTabs.map((tab) => (
           <button
@@ -28,7 +28,6 @@ const CouponPage = ({ initialTab = "add" }) => {
               fontWeight: activeTab === tab.value ? "bold" : "normal",
               borderBottom: activeTab === tab.value ? "2px solid #333" : "none",
               background: "none",
-              border: "none",
               cursor: "pointer",
               padding: "0.5rem 1rem",
             }}

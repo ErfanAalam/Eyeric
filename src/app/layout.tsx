@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
 import { AdminAuthProvider } from "../contexts/AdminAuthContext";
 import { FavoritesProvider } from "../contexts/FavoritesContext";
+import { CartProvider } from '../contexts/CartContext';
 
 // ✅ Load Poppins font with CSS variable
 const poppins = Poppins({
@@ -26,11 +27,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={poppins.variable}>
       <body className="antialiased">
-        <AdminAuthProvider>
-          <AuthProvider>
-            <FavoritesProvider>{children}</FavoritesProvider>
-          </AuthProvider>
-        </AdminAuthProvider>
+        <CartProvider>
+          <AdminAuthProvider>
+            <AuthProvider>
+              <FavoritesProvider>{children}</FavoritesProvider>
+            </AuthProvider>
+          </AdminAuthProvider>
+        </CartProvider>
       </body>
     </html>
   );

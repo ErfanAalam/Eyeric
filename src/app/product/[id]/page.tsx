@@ -19,13 +19,17 @@ import {
   X,
   Ruler,
   Divide,
-  MoveHorizontal
+  MoveHorizontal,
+  Monitor,
+  Glasses
 } from "lucide-react";
 import Navbar from "../../../../components/Navbar";
 import Footer from "../../../../components/Footer";
 import { supabase } from "../../../../lib/supabaseClient";
 import { getProducts } from "../../../../src/services/homeService";
 import { useFavorites } from "../../../contexts/FavoritesContext";
+import { getLensesByCategory } from "../../../../src/services/homeService";
+import { useCart } from '../../../contexts/CartContext';
 // import { useHasMounted } from "../../../hooks/useHasMounted";
 
 // Define Product interface locally
@@ -54,6 +58,20 @@ interface Product {
   lens_width?: number;
   bridge_width?: number;
   temple_length?: number;
+  is_lens_used?: boolean; // Added for new logic
+  lens_category_id?: number; // Should be number for compatibility
+}
+
+// Define Lens type for modal
+interface Lens {
+  id: string;
+  image_url: string;
+  title: string;
+  description: string;
+  features: string[];
+  original_price: number;
+  category: string;
+  lens_category_id: number;
 }
 
 // Helper to normalize color data
@@ -70,6 +88,7 @@ const ProductDetailPage = () => {
   const params = useParams();
   const router = useRouter();
   const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
+  const { addToCart, isInCart, removeByDetails } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,8 +108,45 @@ const ProductDetailPage = () => {
   const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const imageContainerRef = React.useRef<HTMLDivElement>(null);
+  const [showLensModal, setShowLensModal] = useState(false);
+  const [lenses, setLenses] = useState<Lens[]>([]);
+  const [lensesLoading, setLensesLoading] = useState(false);
+  const [lensesError, setLensesError] = useState<string | null>(null);
+  const [showPowerModal, setShowPowerModal] = useState(false);
+  const [selectedLensId, setSelectedLensId] = useState<string | null>(null);
+  const lensTypes = [
+    {
+      key: "single-vision",
+      icon: <Glasses className="w-8 h-8 text-gray-700" />,
+      title: "Single Vision",
+      description: "For distance or near vision (Thin, anti-glare, blue-cut options)",
+    },
+    {
+      key: "bifocal-progressive",
+      icon: <Glasses className="w-8 h-8 text-gray-700" />,
+      title: "Bifocal/Progressive",
+      description: "Bifocal and Progressives (For two powers in same lenses)",
+    },
+    {
+      key: "zero-power",
+      icon: <Monitor className="w-8 h-8 text-gray-700" />,
+      title: "Zero Power",
+      description: "Block 98% of harmful rays (Anti-glare and blue-cut options)",
+    },
+    {
+      key: "frame-only",
+      icon: <Glasses className="w-8 h-8 text-gray-700" />,
+      title: "Frame Only",
+      description: "Buy Only Frame",
+    },
+  ];
+  const [showPowerLensModal, setShowPowerLensModal] = useState(false);
+  const [powerLensList, setPowerLensList] = useState<Lens[]>([]);
+  const [powerLensLoading, setPowerLensLoading] = useState(false);
+  const [powerLensError, setPowerLensError] = useState<string | null>(null);
+  const [selectedPowerLensId, setSelectedPowerLensId] = useState<string | null>(null);
+  const [selectedLensType, setSelectedLensType] = useState<string | null>(null);
 
-//   if (!hasMounted) return null;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -227,6 +283,27 @@ const ProductDetailPage = () => {
     }
   };
 
+  const handleAddLensClick = async () => {
+    if (!product?.lens_category_id && product?.lens_category_id !== 0) {
+      
+    };
+    setShowLensModal(true);
+    setLensesLoading(true);
+    setLensesError(null);
+    try {
+      const data = await getLensesByCategory(product.lens_category_id!);
+      setLenses(data);
+    } catch {
+      setLensesError('Failed to load lenses');
+    } finally {
+      setLensesLoading(false);
+    }
+  };
+
+  const handleAddPowerClick = () => {
+    setShowPowerModal(true);
+  };
+
   // Magnifier event handlers
   const handleMouseEnter = () => setShowMagnifier(true);
   const handleMouseLeave = () => setShowMagnifier(false);
@@ -242,6 +319,7 @@ const ProductDetailPage = () => {
     setShowPreview(true);
     setPreviewIndex(selectedImage);
   };
+  
   const handlePreviewLeft = () => {
     setPreviewIndex((i) => Math.max(0, i - 1));
   };
@@ -326,6 +404,68 @@ const ProductDetailPage = () => {
   }
 
   const productImages = getProductImages();
+  const BRAND_COLOR = "#2D6CDF";
+
+  // Handler for selecting a lens type in Power modal
+  const handlePowerLensTypeSelect = async (typeKey: string) => {
+    setSelectedLensType(typeKey);
+    setShowPowerLensModal(true);
+    setPowerLensLoading(true);
+    setPowerLensError(null);
+    setSelectedPowerLensId(null);
+    try {
+      if (!product?.lens_category_id) throw new Error('No lens category id');
+      const allLenses = await getLensesByCategory(product.lens_category_id);
+      // Map UI typeKey to DB category
+      let dbCategory = typeKey;
+      if (typeKey === 'bifocal-progressive') dbCategory = 'progressive';
+      if (typeKey === 'single-vision') dbCategory = 'single vision';
+      if (typeKey === 'zero-power') dbCategory = 'zero power';
+      if (typeKey === 'frame-only') dbCategory = 'frame only';
+      const filtered = allLenses.filter(lens => lens.category === dbCategory);
+      setPowerLensList(filtered);
+    } catch {
+      setPowerLensError('Failed to load lenses');
+      setPowerLensList([]);
+    } finally {
+      setPowerLensLoading(false);
+    }
+  };
+
+  // Add to Cart (frame only)
+  const handleAddToCart = () => {
+    if (!product) return;
+    addToCart({ product, powerCategory: 'frame only' });
+    alert('Added to cart!');
+  };
+  const handleRemoveFromCart = () => {
+    if (!product) return;
+    removeByDetails({ product, powerCategory: 'frame only' });
+    alert('Removed from cart!');
+  };
+  // Add to Cart with lens
+  const handleAddLensToCart = (lens: Lens) => {
+    if (!product) return;
+    addToCart({ product, lens });
+    alert('Added to cart with lens!');
+  };
+  const handleRemoveLensFromCart = (lens: Lens) => {
+    if (!product) return;
+    removeByDetails({ product, lens });
+    alert('Removed from cart!');
+  };
+  // Add to Cart with power (category and lens)
+  const handleAddPowerToCart = (powerCategory: string, lens: Lens) => {
+    if (!product) return;
+    addToCart({ product, lens, powerCategory });
+    alert('Added to cart with power and lens!');
+  };
+  const handleRemovePowerFromCart = (powerCategory: string, lens: Lens) => {
+    if (!product) return;
+    removeByDetails({ product, lens, powerCategory });
+    alert('Removed from cart!');
+  };
+
 
   return (
     <div className="min-h-screen bg-white">
@@ -521,10 +661,10 @@ const ProductDetailPage = () => {
               </div>
             )}
 
-            {/* Frame Measurements */}
-            {(product.lens_width || product.bridge_width || product.temple_length) && (
+            {/* Frame Measurements or Sizes */}
+            {(product.lens_width || product.bridge_width || product.temple_length) ? (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">SIZE : {(product.sizes[0]).toString().toUpperCase()}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">Frame Measurements</h3>
                 <div className="flex flex-wrap gap-4 justify-center">
                   {/* Lens Width */}
                   {product.lens_width && (
@@ -552,7 +692,21 @@ const ProductDetailPage = () => {
                   )}
                 </div>
               </div>
-            )}
+            ) : (product.sizes && product.sizes.length > 0) ? (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Sizes</h3>
+                <div className="flex gap-3">
+                  {product.sizes.map((size, index) => (
+                    <button
+                      key={index}
+                      className={`px-4 py-2 rounded-lg border-2 transition-all {'border-blue-600 bg-blue-50 text-blue-600'}`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             {/* Sizes */}
             {/* {product.sizes && product.sizes.length > 0 && (
@@ -598,10 +752,64 @@ const ProductDetailPage = () => {
 
             {/* Action Buttons */}
             <div className="flex gap-4">
-              <button className="flex-1 bg-primary/80 text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2">
-                <ShoppingBag className="w-5 h-5" />
-                Add to Cart
-              </button>
+              {/* Sunglasses & Powered Sunglasses logic */}
+              {product.type_category &&
+                (product.type_category.includes("sunglasses") || product.type_category.includes("powered sunglasses")) ? (
+                  product.is_lens_used ? (
+                    <>
+                      {product && isInCart({ product, powerCategory: 'frame only' }) ? (
+                        <button className="flex-1 bg-red-500 text-white py-4 rounded-xl font-semibold hover:bg-red-600 cursor-pointer transition-colors flex items-center justify-center gap-2" onClick={handleRemoveFromCart}>
+                          Remove from Cart
+                        </button>
+                      ) : (
+                        <button
+                          className="flex-1 bg-primary/80 text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
+                          onClick={handleAddToCart}
+                        >
+                          <ShoppingBag className="w-5 h-5" />
+                          Add to Cart
+                        </button>
+                      )}
+                      <button
+                        className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 cursor-pointer transition-colors flex items-center justify-center gap-2"
+                        onClick={handleAddLensClick}
+                      >
+                        <Ruler className="w-5 h-5" />
+                        Add Lens
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="flex-1 bg-primary/80 text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
+                      onClick={handleAddToCart}
+                    >
+                      <ShoppingBag className="w-5 h-5" />
+                      Add to Cart
+                    </button>
+                  )
+                ) :
+                // Eyeglasses & Computer Glasses logic
+                product.type_category &&
+                (product.type_category.includes("eyeglasses") || product.type_category.includes("computer glasses") || product.type_category.includes("computerglasses")) ? (
+                  <button
+                    className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 cursor-pointer transition-colors flex items-center justify-center gap-2"
+                    onClick={handleAddPowerClick}
+                  >
+                    <Ruler className="w-5 h-5" />
+                    Add Power
+                  </button>
+                ) : (
+                  // Default fallback (show Add to Cart)
+                  <button
+                    className="flex-1 bg-primary/80 text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
+                    onClick={handleAddToCart}
+                  >
+                    <ShoppingBag className="w-5 h-5" />
+                    Add to Cart
+                  </button>
+                )
+              }
+              {/* Favorite Button (unchanged) */}
               <button 
                 onClick={handleFavoriteClick}
                 className={`w-14 h-14 border border-gray-300 rounded-xl flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors ${
@@ -879,6 +1087,263 @@ const ProductDetailPage = () => {
               <ArrowRight className="w-8 h-8 md:w-10 md:h-10" />
             </button>
           )}
+        </div>
+      )}
+
+      {/* Lens Modal/Drawer */}
+      {showLensModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-stretch md:justify-end bg-black/40"
+          onClick={() => setShowLensModal(false)}
+        >
+          <div
+            className="w-full md:w-[50vw] bg-gradient-to-br from-[#f5faff] via-[#faf8f6] to-[#f0f4fa] rounded-t-2xl md:rounded-l-2xl shadow-2xl p-0 overflow-y-auto animate-slideInUp md:animate-slideInRight relative flex flex-col max-h-[100vh]"
+            style={{ position: 'relative', bottom: 0, right: 0 }}
+            onClick={event => event.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-3 md:px-6 pt-3 md:pt-6 pb-2 md:pb-2 border-b border-gray-100 bg-gradient-to-b from-white/90 to-[#faf8f6] backdrop-blur">
+              <button className="p-2 mr-2" onClick={() => setShowLensModal(false)}>
+                <ArrowLeft className="w-6 h-6 text-gray-700" />
+              </button>
+              <h2 className="flex-1 text-center text-lg md:text-2xl font-bold text-gray-900 tracking-tight">Choose Lens Package</h2>
+              <button className="p-2 ml-2" onClick={() => setShowLensModal(false)}>
+                <X className="w-6 h-6 text-gray-700" />
+              </button>
+            </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-2 md:px-6 py-2 md:py-6">
+              {lensesLoading ? (
+                <div className="flex justify-center items-center py-8">Loading lenses...</div>
+              ) : lensesError ? (
+                <div className="text-red-500 py-8">{lensesError}</div>
+              ) : lenses.length === 0 ? (
+                <div className="text-gray-500 py-8">No lenses found for this category.</div>
+              ) : (
+                <div className="flex flex-col gap-3 md:gap-6">
+                  {lenses.map((lens) => (
+                    <div
+                      key={lens.id}
+                      className={`group flex items-center bg-white rounded-2xl shadow-lg px-3 py-3 md:px-6 md:py-5 cursor-pointer border-2 transition-all duration-200 relative overflow-hidden
+                        ${selectedLensId === lens.id
+                          ? 'border-[2.5px] border-primary bg-gradient-to-br from-primary/60 to-yellow-50/40 scale-[1.02]'
+                          : 'border-gray-100 hover:border-primary hover:shadow-xl hover:scale-[1.01]'}
+                      `}
+                      style={{ boxShadow: selectedLensId === lens.id ? `0 0 0 2px ${BRAND_COLOR}33` : undefined }}
+                      onClick={() => setSelectedLensId(lens.id)}
+                    >
+                      <div className="w-16 h-16 md:w-60 md:h-40 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center mr-2 md:mr-6 border border-gray-200">
+                        {lens.image_url ? (
+                          <Image src={lens.image_url} alt={lens.title} width={96} height={96} className="object-cover w-full h-full" />
+                        ) : (
+                          <span className="text-2xl md:text-4xl">👓</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-base md:text-2xl text-gray-900 mb-1 truncate">{lens.title}</div>
+                        <ul className="text-gray-700 text-xs md:text-[16px] mb-1 md:mb-2 list-disc list-inside space-y-0.5">
+                          {Array.isArray(lens.features) && lens.features.map((f, i) => (
+                            <li key={i}>{f}</li>
+                          ))}
+                        </ul>
+                        <div className="text-gray-500 text-xs md:text-[18px] mb-1">Applicable Only for Single Vision Power</div>
+                        <div className="text-gray-500 text-xs md:text-[18px] mb-1">UV-400 Protection</div>
+                        <div className="font-semibold text-base md:text-xl text-primary mt-1 md:mt-2">
+                          Frame + Lens: <span className="text-gray-900">₹{lens.original_price}</span>
+                        </div>
+                      </div>
+                      {/* Selection checkmark */}
+                      {selectedLensId === lens.id && (
+                        <span className="ml-2 text-primary text-xl md:text-2xl font-bold absolute top-3 right-3 md:static">✓</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Footer */}
+            <div className="sticky bottom-0 z-10 px-3 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gradient-to-t from-white/90 to-[#faf8f6] flex flex-col gap-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-500 text-sm md:text-base">Subtotal (Frame):</span>
+                <span className="text-xl md:text-2xl font-bold text-gray-900">₹{product?.discounted_price || product?.original_price}</span>
+              </div>
+              {selectedLensId && isInCart({ product, lens: lenses.find(l => l.id === selectedLensId) }) ? (
+                <button className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => handleRemoveLensFromCart(lenses.find(l => l.id === selectedLensId))}>
+                  Remove from Cart
+                </button>
+              ) : (
+                <button className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => selectedLensId && handleAddLensToCart(lenses.find(l => l.id === selectedLensId))}>
+                  Add to Cart
+                </button>
+              )}
+              <div className="text-gray-400 text-xs md:text-sm text-center mt-1">Need help? <span className="underline cursor-pointer">Contact Support</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Power Modal/Drawer */}
+      {showPowerModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-end md:items-stretch md:justify-end bg-black/40"
+          onClick={() => setShowPowerModal(false)}
+        >
+          <div
+            className="w-full md:w-[50vw] bg-gradient-to-br from-[#f5faff] via-[#faf8f6] to-[#f0f4fa] rounded-t-2xl md:rounded-l-2xl shadow-2xl p-0 overflow-y-auto animate-slideInUp md:animate-slideInRight relative flex flex-col max-h-[100vh]"
+            style={{ position: 'relative', bottom: 0, right: 0 }}
+            onClick={event => event.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-3 md:px-6 pt-3 md:pt-6 pb-2 md:pb-2 border-b border-gray-100 bg-gradient-to-b from-white/90 to-[#faf8f6] backdrop-blur">
+              <button className="p-2 mr-2" onClick={() => setShowPowerModal(false)}>
+                <ArrowLeft className="w-6 h-6 text-gray-700" />
+              </button>
+              <h2 className="flex-1 text-center text-lg md:text-2xl font-bold text-gray-900 tracking-tight">Select Lens Type</h2>
+              <button className="p-2 ml-2" onClick={() => setShowPowerModal(false)}>
+                <X className="w-6 h-6 text-gray-700" />
+              </button>
+            </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-2 md:px-6 py-2 md:py-6">
+              <div className="flex flex-col gap-3 md:gap-6">
+                {lensTypes.map((type) => (
+                  <div
+                    key={type.key}
+                    className={`group flex items-center bg-white rounded-2xl shadow-lg px-3 py-3 md:px-6 md:py-5 cursor-pointer border-2 transition-all duration-200 relative overflow-hidden
+                      ${selectedLensType === type.key
+                        ? 'border-[2.5px] border-primary bg-gradient-to-br from-primary/60 to-yellow-50/40 scale-[1.02]'
+                        : 'border-gray-100 hover:border-primary hover:shadow-xl hover:scale-[1.01]'}
+                    `}
+                    style={{ boxShadow: selectedLensType === type.key ? `0 0 0 2px ${BRAND_COLOR}33` : undefined }}
+                    onClick={() => handlePowerLensTypeSelect(type.key)}
+                  >
+                    <div className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center mr-2 md:mr-6 border border-gray-200">
+                      {type.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-bold text-base md:text-xl text-gray-900 mb-1 truncate">{type.title}</div>
+                      <div className="text-gray-700 text-xs md:text-base mb-1">{type.description}</div>
+                    </div>
+                    {/* Selection checkmark */}
+                    {selectedLensType === type.key && (
+                      <span className="ml-2 text-primary text-xl md:text-2xl font-bold absolute top-3 right-3 md:static">✓</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Footer */}
+            <div className="sticky bottom-0 z-10 px-3 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gradient-to-t from-white/90 to-[#faf8f6] flex flex-col gap-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-500 text-sm md:text-base">Subtotal (Frame):</span>
+                <span className="text-xl md:text-2xl font-bold text-gray-900">₹{product?.discounted_price || product?.original_price}</span>
+              </div>
+              <button
+                className={`w-full py-3 rounded-xl font-bold text-white shadow-md transition-all duration-200 text-base md:text-lg ${selectedLensType ? 'bg-primary hover:bg-primary/80' : 'bg-gray-300 cursor-not-allowed'}`}
+                disabled={!selectedLensType}
+                onClick={() => selectedLensType && handlePowerLensTypeSelect(selectedLensType)}
+              >
+                {isInCart({ product, powerCategory: selectedLensType }) ? (
+                  <span>Remove from Cart</span>
+                ) : (
+                  <span>Continue</span>
+                )}
+              </button>
+              <div className="text-gray-400 text-xs md:text-sm text-center mt-1">Need help? <span className="underline cursor-pointer">Contact Support</span></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Power Lens Modal (above Power Modal) */}
+      {showPowerLensModal && (
+        <div
+          className="fixed inset-0 z-60 flex items-end md:items-stretch md:justify-end bg-black/60"
+          onClick={() => setShowPowerLensModal(false)}
+        >
+          <div
+            className="w-full md:w-[50vw] bg-gradient-to-br from-[#f5faff] via-[#faf8f6] to-[#f0f4fa] rounded-t-2xl md:rounded-l-2xl shadow-2xl p-0 overflow-y-auto animate-slideInUp md:animate-slideInRight relative flex flex-col max-h-[100vh]"
+            style={{ position: 'relative', bottom: 0, right: 0 }}
+            onClick={event => event.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between px-3 md:px-6 pt-3 md:pt-6 pb-2 md:pb-2 border-b border-gray-100 bg-gradient-to-b from-white/90 to-[#faf8f6] backdrop-blur">
+              <button className="p-2 mr-2" onClick={() => setShowPowerLensModal(false)}>
+                <ArrowLeft className="w-6 h-6 text-gray-700" />
+              </button>
+              <h2 className="flex-1 text-center text-lg md:text-2xl font-bold text-gray-900 tracking-tight">Select Lens</h2>
+              <button className="p-2 ml-2" onClick={() => setShowPowerLensModal(false)}>
+                <X className="w-6 h-6 text-gray-700" />
+              </button>
+            </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-2 md:px-6 py-2 md:py-6">
+              {powerLensLoading ? (
+                <div className="flex justify-center items-center py-8">Loading lenses...</div>
+              ) : powerLensError ? (
+                <div className="text-red-500 py-8">{powerLensError}</div>
+              ) : powerLensList.length === 0 ? (
+                <div className="text-gray-500 py-8">No lenses found for this type.</div>
+              ) : (
+                <div className="flex flex-col gap-3 md:gap-6">
+                  {powerLensList.map((lens) => (
+                    <div
+                      key={lens.id}
+                      className={`group flex items-center bg-white rounded-2xl shadow-lg px-3 py-3 md:px-6 md:py-5 cursor-pointer border-2 transition-all duration-200 relative overflow-hidden
+                        ${selectedPowerLensId === lens.id
+                          ? 'border-[2.5px] border-primary bg-gradient-to-br from-primary/60 to-yellow-50/40 scale-[1.02]'
+                          : 'border-gray-100 hover:border-primary hover:shadow-xl hover:scale-[1.01]'}
+                      `}
+                      style={{ boxShadow: selectedPowerLensId === lens.id ? `0 0 0 2px ${BRAND_COLOR}33` : undefined }}
+                      onClick={() => setSelectedPowerLensId(lens.id)}
+                    >
+                      <div className="w-16 h-16 md:w-60 md:h-40 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center mr-2 md:mr-6 border border-gray-200">
+                        {lens.image_url ? (
+                          <Image src={lens.image_url} alt={lens.title} width={96} height={96} className="object-cover w-full h-full" />
+                        ) : (
+                          <span className="text-2xl md:text-4xl">👓</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-base md:text-2xl text-gray-900 mb-1 truncate">{lens.title}</div>
+                        <ul className="text-gray-700 text-xs md:text-[16px] mb-1 md:mb-2 list-disc list-inside space-y-0.5">
+                          {Array.isArray(lens.features) && lens.features.map((f, i) => (
+                            <li key={i}>{f}</li>
+                          ))}
+                        </ul>
+                        <div className="text-gray-500 text-xs md:text-[18px] mb-1">Applicable Only for Single Vision Power</div>
+                        <div className="text-gray-500 text-xs md:text-[18px] mb-1">UV-400 Protection</div>
+                        <div className="font-semibold text-base md:text-xl text-primary mt-1 md:mt-2">
+                          Frame + Lens: <span className="text-gray-900">₹{lens.original_price}</span>
+                        </div>
+                      </div>
+                      {/* Selection checkmark */}
+                      {selectedPowerLensId === lens.id && (
+                        <span className="ml-2 text-primary text-xl md:text-2xl font-bold absolute top-3 right-3 md:static">✓</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Footer */}
+            <div className="sticky bottom-0 z-10 px-3 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gradient-to-t from-white/90 to-[#faf8f6] flex flex-col gap-2">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-500 text-sm md:text-base">Subtotal (Frame):</span>
+                <span className="text-xl md:text-2xl font-bold text-gray-900">₹{product?.discounted_price || product?.original_price}</span>
+              </div>
+              {selectedPowerLensId && selectedLensType && isInCart({ product, lens: powerLensList.find(l => l.id === selectedPowerLensId), powerCategory: selectedLensType }) ? (
+                <button className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => handleRemovePowerFromCart(selectedLensType, powerLensList.find(l => l.id === selectedPowerLensId))}>
+                  Remove from Cart
+                </button>
+              ) : (
+                <button className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => selectedPowerLensId && selectedLensType && handleAddPowerToCart(selectedLensType, powerLensList.find(l => l.id === selectedPowerLensId))}>
+                  Add to Cart
+                </button>
+              )}
+              <div className="text-gray-400 text-xs md:text-sm text-center mt-1">Need help? <span className="underline cursor-pointer">Contact Support</span></div>
+            </div>
+          </div>
         </div>
       )}
     </div>
