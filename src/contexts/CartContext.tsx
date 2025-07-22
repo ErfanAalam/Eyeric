@@ -1,9 +1,49 @@
 'use client'
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-export interface CartItem {
-  product: any;
-  lens?: any;
+// Define Product and Lens types
+interface Product {
+  id?: string;
+  title: string;
+  description: string;
+  original_price: number;
+  discounted_price?: number;
+  display_order?: number;
+  bestseller?: boolean;
+  latest_trend?: boolean;
+  banner_image_1?: string;
+  banner_image_2?: string;
+  colors: ({ color: string; images: string[] } | { colors: string[]; images: string[] })[];
+  sizes: string[];
+  frame_material?: string;
+  features: string[];
+  shape_category?: string;
+  tags: string[];
+  gender_category: string[];
+  type_category: string[];
+  created_at?: string;
+  updated_at?: string;
+  lens_width?: number;
+  bridge_width?: number;
+  temple_length?: number;
+  is_lens_used?: boolean;
+  lens_category_id?: number;
+}
+
+interface Lens {
+  id: string;
+  image_url: string;
+  title: string;
+  description: string;
+  features: string[];
+  original_price: number;
+  category: string;
+  lens_category_id: number;
+}
+
+interface CartItem {
+  product: Product;
+  lens?: Lens;
   powerCategory?: string;
 }
 
