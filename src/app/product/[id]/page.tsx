@@ -30,6 +30,9 @@ import { getProducts } from "../../../../src/services/homeService";
 import { useFavorites } from "../../../contexts/FavoritesContext";
 import { getLensesByCategory } from "../../../../src/services/homeService";
 import { useCart } from '../../../contexts/CartContext';
+import AddPowerModal from './AddPowerModal';
+import EnterPowerManuallyModal from './EnterPowerManuallyModal';
+import UploadPrescriptionModal from './UploadPrescriptionModal';
 // import { useHasMounted } from "../../../hooks/useHasMounted";
 
 // Define Product interface locally
@@ -124,7 +127,7 @@ const ProductDetailPage = () => {
     {
       key: "bifocal-progressive",
       icon: <Glasses className="w-8 h-8 text-gray-700" />,
-      title: "Bifocal/Progressive",
+      title: "Progressive + Bifocal",
       description: "Bifocal and Progressives (For two powers in same lenses)",
     },
     {
@@ -146,6 +149,62 @@ const ProductDetailPage = () => {
   const [powerLensError, setPowerLensError] = useState<string | null>(null);
   const [selectedPowerLensId, setSelectedPowerLensId] = useState<string | null>(null);
   const [selectedLensType, setSelectedLensType] = useState<string | null>(null);
+  const [showAddPowerModal, setShowAddPowerModal] = useState(false);
+  const [showEnterPowerManuallyModal, setShowEnterPowerManuallyModal] = useState(false);
+  const [showUploadPrescriptionModal, setShowUploadPrescriptionModal] = useState(false);
+  const [selectedLensForPower, setSelectedLensForPower] = useState<Lens | null>(null);
+  const [savedPowers] = useState([
+    { id: '1', label: 'Saved Power', details: 'Last used / added powers' },
+  ]);
+  const [isPowerFlow, setIsPowerFlow] = useState(false);
+
+  // Handler to open AddPowerModal after lens selection for single vision/progressive
+  const handleLensSelectForPower = (lens: Lens) => {
+    setSelectedLensForPower(lens);
+    setShowAddPowerModal(true);
+  };
+
+  const handleSubmitPowerLater = () => {
+    if (product && selectedLensForPower) {
+      addToCart({ product, lens: selectedLensForPower, powerCategory: 'submit-later' });
+    }
+    setShowAddPowerModal(false);
+    setSelectedLensForPower(null);
+  };
+
+  const handleEnterPowerManually = () => {
+    setShowAddPowerModal(false);
+    setShowEnterPowerManuallyModal(true);
+  };
+
+  const handleUploadPrescription = () => {
+    setShowAddPowerModal(false);
+    setShowUploadPrescriptionModal(true);
+  };
+
+  const handleSelectSavedPower = () => {
+    if (product && selectedLensForPower) {
+      addToCart({ product, lens: selectedLensForPower, powerCategory: 'saved' });
+    }
+    setShowAddPowerModal(false);
+    setSelectedLensForPower(null);
+  };
+
+  const handleManualPowerSubmit = () => {
+    if (product && selectedLensForPower) {
+      addToCart({ product, lens: selectedLensForPower, powerCategory: 'manual' });
+    }
+    setShowEnterPowerManuallyModal(false);
+    setSelectedLensForPower(null);
+  };
+
+  const handlePrescriptionSubmit = () => {
+    if (product && selectedLensForPower) {
+      addToCart({ product, lens: selectedLensForPower, powerCategory: 'prescription' });
+    }
+    setShowUploadPrescriptionModal(false);
+    setSelectedLensForPower(null);
+  };
 
 
   useEffect(() => {
@@ -284,6 +343,7 @@ const ProductDetailPage = () => {
   };
 
   const handleAddLensClick = async () => {
+    setIsPowerFlow(false);
     if (!product?.lens_category_id && product?.lens_category_id !== 0) {
       
     };
@@ -301,6 +361,7 @@ const ProductDetailPage = () => {
   };
 
   const handleAddPowerClick = () => {
+    setIsPowerFlow(true);
     setShowPowerModal(true);
   };
 
@@ -409,6 +470,17 @@ const ProductDetailPage = () => {
   // Handler for selecting a lens type in Power modal
   const handlePowerLensTypeSelect = async (typeKey: string) => {
     setSelectedLensType(typeKey);
+
+    if (typeKey === "frame-only") {
+      // Add to cart directly for frame only
+      if (product) {
+        addToCart({ product, powerCategory: "frame only" });
+        setShowPowerModal(false);
+        alert("Added to cart!");
+      }
+      return;
+    }
+
     setShowPowerLensModal(true);
     setPowerLensLoading(true);
     setPowerLensError(null);
@@ -459,11 +531,6 @@ const ProductDetailPage = () => {
     if (!product) return;
     addToCart({ product, lens, powerCategory });
     alert('Added to cart with power and lens!');
-  };
-  const handleRemovePowerFromCart = (powerCategory: string, lens: Lens) => {
-    if (!product) return;
-    removeByDetails({ product, lens, powerCategory });
-    alert('Removed from cart!');
   };
 
 
@@ -1097,7 +1164,7 @@ const ProductDetailPage = () => {
           onClick={() => setShowLensModal(false)}
         >
           <div
-            className="w-full md:w-[50vw] bg-gradient-to-br from-[#f5faff] via-[#faf8f6] to-[#f0f4fa] rounded-t-2xl md:rounded-l-2xl shadow-2xl p-0 overflow-y-auto animate-slideInUp md:animate-slideInRight relative flex flex-col max-h-[100vh]"
+            className="w-full md:w-[50vw] bg-gradient-to-br from-[#f5faff] via-[#faf8f6] to-[#f0f4fa] rounded-t-2xl md:rounded-l-2xl shadow-2xl p-0 overflow-y-auto animate-slideInUp md:animate-slideInRight relative flex flex-col h-[100vh]"
             style={{ position: 'relative', bottom: 0, right: 0 }}
             onClick={event => event.stopPropagation()}
           >
@@ -1130,7 +1197,11 @@ const ProductDetailPage = () => {
                           : 'border-gray-100 hover:border-primary hover:shadow-xl hover:scale-[1.01]'}
                       `}
                       style={{ boxShadow: selectedLensId === lens.id ? `0 0 0 2px ${BRAND_COLOR}33` : undefined }}
-                      onClick={() => setSelectedLensId(lens.id)}
+                      onClick={() =>
+                        (lens.category === 'single vision' || lens.category === 'progressive' || lens.category === 'bifocal')
+                          ? handleLensSelectForPower(lens)
+                          : setSelectedLensId(lens.id)
+                      }
                     >
                       <div className="w-16 h-16 md:w-60 md:h-40 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center mr-2 md:mr-6 border border-gray-200">
                         {lens.image_url ? (
@@ -1189,7 +1260,7 @@ const ProductDetailPage = () => {
           onClick={() => setShowPowerModal(false)}
         >
           <div
-            className="w-full md:w-[50vw] bg-gradient-to-br from-[#f5faff] via-[#faf8f6] to-[#f0f4fa] rounded-t-2xl md:rounded-l-2xl shadow-2xl p-0 overflow-y-auto animate-slideInUp md:animate-slideInRight relative flex flex-col max-h-[100vh]"
+            className="w-full md:w-[50vw] bg-gradient-to-br from-[#f5faff] via-[#faf8f6] to-[#f0f4fa] rounded-t-2xl md:rounded-l-2xl shadow-2xl p-0 overflow-y-auto animate-slideInUp md:animate-slideInRight relative flex flex-col h-[100vh]"
             style={{ position: 'relative', bottom: 0, right: 0 }}
             onClick={event => event.stopPropagation()}
           >
@@ -1262,7 +1333,7 @@ const ProductDetailPage = () => {
           onClick={() => setShowPowerLensModal(false)}
         >
           <div
-            className="w-full md:w-[50vw] bg-gradient-to-br from-[#f5faff] via-[#faf8f6] to-[#f0f4fa] rounded-t-2xl md:rounded-l-2xl shadow-2xl p-0 overflow-y-auto animate-slideInUp md:animate-slideInRight relative flex flex-col max-h-[100vh]"
+            className="w-full md:w-[50vw] bg-gradient-to-br from-[#f5faff] via-[#faf8f6] to-[#f0f4fa] rounded-t-2xl md:rounded-l-2xl shadow-2xl p-0 overflow-y-auto animate-slideInUp md:animate-slideInRight relative flex flex-col h-[100vh]"
             style={{ position: 'relative', bottom: 0, right: 0 }}
             onClick={event => event.stopPropagation()}
           >
@@ -1332,20 +1403,52 @@ const ProductDetailPage = () => {
                 <span className="text-gray-500 text-sm md:text-base">Subtotal (Frame):</span>
                 <span className="text-xl md:text-2xl font-bold text-gray-900">₹{product?.discounted_price || product?.original_price}</span>
               </div>
-              {selectedPowerLensId && selectedLensType && isInCart({ product, lens: powerLensList.find(l => l.id === selectedPowerLensId), powerCategory: selectedLensType }) ? (
-                <button className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => handleRemovePowerFromCart(selectedLensType, powerLensList.find(l => l.id === selectedPowerLensId))}>
-                  Remove from Cart
-                </button>
-              ) : (
-                <button className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => selectedPowerLensId && selectedLensType && handleAddPowerToCart(selectedLensType, powerLensList.find(l => l.id === selectedPowerLensId))}>
-                  Add to Cart
-                </button>
+              {selectedPowerLensId && selectedLensType && (
+                isPowerFlow ? (
+                  <button
+                    className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg"
+                    onClick={() => {
+                      setShowPowerLensModal(false);
+                      setShowAddPowerModal(true);
+                      setSelectedLensForPower(powerLensList.find(l => l.id === selectedPowerLensId));
+                    }}
+                  >
+                    Continue
+                  </button>
+                ) : (
+                  <button
+                    className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg"
+                    onClick={() => selectedPowerLensId && selectedLensType && handleAddPowerToCart(selectedLensType, powerLensList.find(l => l.id === selectedPowerLensId))}
+                  >
+                    Add to Cart
+                  </button>
+                )
               )}
               <div className="text-gray-400 text-xs md:text-sm text-center mt-1">Need help? <span className="underline cursor-pointer">Contact Support</span></div>
             </div>
           </div>
         </div>
       )}
+      <AddPowerModal
+        open={showAddPowerModal}
+        onClose={() => { setShowAddPowerModal(false); setSelectedLensForPower(null); setIsPowerFlow(false); }}
+        onSubmitPowerLater={handleSubmitPowerLater}
+        onEnterPowerManually={handleEnterPowerManually}
+        onUploadPrescription={handleUploadPrescription}
+        onSelectSavedPower={handleSelectSavedPower}
+        savedPowers={savedPowers}
+      />
+      <EnterPowerManuallyModal
+        open={showEnterPowerManuallyModal}
+        onClose={() => { setShowEnterPowerManuallyModal(false); setSelectedLensForPower(null); }}
+        onSubmit={handleManualPowerSubmit}
+        lensCategory={selectedLensType === 'bifocal-progressive' || selectedLensType === 'progressive' ? selectedLensType : undefined}
+      />
+      <UploadPrescriptionModal
+        open={showUploadPrescriptionModal}
+        onClose={() => { setShowUploadPrescriptionModal(false); setSelectedLensForPower(null); }}
+        onSubmit={handlePrescriptionSubmit}
+      />
     </div>
   );
 };
