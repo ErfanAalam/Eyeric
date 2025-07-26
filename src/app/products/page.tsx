@@ -218,7 +218,7 @@ const ProductsContent = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className=" px-4 py-8">
         {/* Breadcrumb and Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
           {/* Search Bar replaces breadcrumb */}
@@ -302,11 +302,11 @@ const ProductsContent = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
                 {filteredProducts.map((product) => (
                   <div 
                     key={product.id} 
-                    className="relative bg-white rounded-2xl shadow-lg group overflow-hidden flex flex-col cursor-pointer"
+                    className="relative bg-white rounded-2xl shadow-lg max-h-[500px] group overflow-hidden flex flex-col cursor-pointer"
                     onClick={() => handleProductClick(product)}
                   >
                     {/* Wishlist Icon */}
@@ -322,7 +322,7 @@ const ProductsContent = () => {
                     </button>
                     {/* Sale Badge */}
                     {product.discounted_price && (
-                      <span className="absolute top-3 left-3 z-10 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full">Sale</span>
+                      <span className="absolute top-3 left-3 z-10 bg-primary text-white text-xs font-semibold px-3 py-1 md:px-4 md:py-2 rounded-full">Sale</span>
                     )}
                     {/* Product Image */}
                     <div className="aspect-[4/3] w-full overflow-hidden">
@@ -335,7 +335,7 @@ const ProductsContent = () => {
                       />
                     </div>
                     {/* Product Info */}
-                    <div className="p-4 flex flex-col flex-1">
+                    <div className="p-4 flex flex-col flex-1 border-black">
                       <h3 className="font-bold text-gray-900 text-base mb-1 line-clamp-2">{product.title}</h3>
                       <div className="flex items-center gap-2 mb-2">
                         {product.discounted_price && (
@@ -343,7 +343,7 @@ const ProductsContent = () => {
                         )}
                         <span className="text-text font-bold text-lg">₹{product.discounted_price || product.original_price}</span>
                       </div>
-                      <button className="mt-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/80 text-white rounded-full py-2 px-4 font-semibold shadow transition-all text-sm" onClick={() => handleProductClick(product)}>
+                      <button className="mt-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/80 text-white rounded-full py-2 px-4 md:py-4 md:px-6 font-semibold shadow transition-all text-sm md:text-base" onClick={() => handleProductClick(product)}>
                         <ShoppingBag className="w-4 h-4" /> Buy Now
                       </button>
                     </div>

@@ -1,20 +1,15 @@
 import React from 'react';
 import { Clock, BookMarked, Pencil, Upload, CheckCircle, FileText, PencilIcon, ArrowBigUp } from "lucide-react";
-
-interface SavedPower {
-  id: string;
-  label: string;
-  details: string;
-}
+import type { PowerEntry } from './page';
 
 interface AddPowerModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmitPowerLater: () => void;
+  onSubmitPowerLater: (name: string, phone: string) => void;
   onEnterPowerManually: () => void;
-  onUploadPrescription: () => void;
-  onSelectSavedPower?: (power: SavedPower) => void;
-  savedPowers?: SavedPower[];
+  onUploadPrescription: (imageUrl?: string, name?: string, phone?: string) => void;
+  onSelectSavedPower?: () => void;
+  savedPowers?: PowerEntry[];
 }
 
 const AddPowerModal: React.FC<AddPowerModalProps> = ({
@@ -70,7 +65,7 @@ const AddPowerModal: React.FC<AddPowerModalProps> = ({
             <div className="flex flex-col gap-3 mb-6">
               <button
                 className="flex items-center gap-3 bg-white rounded-xl shadow px-4 py-3 border border-gray-100 hover:shadow-lg transition-all"
-                onClick={onSubmitPowerLater}
+                onClick={() => onSubmitPowerLater('', '')}
               >
                 <span className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
                   <Clock className="w-8 h-8 text-blue-900" />
@@ -91,7 +86,7 @@ const AddPowerModal: React.FC<AddPowerModalProps> = ({
               {savedPowers.length > 0 && (
                 <button
                   className="flex items-center gap-3 bg-white rounded-xl shadow px-4 py-3 border border-gray-100 hover:shadow-lg transition-all relative"
-                  onClick={() => onSelectSavedPower && onSelectSavedPower(savedPowers[0])}
+                  onClick={() => onSelectSavedPower && onSelectSavedPower()}
                 >
                   <span className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
                     <BookMarked className="w-8 h-8 text-blue-900" />
@@ -121,7 +116,7 @@ const AddPowerModal: React.FC<AddPowerModalProps> = ({
               {/* Upload Prescription */}
               <button
                 className="flex items-center gap-3 bg-white rounded-xl shadow px-4 py-3 border border-gray-100 hover:shadow-lg transition-all"
-                onClick={onUploadPrescription}
+                onClick={() => onUploadPrescription && onUploadPrescription()}
               >
                 <span className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
                   <Upload className="w-8 h-8 text-blue-900" />

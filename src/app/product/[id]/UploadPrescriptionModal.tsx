@@ -1,15 +1,19 @@
 import React, { useRef, useState } from 'react';
+import { supabase } from '../../../../lib/supabaseClient';
 
 interface UploadPrescriptionModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (imageUrl: string, name: string, phone: string) => void;
 }
 
 const UploadPrescriptionModal: React.FC<UploadPrescriptionModalProps> = ({ open, onClose, onSubmit }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -52,10 +56,43 @@ const UploadPrescriptionModal: React.FC<UploadPrescriptionModalProps> = ({ open,
     e.preventDefault();
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const uploadToSupabase = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `prescription-images/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from('prescription-images')
+      .upload(filePath, file);
+
+    if (error) {
+      throw new Error(`Upload failed: ${error.message}`);
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('prescription-images')
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedFile) {
-      onSubmit();
+    if (!selectedFile || !name || !phone) {
+      setError('Please fill in all required fields and select a file.');
+      return;
+    }
+
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const imageUrl = await uploadToSupabase(selectedFile);
+      onSubmit(imageUrl, name, phone);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -86,6 +123,28 @@ const UploadPrescriptionModal: React.FC<UploadPrescriptionModalProps> = ({ open,
             <li>Make sure your file size under 5 MB</li>
             <li>Please upload only one file</li>
           </ul>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm mb-1">Name *</label>
+            <input
+              type="text"
+              className="w-full border rounded-lg px-3 py-2 text-base"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+              placeholder="Name"
+            />
+          </div>
+          <div className="mb-2">
+            <label className="block text-gray-700 text-sm mb-1">Phone Number *</label>
+            <input
+              type="tel"
+              className="w-full border rounded-lg px-3 py-2 text-base"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              required
+              placeholder="Phone Number"
+            />
+          </div>
           <div
             className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl p-8 mb-6 cursor-pointer bg-gray-50 hover:bg-gray-100 transition"
             onClick={() => fileInputRef.current?.click()}
@@ -115,10 +174,10 @@ const UploadPrescriptionModal: React.FC<UploadPrescriptionModalProps> = ({ open,
           </div>
           <button
             type="submit"
-            className={`w-full py-3 rounded-xl font-bold text-white text-base md:text-lg transition-all duration-200 ${selectedFile ? 'bg-indigo-500 hover:bg-indigo-600' : 'bg-gray-300 cursor-not-allowed'}`}
-            disabled={!selectedFile}
+            className={`w-full py-3 rounded-xl font-bold text-white text-base md:text-lg transition-all duration-200 ${selectedFile && !isUploading ? 'bg-indigo-500 hover:bg-indigo-600' : 'bg-gray-300 cursor-not-allowed'}`}
+            disabled={!selectedFile || isUploading}
           >
-            Continue
+            {isUploading ? 'Uploading...' : 'Continue'}
           </button>
         </form>
       </div>

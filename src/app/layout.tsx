@@ -5,6 +5,7 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { AdminAuthProvider } from "../contexts/AdminAuthContext";
 import { FavoritesProvider } from "../contexts/FavoritesContext";
 import { CartProvider } from '../contexts/CartContext';
+import Script from "next/script";
 
 // ✅ Load Poppins font with CSS variable
 const poppins = Poppins({
@@ -26,14 +27,39 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={poppins.variable}>
+      <head>
+        {/* Google Tag Manager */}
+        <Script
+          id="gtm-script"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+              new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+              j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+              'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+              })(window,document,'script','dataLayer','GTM-5CJP3LN3');
+            `,
+          }}
+        />
+      </head>
       <body className="antialiased">
-        <CartProvider>
+        {/* Google Tag Manager (noscript) */}
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-5CJP3LN3"
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          />
+        </noscript>
+        <AuthProvider>
           <AdminAuthProvider>
-            <AuthProvider>
+            <CartProvider>
               <FavoritesProvider>{children}</FavoritesProvider>
-            </AuthProvider>
+            </CartProvider>
           </AdminAuthProvider>
-        </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

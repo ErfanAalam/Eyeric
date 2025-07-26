@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Heart, ShoppingCart, User, Menu, X, ChevronDown, Sparkles, LogOut } from 'lucide-react';
+import { Search, Heart, ShoppingCart, User, ChevronDown, LogOut, Menu } from 'lucide-react';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useFavorites } from '../src/contexts/FavoritesContext';
 import { getProducts } from '../src/services/homeService';
@@ -154,11 +154,6 @@ const Navbar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [userDropdownOpen]);
 
-  const handleLogout = async () => {
-    await signOut();
-    setUserDropdownOpen(false);
-  };
-
   const handleDropdownEnter = (key: string): void => {
     setActiveDropdown(key);
   };
@@ -170,10 +165,6 @@ const Navbar: React.FC = () => {
   const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     console.log('Search query:', searchQuery);
-  };
-
-  const toggleMobileMenu = (): void => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   const handleNavItemClick = (key: string, item: string) => {
@@ -251,300 +242,152 @@ const Navbar: React.FC = () => {
           ? 'glass-effect shadow-lg' 
           : 'bg-white/90 backdrop-blur-sm shadow-md'
       }`}>
-        {/* Main Navbar */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-18">
-            {/* Logo/Brand */}
-            <div className="flex-shrink-0 flex items-center group">
-              <Link href="/" className="flex items-center space-x-2 hover-lift">
-                <div className="relative">
-                  <div className={`text-3xl tracking-tight font-bold text-primary`}>
-                    EYERIC
-                  </div>
-                  <div className="absolute -top-1 -right-1">
-                    <Sparkles 
-                      size={16} 
-                      className="text-yellow-400 animate-pulse-custom" 
-                    />
-                  </div>
-                </div>
-                <div className={`hidden sm:block text-xs font-medium`} style={{color:colors.text}}>
-                  Premium Eyewear
-                </div>
-              </Link>
-            </div>
-
-            {/* Mobile Top Icons Row */}
-            <div className="flex md:hidden items-center space-x-2">
-              {/* Favorites Icon */}
-              <Link 
-                href="/favorites"
-                className="relative p-2 rounded-xl hover:bg-gradient-to-r hover:from-pink-50 hover:to-red-50 transition-all duration-300 group"
-                style={{ color: colors.muted }}
-              >
-                <Heart size={22} className="group-hover:text-red-500 transition-all duration-300" />
-                {isLoggedIn && favoritesCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
-                    {favoritesCount}
-                  </span>
-                )}
-              </Link>
-              {/* Cart Icon */}
-              <Link 
-                href="/cart"
-                className="relative p-2 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 group"
-                style={{ color: colors.muted }}
-              >
-                <ShoppingCart size={22} className="group-hover:text-blue-500 transition-all duration-300" />
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">{cartCount}</span>
-              </Link>
-              {/* User/Profile Icon */}
-              {user ? (
-                <div className="relative user-dropdown">
-                  <button
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className="flex items-center p-2 rounded-xl overflow-hidden border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-300"
-                    style={{ color: colors.text }}
-                  >
-                    <User size={20} />
-                  </button>
-                  {/* User Dropdown (mobile) */}
-                  {userDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-47 glass-effect rounded-2xl shadow-2xl border border-white/20 z-50">
-                      <div className="p-3">
-                        <div className="text-xs font-semibold text-gray-800 mb-1">
-                          {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}
-                        </div>
-                        <div className="text-xs text-gray-500 mb-2">
-                          {user.email}
-                        </div>
-                        <div className="space-y-1">
-                          <Link
-                            href="/profile"
-                            className={`block px-2 py-1 text-xs font-medium rounded-xl hover:bg-primary hover:text-text transition-all duration-300`}
-                            onClick={() => setUserDropdownOpen(false)}
-                          >
-                            My Profile
-                          </Link>
-                          <Link
-                            href="/orders"
-                            className={`block px-2 py-1 text-xs font-medium rounded-xl hover:bg-primary hover:text-text transition-all duration-300`}
-                            onClick={() => setUserDropdownOpen(false)}
-                          >
-                            My Orders
-                          </Link>
-                          <button
-                            onClick={handleLogout}
-                            className={`w-full flex items-center space-x-1 px-2 py-1 text-xs font-medium rounded-xl hover:bg-primary hover:text-text transition-all duration-300`}
-                          >
-                            <LogOut size={14} />
-                            <span>Sign Out</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link 
-                  href="/login"
-                  className={`p-2 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-primary transition-all duration-300`}
-                  style={{ color: colors.text }}
+        {/* Mobile Header */}
+        <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white/90 border-b border-gray-100/50">
+          <Link href="/" className="flex items-center space-x-2">
+            <div className="text-2xl font-bold text-primary">EYERIC</div>
+          </Link>
+          <div className="flex items-center space-x-4">
+            <Link href="/favorites" className="relative">
+              <Heart size={20} className="text-gray-700" />
+              {isLoggedIn && favoritesCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">{favoritesCount}</span>
+              )}
+            </Link>
+            <Link href="/cart" className="relative">
+              <ShoppingCart size={20} className="text-gray-700" />
+              <span className="absolute -top-1 -right-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center font-bold">{cartCount}</span>
+            </Link>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <Menu size={24} className="text-gray-700" />
+            </button>
+          </div>
+        </div>
+        
+        {/* Top Bar - Desktop Only */}
+        <div className="hidden md:flex w-full bg-white/90 border-b border-gray-100/50 py-2 px-4 items-center justify-between">
+          {/* Left: Logo and Phone */}
+          <div className="flex items-center space-x-6">
+            <Link href="/" className="flex items-center space-x-2 hover-lift">
+              <div className="relative">
+                <div className={`text-3xl tracking-tight font-bold text-primary`}>EYERIC</div>
+              </div>
+              <div className={`hidden lg:block text-xs font-medium`} style={{color:colors.text}}>
+                Premium Eyewear
+              </div>
+            </Link>
+          </div>
+          {/* Center: Search Bar */}
+          <div className="flex-1 flex justify-center px-8">
+            <form onSubmit={handleSearchSubmit} className="relative w-full max-w-xl group">
+              <div className={`relative transition-all duration-300 ${searchFocused ? 'search-glow' : ''}`}>  
+                <input
+                  type="text"
+                  placeholder="What are you looking for?"
+                  value={searchQuery}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setSearchFocused(false)}
+                  className="w-full pl-6 pr-14 py-2.5 border-2 border-gray-200 rounded-2xl bg-white focus:outline-none focus:border-blue-400 transition-all duration-300 text-base placeholder-gray-400"
+                />
+                <button 
+                  type="submit"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-xl hover:bg-blue-500 hover:text-white transition-all duration-300 group"
+                  style={{ color: colors.muted }}
                 >
-                  <User size={20} />
-                </Link>
-              )}
-            </div>
-            {/* End Mobile Top Icons Row */}
-
-            {/* Search Bar - Hidden on mobile */}
-            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-              <form onSubmit={handleSearchSubmit} className="relative w-full group">
-                <div className={`relative transition-all duration-300 ${
-                  searchFocused ? 'search-glow' : ''
-                }`}>
-                  <input
-                    type="text"
-                    placeholder="Discover your perfect frames..."
-                    value={searchQuery}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-                    onFocus={() => setSearchFocused(true)}
-                    onBlur={() => setSearchFocused(false)}
-                    className="w-full pl-6 pr-14 py-3 border-2 border-transparent rounded-2xl bg-gradient-to-r from-gray-50 to-blue-50 focus:outline-none focus:border-blue-400 focus:bg-white transition-all duration-300 text-sm placeholder-gray-400"
-                  />
-                  <button 
-                    type="submit"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-xl hover:bg-blue-500 hover:text-white transition-all duration-300 group"
-                    style={{ color: colors.muted }}
-                  >
-                    <Search size={20} className="group-hover:scale-110 transition-transform" />
-                  </button>
-                </div>
-                
-                {/* Search suggestions overlay */}
-                {searchFocused && searchQuery && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 animate-fadeInUp z-50">
+                  <Search size={20} className="group-hover:scale-110 transition-transform" />
+                </button>
+              </div>
+            </form>
+          </div>
+          {/* Right: Top Links */}
+          <div className="flex items-center space-x-6">
+            <Link href="#" className="text-sm font-medium text-gray-700 hover:text-primary">Track Order</Link>
+            {user ? (
+              <div className="relative user-dropdown">
+                <button onClick={() => setUserDropdownOpen(!userDropdownOpen)} className="text-sm font-medium text-gray-700 hover:text-primary flex items-center space-x-1">
+                  <User size={18} />
+                  {isLoggedIn ? userProfile?.first_name + ' ' + userProfile?.last_name : 'My Account'}
+                  <ChevronDown size={14} className={`transition-transform duration-300 ${userDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {userDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-68 glass-effect rounded-2xl shadow-2xl border border-white/20 z-50">
                     <div className="p-4">
-                      <div className="text-xs text-gray-500 mb-2">Popular searches</div>
-                      {['Ray-Ban', 'Oakley', 'Blue Light Glasses', 'Reading Glasses'].map((suggestion, i) => (
-                        <div key={i} className="py-2 px-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors">
-                          {suggestion}
-                        </div>
-                      ))}
+                      <div className="text-sm font-semibold text-gray-800 mb-2">
+                        {user.email}
+                      </div>
+                      <div className="space-y-2">
+                        <Link
+                          href="/profile"
+                          className={`block px-3 py-2 text-sm font-medium rounded-xl hover:bg-primary hover:text-white transition-all duration-300`}
+                          onClick={() => setUserDropdownOpen(false)}
+                        >
+                          My Profile
+                        </Link>
+                        <Link
+                          href="/orders"
+                          className={`block px-3 py-2 text-sm font-medium rounded-xl hover:bg-primary hover:text-white transition-all duration-300`}
+                          onClick={() => setUserDropdownOpen(false)}
+                        >
+                          My Orders
+                        </Link>
+                        <button
+                          onClick={async () => { await signOut(); setUserDropdownOpen(false); }}
+                          className={`w-full flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-xl hover:bg-primary hover:text-white transition-all duration-300`}
+                        >
+                          <LogOut size={16} />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
-              </form>
-            </div>
-
-            {/* Right Side Icons - Desktop */}
-            <div className="hidden md:flex items-center space-x-3">
-              <Link 
-                href="/favorites"
-                className="relative p-3 rounded-2xl hover:bg-gradient-to-r hover:from-pink-50 hover:to-red-50 transition-all duration-300 hover-lift group"
-                style={{ color: colors.muted }}
-              >
-                <Heart size={24} className="group-hover:text-red-500 group-hover:scale-110 transition-all duration-300" />
-                {isLoggedIn && favoritesCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">
-                    {favoritesCount}
-                  </span>
-                )}
-              </Link>
-              
-              <Link 
-                href="/cart"
-                className="relative p-3 rounded-2xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-300 hover-lift group"
-                style={{ color: colors.muted }}
-              >
-                <ShoppingCart size={24} className="group-hover:text-blue-500 group-hover:scale-110 transition-all duration-300" />
-                <span className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold animate-pulse">{cartCount}</span>
-              </Link>
-
-              {/* User Authentication Section */}
-              {user ? (
-                <div className="relative user-dropdown">
-                  <button
-                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                    className={`flex items-center space-x-2 px-4 py-2.5 text-sm font-semibold border-2 border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-primary transition-all hover:text-white duration-300 hover-lift`}
-                  >
-                    <User size={20} />
-                    <span className="hidden sm:block">
-                      {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}
-                    </span>
-                    <ChevronDown size={16} className={`transition-transform duration-300 ${userDropdownOpen ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {/* User Dropdown */}
-                  {userDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-48 glass-effect rounded-2xl shadow-2xl border border-white/20 z-50">
-                      <div className="p-4">
-                        <div className="text-sm font-semibold text-gray-800 mb-2">
-                          {userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : 'User'}
-                        </div>
-                        <div className="text-xs text-gray-500 mb-4">
-                          {user.email}
-                        </div>
-                        <div className="space-y-2">
-                          <Link
-                            href="/profile"
-                            className={`block px-3 py-2 text-sm font-medium rounded-xl hover:bg-primary hover:text-white transition-all duration-300`}
-                            onClick={() => setUserDropdownOpen(false)}
-                          >
-                            My Profile
-                          </Link>
-                          <Link
-                            href="/orders"
-                            className={`block px-3 py-2 text-sm font-medium rounded-xl hover:bg-primary hover:text-white transition-all duration-300`}
-                            onClick={() => setUserDropdownOpen(false)}
-                          >
-                            My Orders
-                          </Link>
-                          <button
-                            onClick={handleLogout}
-                            className={`w-full flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-xl hover:bg-primary hover:text-white transition-all duration-300`}
-                          >
-                            <LogOut size={16} />
-                            <span>Sign Out</span>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center space-x-3">
-                  <Link 
-                    href="/login"
-                    className="px-6 py-2.5 text-sm font-semibold border-2 border-gray-200 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 hover-lift"
-                    style={{ color: colors.text }}
-                  >
-                    Login
-                  </Link>
-                  <Link 
-                    href="/signup"
-                    className="px-6 py-2.5 text-sm font-semibold text-white rounded-2xl transition-all duration-300 hover-lift relative overflow-hidden group"
-                    style={{ backgroundColor: colors.primary }}
-                  >
-                    <span className="relative z-10">Sign Up</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  </Link>
-                </div>
+              </div>
+            ) : (
+              <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-primary">Sign In & Sign Up</Link>
+            )}
+            <Link href="/favorites" className="relative group">
+              <Heart size={22} className="text-gray-700 group-hover:text-red-500 transition-all duration-300" />
+              {isLoggedIn && favoritesCount > 0 && (
+                <span className="absolute -top-1 -right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">{favoritesCount}</span>
               )}
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={toggleMobileMenu}
-                className="p-3 rounded-2xl hover:bg-gray-100 transition-all duration-300 relative overflow-hidden group"
-                style={{ color: colors.text }}
-                aria-label="Toggle mobile menu"
-              >
-                <div className={`transition-all duration-300 ${isMobileMenuOpen ? 'rotate-180' : ''}`}>
-                  {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                </div>
-              </button>
-            </div>
+            </Link>
+            <Link href="/cart" className="relative group">
+              <ShoppingCart size={22} className="text-gray-700 group-hover:text-blue-500 transition-all duration-300" />
+              <span className="absolute -top-1 -right-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">{cartCount}</span>
+            </Link>
           </div>
         </div>
 
-        {/* Sub Navbar - Desktop */}
-        <div className="hidden md:block border-t border-gray-100/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center space-x-1 py-4">
-              {Object.entries(navItems).map(([key, item], index) => (
-                <div
+        {/* Main Navbar Row - Desktop Only */}
+        <div className="hidden md:flex w-full bg-white/90">
+          <div className="max-w-7xl mx-auto w-full flex items-center justify-between px-4">
+            {/* Left: Main Nav Links */}
+            <div className="flex items-center space-x-2">
+              {Object.entries(navItems).map(([key, item]) => (
+                <button
                   key={key}
-                  className="relative"
                   onMouseEnter={() => handleDropdownEnter(key)}
                   onMouseLeave={handleDropdownLeave}
-                  style={{ animationDelay: `${index * 100}ms` }}
+                  className={`relative flex items-center px-3 py-4 text-sm font-semibold uppercase tracking-wide hover:text-primary hover:bg-gray-50 rounded transition-all duration-200 ${activeDropdown === key ? 'text-primary' : ''}`}
+                  style={{ color: colors.text }}
                 >
-                  <button 
-                    className={`flex items-center space-x-2 px-4 py-3 text-sm font-semibold rounded-2xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 hover-lift group`}
-                    style={{ color: colors.text }}
-                  >
-                    <span className={`group-hover:text-primary transition-colors`}>{item.title}</span>
-                    <ChevronDown size={16} className={`transition-transform duration-300 ${activeDropdown === key ? 'rotate-180' : ''} group-hover:text-blue-600`} />
-                  </button>
-
+                  {item.title}
+                  <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${activeDropdown === key ? 'rotate-180' : ''}`} />
                   {/* Dropdown Menu */}
                   {activeDropdown === key && (
                     <div className="absolute top-full left-0 mt-2 w-64 glass-effect rounded-3xl shadow-2xl border border-white/20 z-50 dropdown-enter">
                       <div className="p-6">
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-                          {item.title}
-                        </div>
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">{item.title}</div>
                         <div className="space-y-1">
-                          {item.items.map((subItem: string, index: number) => (
+                          {item.items.map((subItem: string, idx: number) => (
                             <button
-                              key={index}
+                              key={idx}
                               onClick={() => handleNavItemClick(key, subItem)}
-                              className={`block w-full text-left px-4 py-3 text-sm font-medium rounded-2xl hover:bg-primary hover:text-white transition-all duration-300 hover-lift`}
-                              style={{ 
-                                animationDelay: `${index * 50}ms`
-                              }}
+                              className="block w-full text-left px-4 py-3 text-sm font-medium rounded-2xl hover:bg-primary hover:text-white transition-all duration-300 hover-lift"
                             >
                               {subItem}
                             </button>
@@ -553,13 +396,19 @@ const Navbar: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </div>
+                </button>
               ))}
             </div>
+            {/* Right: Special Buttons */}
+            {/* <div className="flex items-center space-x-2">
+              <button className="bg-teal-400 hover:bg-teal-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all">3D TRY ON</button>
+              <button className="bg-blue-100 hover:bg-blue-200 text-blue-900 font-bold px-4 py-2 rounded-xl text-sm transition-all">BLU</button>
+              <button className="bg-black hover:bg-gray-900 text-yellow-400 font-bold px-4 py-2 rounded-xl text-sm transition-all">GOLD <span className="bg-yellow-400 text-black text-xs font-bold px-2 py-0.5 rounded ml-1 align-middle">MAX</span></button>
+            </div> */}
           </div>
         </div>
 
-        {/* Mobile Menu - Optimized version */}
+        {/* Main Navbar (old) and Sub Navbar (old) - Mobile Only */}
         {isMobileMenuOpen && (
           <div className="md:hidden glass-effect border-t border-white/20 mobile-menu">
             <div className="mobile-menu-content max-h-[calc(100vh-4rem)] overflow-y-auto">

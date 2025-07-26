@@ -24,7 +24,7 @@ import {
   getShapeBanners,
 } from "../services/homeService";
 import { useHasMounted } from "../hooks/useHasMounted";
-import colors from '../constants/colors';
+import colors from "../constants/colors";
 
 // Define Product type locally
 interface Product {
@@ -58,10 +58,10 @@ interface Slide {
 
 // Utility function to truncate description to 5 words
 function truncateDescription(desc: string): string {
-  if (!desc) return '';
-  const words = desc.split(' ');
+  if (!desc) return "";
+  const words = desc.split(" ");
   if (words.length <= 4) return desc;
-  return words.slice(0, 4).join(' ') + '...';
+  return words.slice(0, 4).join(" ") + "...";
 }
 
 // console.log(colors)
@@ -91,7 +91,7 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
               src={slide.image_url || slide.image}
               alt="slide"
               fill
-              style={{ objectFit: 'cover', objectPosition: 'center' }}
+              style={{ objectFit: "cover", objectPosition: "center" }}
               className="w-full h-full object-cover object-center"
               quality={90}
               sizes="(max-width: 768px) 100vw, 100vw"
@@ -124,14 +124,22 @@ interface CategoryBanner {
   type_category?: string;
   image_url: string;
 }
-const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; categoryBanners: CategoryBanner[] }) => {
+const CategoryTabs = ({
+  products,
+  categoryBanners,
+}: {
+  products: Product[];
+  categoryBanners: CategoryBanner[];
+}) => {
   const [activeTab, setActiveTab] = useState("men");
   const router = useRouter();
 
   // Get all unique type categories from products
   const typeTitles = Array.from(
     new Set(
-      products.flatMap((p) => (Array.isArray(p.type_category) ? p.type_category : []))
+      products.flatMap((p) =>
+        Array.isArray(p.type_category) ? p.type_category : []
+      )
     )
   );
   const categoryKeys = ["men", "women", "kids"];
@@ -140,18 +148,20 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
   const kidsAllowedTypes = ["eyeglasses", "computer glasses"];
 
   // Build categories object dynamically from products
-  const dynamicCategories: { [key: string]: { title: string; image: string; description: string }[] } = {};
+  const dynamicCategories: {
+    [key: string]: { title: string; image: string; description: string }[];
+  } = {};
   categoryKeys.forEach((gender) => {
     dynamicCategories[gender] = typeTitles
       .filter((type) =>
-        gender === "kids"
-          ? kidsAllowedTypes.includes(type.toLowerCase())
-          : true
+        gender === "kids" ? kidsAllowedTypes.includes(type.toLowerCase()) : true
       )
       .map((type) => {
         // Find a banner for this gender/type
         const banner = categoryBanners.find(
-          (b: CategoryBanner) => b.gender?.toLowerCase() === gender && b.type_category?.toLowerCase() === type.toLowerCase()
+          (b: CategoryBanner) =>
+            b.gender?.toLowerCase() === gender &&
+            b.type_category?.toLowerCase() === type.toLowerCase()
         );
         // Fallback to product image if no banner
         const match = products.find(
@@ -159,13 +169,17 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
             Array.isArray(p.gender_category) &&
             p.gender_category.map((g) => g.toLowerCase()).includes(gender) &&
             Array.isArray(p.type_category) &&
-            p.type_category.map((t) => t.toLowerCase()).includes(type.toLowerCase())
+            p.type_category
+              .map((t) => t.toLowerCase())
+              .includes(type.toLowerCase())
         );
         return banner
           ? {
               title: type,
               image: banner.image_url,
-              description: match ? truncateDescription(match.description || "") : "",
+              description: match
+                ? truncateDescription(match.description || "")
+                : "",
             }
           : match
           ? {
@@ -188,10 +202,12 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
   };
 
   return (
-    <div  className="py-10 px-4 bg-background text-text">
+    <div className="py-10 px-4 bg-background text-text">
       <div className="max-w-7xl mx-auto">
-        <h2 className={`text-2xl md:text-4xl font-bold text-center mb-8 bg-text bg-clip-text text-transparent`}>
-          Shop by Categories
+        <h2
+          className={`text-2xl md:text-4xl font-semibold text-center mb-8 bg-text bg-clip-text text-transparent`}
+        >
+          Pick Your Look
         </h2>
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8">
@@ -207,7 +223,7 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
                       : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
                   }`}
                 >
-                  {(category).toUpperCase()}
+                  {category.toUpperCase()}
                 </button>
               ))}
             </div>
@@ -233,14 +249,15 @@ const CategoryTabs = ({ products, categoryBanners }: { products: Product[]; cate
                     placeholder="blur"
                     blurDataURL="/placeholder.png"
                   />
-                  
                 ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">No Image</div>
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
+                    No Image
+                  </div>
                 )}
               </div>
               <div className="p-4">
                 <h3 className="text-[12px] md:text-lg font-bold mb-1 text-gray-800">
-                  {(item.title).toUpperCase()}
+                  {item.title.toUpperCase()}
                 </h3>
               </div>
             </div>
@@ -259,7 +276,8 @@ const BestSellers = ({ products }: { products: Product[] }) => {
     .slice(0, 8);
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const router = useRouter();
-  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
+  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } =
+    useFavorites();
 
   const handleProductClick = (product: Product) => {
     router.push(`/product/${product.id}`);
@@ -267,9 +285,9 @@ const BestSellers = ({ products }: { products: Product[] }) => {
 
   const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
-    
+
     if (!isLoggedIn) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
@@ -280,14 +298,19 @@ const BestSellers = ({ products }: { products: Product[] }) => {
         await addToFavorites(product);
       }
     } catch (error) {
-      console.error('Error handling favorite:', error);
+      console.error("Error handling favorite:", error);
     }
+  };
+
+  // Calculate discount percentage
+  const calculateDiscount = (original: number, discounted: number) => {
+    return Math.round(((original - discounted) / original) * 100);
   };
 
   return (
     <div className="py-16 px-4 bg-background text-text">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-text bg-clip-text text-transparent">
+        <h2 className="text-2xl md:text-4xl font-semibold text-center mb-12 bg-text bg-clip-text text-transparent">
           Best Sellers
         </h2>
         <div className="relative">
@@ -296,29 +319,29 @@ const BestSellers = ({ products }: { products: Product[] }) => {
               {sellers.map((item, index) => (
                 <div
                   key={item.id || index}
-                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col cursor-pointer"
+                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[200px] md:w-[320px] flex flex-col cursor-pointer max-h-[300px] md:max-h-[420px]"
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   onClick={() => handleProductClick(item)}
                 >
                   <div className="absolute top-3 left-3 z-10">
                     <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      Best Seller
+                      Sale
                     </span>
                   </div>
-                  
+
                   {/* Favorite Button */}
                   <button
                     onClick={(e) => handleFavoriteClick(e, item)}
                     className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all duration-300 group-hover:bg-white"
                   >
-                    <Heart 
-                      size={20} 
+                    <Heart
+                      size={20}
                       className={`transition-all duration-300 ${
-                        isFavorite(item.id!) 
-                          ? 'text-red-500 fill-current' 
-                          : 'text-gray-400 hover:text-red-500'
-                      }`} 
+                        isFavorite(item.id!)
+                          ? "text-red-500 fill-current"
+                          : "text-gray-400 hover:text-red-500"
+                      }`}
                     />
                   </button>
 
@@ -330,7 +353,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                       src={
                         hoveredIndex === index && item.banner_image_2
                           ? item.banner_image_2
-                          : item.banner_image_1 || item.banner_image_2 || ''
+                          : item.banner_image_1 || item.banner_image_2 || ""
                       }
                       alt={item.title}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -340,24 +363,38 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                     <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-2 min-h-[3.5rem]">
                       {item.title}
                     </h3>
-                    <div className="flex items-center mb-3">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < 4 ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-                          />
-                        ))}
-                        <span className="ml-2 text-sm text-gray-600">
-                          (4.5)
+                    {item.discounted_price && (
+                      <>
+                        <span className="text-xs md:text-sm w-fit font-semibold text-green-600 bg-green-100 px-1 py-0.5 rounded">
+                          {calculateDiscount(
+                            item.original_price,
+                            item.discounted_price
+                          )}
+                          % OFF
                         </span>
-                      </div>
-                    </div>
+                      </>
+                    )}
+
                     <div className="mt-auto flex items-center justify-between">
-                      <span className="text-md md:text-xl font-bold text-text">
-                        ₹{item.discounted_price || item.original_price}
-                      </span>
-                      <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105" onClick={() => handleProductClick(item)}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-md md:text-xl font-bold text-text">
+                          ₹{item.discounted_price || item.original_price}
+                        </span>
+                        {item.discounted_price && (
+                          <>
+                            <span className="text-md md:text-xl font-bold text-gray-500">
+                              <del>₹{item.original_price}</del>
+                            </span>
+                            {/* <span className="text-xs md:text-sm font-semibold text-green-600 bg-green-100 px-1 py-0.5 rounded">
+                              {calculateDiscount(item.original_price, item.discounted_price)}% OFF
+                            </span> */}
+                          </>
+                        )}
+                      </div>
+                      <button
+                        className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                        onClick={() => handleProductClick(item)}
+                      >
                         Buy Now
                       </button>
                     </div>
@@ -380,7 +417,8 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
     .slice(0, 8);
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const router = useRouter();
-  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
+  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } =
+    useFavorites();
 
   const handleProductClick = (product: Product) => {
     router.push(`/product/${product.id}`);
@@ -388,9 +426,9 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
 
   const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
-    
+
     if (!isLoggedIn) {
-      router.push('/login');
+      router.push("/login");
       return;
     }
 
@@ -401,8 +439,13 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
         await addToFavorites(product);
       }
     } catch (error) {
-      console.error('Error handling favorite:', error);
+      console.error("Error handling favorite:", error);
     }
+  };
+
+  // Calculate discount percentage
+  const calculateDiscount = (original: number, discounted: number) => {
+    return Math.round(((original - discounted) / original) * 100);
   };
 
   return (
@@ -417,29 +460,29 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
               {trends.map((item, index) => (
                 <div
                   key={item.id || index}
-                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[280px] md:w-[320px] flex flex-col cursor-pointer"
+                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[200px] md:w-[320px] flex flex-col cursor-pointer max-h-[300px] md:max-h-[420px]"
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   onClick={() => handleProductClick(item)}
                 >
                   <div className="absolute top-3 left-3 z-10">
                     <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      New Trend
+                      Sale
                     </span>
                   </div>
-                  
+
                   {/* Favorite Button */}
                   <button
                     onClick={(e) => handleFavoriteClick(e, item)}
                     className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all duration-300 group-hover:bg-white"
                   >
-                    <Heart 
-                      size={20} 
+                    <Heart
+                      size={20}
                       className={`transition-all duration-300 ${
-                        isFavorite(item.id!) 
-                          ? 'text-red-500 fill-current' 
-                          : 'text-gray-400 hover:text-red-500'
-                      }`} 
+                        isFavorite(item.id!)
+                          ? "text-red-500 fill-current"
+                          : "text-gray-400 hover:text-red-500"
+                      }`}
                     />
                   </button>
 
@@ -451,7 +494,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                       src={
                         hoveredIndex === index && item.banner_image_2
                           ? item.banner_image_2
-                          : item.banner_image_1 || item.banner_image_2 || ''
+                          : item.banner_image_1 || item.banner_image_2 || ""
                       }
                       alt={item.title}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
@@ -461,24 +504,34 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                     <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-2 min-h-[3.5rem]">
                       {item.title}
                     </h3>
-                    <div className="flex items-center mb-3">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < 4 ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-                          />
-                        ))}
-                        <span className="ml-2 text-sm text-gray-600">
-                          (4.5)
+                    {item.discounted_price && (
+                      <>
+                        <span className="text-xs md:text-sm w-fit font-semibold text-green-600 bg-green-100 px-1 py-0.5 rounded">
+                          {calculateDiscount(
+                            item.original_price,
+                            item.discounted_price
+                          )}
+                          % OFF
                         </span>
-                      </div>
-                    </div>
+                      </>
+                    )}
                     <div className="mt-auto flex items-center justify-between">
-                      <span className="text-md md:text-xl font-bold text-text">
-                        ₹{item.discounted_price || item.original_price}
-                      </span>
-                      <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105" onClick={() => handleProductClick(item)}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-md md:text-xl font-bold text-text">
+                          ₹{item.discounted_price || item.original_price}
+                        </span>
+                        {item.discounted_price && (
+                          <>
+                            <span className="text-md md:text-xl font-bold text-gray-500">
+                              <del>₹{item.original_price}</del>
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <button
+                        className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                        onClick={() => handleProductClick(item)}
+                      >
                         Buy Now
                       </button>
                     </div>
@@ -498,7 +551,13 @@ interface ShapeBanner {
   shape?: string;
   image_url: string;
 }
-const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBanners: ShapeBanner[] }) => {
+const ShopByShapes = ({
+  products,
+  shapeBanners,
+}: {
+  products: Product[];
+  shapeBanners: ShapeBanner[];
+}) => {
   // Get unique shapes from products
   const uniqueShapes: Product[] = [
     ...new Map(
@@ -510,11 +569,21 @@ const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBa
   const [selectedShape, setSelectedShape] = useState(0);
   const router = useRouter();
   const getShapeBanner = (shape: string) =>
-    shapeBanners.find((b: ShapeBanner) => b.shape?.toLowerCase() === shape?.toLowerCase());
+    shapeBanners.find(
+      (b: ShapeBanner) => b.shape?.toLowerCase() === shape?.toLowerCase()
+    );
 
   const handleShapeClick = (shape: string) => {
     const formattedShape = shape.toLowerCase().replace(/\s+/g, "-");
     router.push(`/shape-products?shape=${formattedShape}`);
+  };
+
+  const handlePrevious = () => {
+    setSelectedShape((prev) => (prev === 0 ? uniqueShapes.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setSelectedShape((prev) => (prev === uniqueShapes.length - 1 ? 0 : prev + 1));
   };
 
   return (
@@ -525,20 +594,26 @@ const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBa
         </h2>
         <div className="flex flex-col items-center">
           {/* Preview Image */}
-          <div className="w-full max-w-2xl mb-8">
+          <div className="w-full max-w-2xl mb-8 relative">
             {uniqueShapes[selectedShape] && (
               <div
                 className="relative overflow-hidden rounded-3xl shadow-2xl bg-white/30 backdrop-blur-sm border border-white/50 cursor-pointer hover:shadow-3xl transition-all duration-500"
-                onClick={() => handleShapeClick(String(uniqueShapes[selectedShape].shape_category))}
+                onClick={() =>
+                  handleShapeClick(
+                    String(uniqueShapes[selectedShape].shape_category)
+                  )
+                }
               >
                 <div className="aspect-[4/3] w-full bg-gray-100">
                   <Image
                     fill
                     src={
-                      getShapeBanner(String(uniqueShapes[selectedShape].shape_category))?.image_url ||
+                      getShapeBanner(
+                        String(uniqueShapes[selectedShape].shape_category)
+                      )?.image_url ||
                       uniqueShapes[selectedShape].banner_image_1 ||
                       uniqueShapes[selectedShape].banner_image_2 ||
-                      ''
+                      ""
                     }
                     alt={String(uniqueShapes[selectedShape].shape_category)}
                     className="object-cover object-center w-full h-full transition-all duration-500"
@@ -550,15 +625,44 @@ const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBa
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 text-text">
                   <h3 className="text-xl md:text-2xl font-bold mb-2">
-                    {(uniqueShapes[selectedShape].shape_category).charAt(0).toUpperCase() + (uniqueShapes[selectedShape].shape_category).slice(1)}
+                    {uniqueShapes[selectedShape].shape_category
+                      .charAt(0)
+                      .toUpperCase() +
+                      uniqueShapes[selectedShape].shape_category.slice(1)}
                   </h3>
-                  {/* <p className="text-sm md:text-lg opacity-90">
-                    {truncateDescription(uniqueShapes[selectedShape].description)}
-                  </p> */}
                   <div className="mt-4 text-sm text-text/80">
-                    Click to view all {String(uniqueShapes[selectedShape].shape_category)?.toLowerCase()} shaped products
+                    Click to view all{" "}
+                    {String(
+                      uniqueShapes[selectedShape].shape_category
+                    )?.toLowerCase()}{" "}
+                    shaped products
                   </div>
                 </div>
+                
+                {/* Navigation Buttons */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrevious();
+                  }}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNext();
+                  }}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
             )}
           </div>
@@ -577,8 +681,8 @@ const ShopByShapes = ({ products, shapeBanners }: { products: Product[]; shapeBa
                   }`}
                 >
                   <h3 className="text-sm md:text-lg font-bold text-gray-800 mb-1">
-                    {(shape.shape_category).toUpperCase()}
-                  </h3>                                                                                            
+                    {shape.shape_category.toUpperCase()}
+                  </h3>
                 </button>
               ))}
             </div>
@@ -621,9 +725,16 @@ const VisionCareSection = () => {
 
 // Make In India Banner Section
 const MakeInIndia = () => (
-  <div style={{ background: colors.background, color: colors.text }} className="py-12 flex flex-col items-center text-center">
-    <div className="mb-2 text-sm md:text-base text-gray-700">Styled By {makeInIndia.styledBy}</div>
-    <h2 className="text-2xl md:text-4xl font-serif font-semibold mb-2 text-gray-900">{makeInIndia.title}</h2>
+  <div
+    style={{ background: colors.background, color: colors.text }}
+    className="py-12 flex flex-col items-center text-center"
+  >
+    <div className="mb-2 text-sm md:text-base text-gray-700">
+      Styled By {makeInIndia.styledBy}
+    </div>
+    <h2 className="text-2xl md:text-4xl font-serif font-semibold mb-2 text-gray-900">
+      {makeInIndia.title}
+    </h2>
     <div className="font-bold text-lg md:text-xl mb-6 text-gray-800">
       {makeInIndia.subtitle}
     </div>
@@ -638,14 +749,19 @@ const MakeInIndia = () => (
 const HowToKnowFaceSize = () => {
   const router = useRouter();
   return (
-    <div style={{ background: colors.background, color: colors.text }} className="py-16 px-4">
+    <div
+      style={{ background: colors.background, color: colors.text }}
+      className="py-16 px-4"
+    >
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-2xl md:text-4xl font-bold mb-4 bg-text bg-clip-text text-transparent">
             Find Your Perfect Fit
           </h2>
           <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-            Choosing the right frame size is crucial for comfort and style. Our comprehensive size guide helps you measure your face and find frames that complement your features perfectly.
+            Choosing the right frame size is crucial for comfort and style. Our
+            comprehensive size guide helps you measure your face and find frames
+            that complement your features perfectly.
           </p>
         </div>
 
@@ -654,24 +770,39 @@ const HowToKnowFaceSize = () => {
             <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
               <span className="text-2xl">📏</span>
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-800">Measure Your Face</h3>
-            <p className="text-sm text-gray-600">Learn how to accurately measure your face width, temple length, and bridge size.</p>
+            <h3 className="text-lg font-semibold mb-2 text-gray-800">
+              Measure Your Face
+            </h3>
+            <p className="text-sm text-gray-600">
+              Learn how to accurately measure your face width, temple length,
+              and bridge size.
+            </p>
           </div>
 
           <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
             <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
               <span className="text-2xl">👓</span>
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-800">Frame Sizing Guide</h3>
-            <p className="text-sm text-gray-600">Understand frame measurements and how they correspond to your face measurements.</p>
+            <h3 className="text-lg font-semibold mb-2 text-gray-800">
+              Frame Sizing Guide
+            </h3>
+            <p className="text-sm text-gray-600">
+              Understand frame measurements and how they correspond to your face
+              measurements.
+            </p>
           </div>
 
           <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
             <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
               <span className="text-2xl">✨</span>
             </div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-800">Style Tips</h3>
-            <p className="text-sm text-gray-600">Discover which frame styles work best for your face shape and size.</p>
+            <h3 className="text-lg font-semibold mb-2 text-gray-800">
+              Style Tips
+            </h3>
+            <p className="text-sm text-gray-600">
+              Discover which frame styles work best for your face shape and
+              size.
+            </p>
           </div>
         </div>
 
@@ -697,17 +828,20 @@ export default function Home() {
   const hasMounted = useHasMounted();
   const [products, setProducts] = React.useState<Product[]>([]);
   const [slides, setSlides] = React.useState<Slide[]>([]);
-  const [categoryBanners, setCategoryBanners] = React.useState<CategoryBanner[]>([]);
+  const [categoryBanners, setCategoryBanners] = React.useState<
+    CategoryBanner[]
+  >([]);
   const [shapeBanners, setShapeBanners] = React.useState<ShapeBanner[]>([]);
 
   React.useEffect(() => {
     const fetchAll = async () => {
-      const [productsData, slidesData, categoryBannersData, shapeBannersData] = await Promise.all([
-        getProducts(),
-        getSlides(),
-        getCategoryBanners(),
-        getShapeBanners(),
-      ]);
+      const [productsData, slidesData, categoryBannersData, shapeBannersData] =
+        await Promise.all([
+          getProducts(),
+          getSlides(),
+          getCategoryBanners(),
+          getShapeBanners(),
+        ]);
       setProducts(productsData);
       setSlides(slidesData);
       setCategoryBanners(categoryBannersData);

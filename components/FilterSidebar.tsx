@@ -17,7 +17,7 @@ export default function FilterSidebar({
   isMobile,
   onClearFilters,
   onApplyFilters,
-  maxPrice = 1000
+  maxPrice = 1000,
 }: {
   currentGender: string;
   onGenderChange: (gender: string) => void;
@@ -45,17 +45,13 @@ export default function FilterSidebar({
   }, [selectedShapes, show]);
 
   const handleStyleToggle = (style: string) => {
-    setLocalStyles(prev =>
-      prev.includes(style)
-        ? prev.filter(s => s !== style)
-        : [...prev, style]
+    setLocalStyles((prev) =>
+      prev.includes(style) ? prev.filter((s) => s !== style) : [...prev, style]
     );
   };
   const handleShapeToggle = (shape: string) => {
-    setLocalShapes(prev =>
-      prev.includes(shape)
-        ? prev.filter(s => s !== shape)
-        : [...prev, shape]
+    setLocalShapes((prev) =>
+      prev.includes(shape) ? prev.filter((s) => s !== shape) : [...prev, shape]
     );
   };
   const handleApply = () => {
@@ -71,7 +67,7 @@ export default function FilterSidebar({
   const sidebarContent = (
     <div className="space-y-6">
       {/* Gender Filter */}
-      <details open className="group border-b pb-2">
+      <details className="group border-b pb-2">
         <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
           GENDER
           <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
@@ -80,10 +76,14 @@ export default function FilterSidebar({
           </span>
         </summary>
         <div className="mt-2 space-y-2 pl-2">
-          {GENDERS.map(gender => (
+          {GENDERS.map((gender) => (
             <button
               key={gender}
-              className={`block w-full text-left px-2 py-1 rounded-lg text-gray-600 text-sm cursor-pointer hover:bg-blue-50 ${currentGender === gender.toLowerCase() ? 'bg-blue-100 font-bold text-blue-700' : ''}`}
+              className={`block w-full text-left px-2 py-1 rounded-lg text-gray-600 text-sm cursor-pointer hover:bg-blue-50 ${
+                currentGender === gender.toLowerCase()
+                  ? "bg-blue-100 font-bold text-blue-700"
+                  : ""
+              }`}
               onClick={() => onGenderChange(gender)}
             >
               {gender}
@@ -101,8 +101,11 @@ export default function FilterSidebar({
           </span>
         </summary>
         <div className="mt-2 space-y-2 pl-2">
-          {styleOptions.map(style => (
-            <label key={style} className="flex items-center gap-2 text-gray-600 text-sm cursor-pointer">
+          {styleOptions.map((style) => (
+            <label
+              key={style}
+              className="flex items-center gap-2 text-gray-600 text-sm cursor-pointer"
+            >
               <input
                 type="checkbox"
                 checked={localStyles.includes(style)}
@@ -124,8 +127,20 @@ export default function FilterSidebar({
           </span>
         </summary>
         <div className="mt-2 space-y-2 pl-2">
-          {["Round", "Square", "Oval", "Heart", "Cat-Eye", "Aviator", "Wayfarer", "Rectangle"].map(shape => (
-            <label key={shape} className="flex items-center gap-2 text-gray-600 text-sm cursor-pointer">
+          {[
+            "Round",
+            "Square",
+            "Oval",
+            "Heart",
+            "Cat-Eye",
+            "Aviator",
+            "Wayfarer",
+            "Rectangle",
+          ].map((shape) => (
+            <label
+              key={shape}
+              className="flex items-center gap-2 text-gray-600 text-sm cursor-pointer"
+            >
               <input
                 type="checkbox"
                 checked={localShapes.includes(shape.toLowerCase())}
@@ -138,7 +153,7 @@ export default function FilterSidebar({
         </div>
       </details>
       {/* Price Filter */}
-      <details open className="group border-b pb-2">
+      <details className="group border-b pb-2">
         <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
           PRICE
           <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
@@ -152,7 +167,9 @@ export default function FilterSidebar({
             min={0}
             max={maxPrice}
             value={currentPrice.max}
-            onChange={e => onPriceChange({ ...currentPrice, max: Number(e.target.value) })}
+            onChange={(e) =>
+              onPriceChange({ ...currentPrice, max: Number(e.target.value) })
+            }
             className="w-full price-slider"
           />
           <div className="flex justify-between text-sm text-gray-600">
@@ -182,7 +199,10 @@ export default function FilterSidebar({
     return show ? (
       <div className="fixed inset-0 z-50 bg-black/40 flex justify-end lg:hidden">
         <div className="bg-white w-80 max-w-full h-full p-6 shadow-xl overflow-y-auto relative animate-slideInRight">
-          <button className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100" onClick={onClose}>
+          <button
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
+            onClick={onClose}
+          >
             <X className="w-6 h-6" />
           </button>
           <h2 className="text-xl font-bold mb-6">Filters</h2>
@@ -192,9 +212,5 @@ export default function FilterSidebar({
     ) : null;
   }
 
-  return (
-    <aside className="w-64 hidden lg:block">
-      {sidebarContent}
-    </aside>
-  );
-} 
+  return <aside className="w-64 hidden lg:block">{sidebarContent}</aside>;
+}

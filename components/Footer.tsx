@@ -12,10 +12,6 @@ import {
   Heart,
   Sparkles,
   Eye,
-  Shield,
-  Truck,
-  RefreshCw,
-  Award,
   Users,
   Star,
   ChevronUp,
@@ -115,13 +111,6 @@ const Footer: React.FC = () => {
     { name: 'Instagram', icon: Instagram, href: '#', color: 'hover:text-pink-600', bg: 'hover:bg-pink-50' },
     { name: 'Youtube', icon: Youtube, href: '#', color: 'hover:text-red-600', bg: 'hover:bg-red-50' },
     { name: 'LinkedIn', icon: Linkedin, href: '#', color: 'hover:text-blue-700', bg: 'hover:bg-blue-50' }
-  ];
-
-  const features = [
-    { icon: Shield, title: '2-Year Warranty', desc: 'Premium protection' },
-    { icon: Truck, title: 'Free Shipping', desc: 'Orders over $50' },
-    { icon: RefreshCw, title: '30-Day Returns', desc: 'Hassle-free policy' },
-    { icon: Award, title: 'Premium Quality', desc: 'Certified materials' }
   ];
 
   return (
@@ -311,27 +300,6 @@ const Footer: React.FC = () => {
         {/* Main Footer Content */}
         <div className="relative z-10">
           {/* Features Section */}
-          <div className="border-b border-white/10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 text-black">
-                {features.map((feature, index) => (
-                  <div 
-                    key={index}
-                    className="text-center group hover-lift animate-fadeInUp "
-                    style={{ animationDelay: `${index * 150}ms` }}
-                  >
-                    <div className="glass-effect rounded-2xl p-6 mb-4 group-hover:bg-white/10 transition-all duration-300">
-                      <div className="mx-auto w-12 h-12 bg-primary rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                        <feature.icon size={24} className="text-white" />
-                      </div>
-                      <h3 className="font-bold text-sm mb-2">{feature.title}</h3>
-                      <p className="text-xs text-gray-700">{feature.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
 
           {/* Newsletter Section */}
           <div className="border-b border-white/10">

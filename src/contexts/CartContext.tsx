@@ -1,5 +1,8 @@
 'use client'
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import { useRouter } from 'next/navigation';
+import { supabase } from '../../lib/supabaseClient';
 
 // Define Product and Lens types
 interface Product {
@@ -60,19 +63,63 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { userProfile } = useAuth();
+  const router = useRouter();
 
+  // Fetch cart from user table on mount if logged in
   useEffect(() => {
-    const stored = localStorage.getItem('cart');
-    if (stored) setCartItems(JSON.parse(stored));
-  }, []);
+    const fetchCart = async () => {
+      if (userProfile) {
+        const { data } = await supabase
+          .from('user')
+          .select('cart_items')
+          .eq('id', userProfile.id)
+          .single();
+        if (data && data.cart_items) {
+          setCartItems(data.cart_items);
+        }
+      }
+    };
+    fetchCart();
+  }, [userProfile]);
 
+  // Update user table when cart changes (if logged in)
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(cartItems));
-  }, [cartItems]);
+    const updateCart = async () => {
+      if (userProfile) {
+        await supabase
+          .from('user')
+          .update({ cart_items: cartItems })
+          .eq('id', userProfile.id);
+      }
+    };
+    if (userProfile) updateCart();
+  }, [cartItems, userProfile]);
 
-  const addToCart = (item: CartItem) => setCartItems(prev => [...prev, item]);
-  const removeFromCart = (index: number) => setCartItems(prev => prev.filter((_, i) => i !== index));
-  const clearCart = () => setCartItems([]);
+  // Add to cart with auth check
+  const addToCart = (item: CartItem) => {
+    if (!userProfile) {
+      router.push('/login');
+      return;
+    }
+    setCartItems(prev => [...prev, item]);
+  };
+
+  const removeFromCart = (index: number) => {
+    if (!userProfile) {
+      router.push('/login');
+      return;
+    }
+    setCartItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const clearCart = () => {
+    if (!userProfile) {
+      router.push('/login');
+      return;
+    }
+    setCartItems([]);
+  };
 
   // Check if a product (with optional lens and powerCategory) is already in the cart
   const isInCart = (item: CartItem) => {
@@ -85,6 +132,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Remove by product id, lens id, and powerCategory
   const removeByDetails = (item: CartItem) => {
+    if (!userProfile) {
+      router.push('/login');
+      return;
+    }
     setCartItems(prev => prev.filter(cartItem =>
       !(
         cartItem.product.id === item.product.id &&

@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Select from 'react-select';
+import imageCompression from 'browser-image-compression';
 
 // Helper function to shift display orders for a specific category
 const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
@@ -435,14 +436,34 @@ const AddProductTab = () => {
   };
 
   // Banner Image Handlers
-  const handleBannerImage1Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBannerImage1Change = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setBannerImage1(e.target.files[0]);
+      try {
+        const compressedFile = await imageCompression(e.target.files[0], {
+          maxSizeMB: 0.5, // adjust as needed
+          maxWidthOrHeight: 1280, // adjust as needed
+          useWebWorker: true,
+        });
+        setBannerImage1(compressedFile);
+      } catch (_err: unknown) {
+        console.error(_err);
+        setMessage('Failed to compress Banner Image 1');
+      }
     }
   };
-  const handleBannerImage2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBannerImage2Change = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setBannerImage2(e.target.files[0]);
+      try {
+        const compressedFile = await imageCompression(e.target.files[0], {
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1280,
+          useWebWorker: true,
+        });
+        setBannerImage2(compressedFile);
+      } catch (_err: unknown) {
+        console.error(_err);
+        setMessage('Failed to compress Banner Image 2');
+      }
     }
   };
 
@@ -452,10 +473,24 @@ const AddProductTab = () => {
     updatedColors[colorIndex].colors[pickerIndex] = value;
     setColors(updatedColors);
   };
-  const handleColorImagesChange = (index: number, files: FileList) => {
-    const updatedColors = [...colors];
-    updatedColors[index].images = Array.from(files);
-    setColors(updatedColors);
+  const handleColorImagesChange = async (index: number, files: FileList) => {
+    try {
+      const compressedFiles = await Promise.all(
+        Array.from(files).map(file =>
+          imageCompression(file, {
+            maxSizeMB: 0.5,
+            maxWidthOrHeight: 1280,
+            useWebWorker: true,
+          })
+        )
+      );
+      const updatedColors = [...colors];
+      updatedColors[index].images = compressedFiles;
+      setColors(updatedColors);
+    } catch (_err: unknown) {
+      console.error(_err);
+      setMessage(`Failed to compress color images for entry ${index + 1}`);
+    }
   };
   const addColorPicker = (colorIndex: number) => {
     const updatedColors = [...colors];
@@ -603,7 +638,9 @@ const AddProductTab = () => {
                       type="file"
                       accept="image/*"
                       multiple
-                      onChange={e => handleColorImagesChange(idx, e.target.files)}
+                      onChange={async e => {
+                        if (e.target.files) await handleColorImagesChange(idx, e.target.files);
+                      }}
                       className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                     />
                     {colorObj.images.length > 0 && (

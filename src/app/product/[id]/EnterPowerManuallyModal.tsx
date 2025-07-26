@@ -1,10 +1,24 @@
 import React, { useState } from 'react';
 
+export interface PowerDetails {
+  samePower: boolean;
+  cylindrical: boolean;
+  leftSPH: string;
+  rightSPH: string;
+  leftCYL: string;
+  rightCYL: string;
+  leftAxis: string;
+  rightAxis: string;
+  leftAddlPower: string;
+  rightAddlPower: string;
+  lensCategory?: string;
+}
+
 interface EnterPowerManuallyModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: () => void;
-  lensCategory?: string; // Add this prop
+  onSubmit: (powerDetails: PowerDetails, name: string, phone: string) => void;
+  lensCategory?: string;
 }
 
 const SPH_VALUES = [
@@ -45,7 +59,20 @@ const EnterPowerManuallyModal: React.FC<EnterPowerManuallyModalProps> = ({ open,
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid()) return;
-    onSubmit();
+    const powerDetails = {
+      samePower,
+      cylindrical,
+      leftSPH,
+      rightSPH: samePower ? leftSPH : rightSPH,
+      leftCYL,
+      rightCYL: samePower ? leftCYL : rightCYL,
+      leftAxis,
+      rightAxis: samePower ? leftAxis : rightAxis,
+      leftAddlPower,
+      rightAddlPower: samePower ? leftAddlPower : rightAddlPower,
+      lensCategory,
+    };
+    onSubmit(powerDetails, name, phone);
   };
 
   if (!open) return null;

@@ -7,7 +7,7 @@ import {
   Heart, 
   ShoppingBag, 
   Star, 
-  ChevronRight,
+  // ChevronRight,
   Shield,
   Truck,
   RefreshCw,
@@ -18,8 +18,8 @@ import {
   ArrowLeft,
   X,
   Ruler,
-  Divide,
-  MoveHorizontal,
+  // Divide,
+  // MoveHorizontal,
   Monitor,
   Glasses
 } from "lucide-react";
@@ -33,6 +33,7 @@ import { useCart } from '../../../contexts/CartContext';
 import AddPowerModal from './AddPowerModal';
 import EnterPowerManuallyModal from './EnterPowerManuallyModal';
 import UploadPrescriptionModal from './UploadPrescriptionModal';
+import { useAuth } from '../../../contexts/AuthContext';
 // import { useHasMounted } from "../../../hooks/useHasMounted";
 
 // Define Product interface locally
@@ -77,6 +78,31 @@ interface Lens {
   lens_category_id: number;
 }
 
+// Define PowerDetails for prescription fields
+export interface PowerDetails {
+  samePower: boolean;
+  cylindrical: boolean;
+  leftSPH: string;
+  rightSPH: string;
+  leftCYL: string;
+  rightCYL: string;
+  leftAxis: string;
+  rightAxis: string;
+  leftAddlPower: string;
+  rightAddlPower: string;
+  lensCategory?: string;
+}
+// Define PowerEntry for full power object
+export interface PowerEntry {
+  id: string;
+  name: string;
+  phone: string;
+  method: string;
+  power_details: PowerDetails | null;
+  prescription_image_url: string | null;
+  created_at: string;
+}
+
 // Helper to normalize color data
 function normalizeColors(colors: Product["colors"]): { colors: string[]; images: string[] }[] {
   return colors.map((c) => {
@@ -86,12 +112,30 @@ function normalizeColors(colors: Product["colors"]): { colors: string[]; images:
   });
 }
 
+// Utility to add a power entry to user table
+async function addPowerToUserTable(userId: string, newPower: PowerEntry) {
+  const { data } = await supabase
+    .from('user')
+    .select('powers')
+    .eq('id', userId)
+    .single();
+  let powers = [];
+  if (data && data.powers) powers = data.powers;
+  powers.push(newPower);
+  await supabase
+    .from('user')
+    .update({ powers })
+    .eq('id', userId);
+  return newPower.id;
+}
+
 const ProductDetailPage = () => {
 //   const hasMounted = useHasMounted();
   const params = useParams();
   const router = useRouter();
   const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
   const { addToCart, isInCart, removeByDetails } = useCart();
+  const { userProfile } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,8 +152,6 @@ const ProductDetailPage = () => {
   const [previewIndex, setPreviewIndex] = useState(0);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
-  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
   const imageContainerRef = React.useRef<HTMLDivElement>(null);
   const [showLensModal, setShowLensModal] = useState(false);
   const [lenses, setLenses] = useState<Lens[]>([]);
@@ -153,9 +195,8 @@ const ProductDetailPage = () => {
   const [showEnterPowerManuallyModal, setShowEnterPowerManuallyModal] = useState(false);
   const [showUploadPrescriptionModal, setShowUploadPrescriptionModal] = useState(false);
   const [selectedLensForPower, setSelectedLensForPower] = useState<Lens | null>(null);
-  const [savedPowers] = useState([
-    { id: '1', label: 'Saved Power', details: 'Last used / added powers' },
-  ]);
+  const [showSavedPowersModal, setShowSavedPowersModal] = useState(false);
+  // No local savedPowers state; use userProfile?.powers as PowerEntry[]
   const [isPowerFlow, setIsPowerFlow] = useState(false);
 
   // Handler to open AddPowerModal after lens selection for single vision/progressive
@@ -164,12 +205,56 @@ const ProductDetailPage = () => {
     setShowAddPowerModal(true);
   };
 
-  const handleSubmitPowerLater = () => {
-    if (product && selectedLensForPower) {
-      addToCart({ product, lens: selectedLensForPower, powerCategory: 'submit-later' });
+  // Handler for manual power submit
+    const handleManualPowerSubmit = async (powerDetails: PowerDetails, name: string, phone: string) => {
+    if (!product || !selectedLensForPower || !userProfile) return;
+    
+    // Validate required fields
+    if (!name || !phone) {
+      alert('Please provide name and phone number.');
+      return;
     }
-    setShowAddPowerModal(false);
+    
+    const newPower: PowerEntry = {
+      id: crypto.randomUUID(),
+      name,
+      phone,
+      method: 'manual',
+      power_details: powerDetails,
+      prescription_image_url: null,
+      created_at: new Date().toISOString(),
+    };
+    await addPowerToUserTable(userProfile.id, newPower);
+    addToCart({ product, lens: selectedLensForPower, powerCategory: 'manual' });
+    setShowEnterPowerManuallyModal(false);
     setSelectedLensForPower(null);
+    alert('Power details saved and added to cart successfully!');
+  };
+
+  // Handler for prescription upload
+  const handleUploadPrescription = async (imageUrl: string, name: string, phone: string) => {
+    if (!product || !selectedLensForPower || !userProfile) return;
+    
+    // Validate required fields
+    if (!imageUrl || !name || !phone) {
+      alert('Please provide all required information: prescription image, name, and phone number.');
+      return;
+    }
+    
+    const newPower: PowerEntry = {
+      id: crypto.randomUUID(),
+      name,
+      phone,
+      method: 'upload',
+      power_details: null,
+      prescription_image_url: imageUrl,
+      created_at: new Date().toISOString(),
+    };
+    await addPowerToUserTable(userProfile.id, newPower);
+    addToCart({ product, lens: selectedLensForPower, powerCategory: 'prescription' });
+    setShowUploadPrescriptionModal(false);
+    setSelectedLensForPower(null);
+    alert('Prescription uploaded and added to cart successfully!');
   };
 
   const handleEnterPowerManually = () => {
@@ -177,34 +262,48 @@ const ProductDetailPage = () => {
     setShowEnterPowerManuallyModal(true);
   };
 
-  const handleUploadPrescription = () => {
+  // Handler for submit power later
+  const handleSubmitPowerLater = async (name: string, phone: string) => {
+    if (!product || !selectedLensForPower || !userProfile) return;
+    
+    // Validate required fields
+    if (!name || !phone) {
+      alert('Please provide name and phone number to submit power later.');
+      return;
+    }
+    
+    const newPower: PowerEntry = {
+      id: crypto.randomUUID(),
+      name,
+      phone,
+      method: 'submit-later',
+      power_details: null,
+      prescription_image_url: null,
+      created_at: new Date().toISOString(),
+    };
+    await addPowerToUserTable(userProfile.id, newPower);
+    addToCart({ product, lens: selectedLensForPower, powerCategory: 'submit-later' });
     setShowAddPowerModal(false);
-    setShowUploadPrescriptionModal(true);
+    setSelectedLensForPower(null);
+    alert('Item added to cart! You can submit your power within 15 days.');
   };
 
+  // Handler for saved power
   const handleSelectSavedPower = () => {
-    if (product && selectedLensForPower) {
-      addToCart({ product, lens: selectedLensForPower, powerCategory: 'saved' });
-    }
     setShowAddPowerModal(false);
+    setShowSavedPowersModal(true);
+  };
+ 
+  // Handler for selecting a specific saved power
+  const handleSelectSpecificSavedPower = (power: PowerEntry) => {
+    if (!product || !selectedLensForPower) return;
+    addToCart({ product, lens: selectedLensForPower, powerCategory: 'saved' });
+    setShowSavedPowersModal(false);
     setSelectedLensForPower(null);
+    alert(`Item added to cart with saved power for ${power.name}!`);
   };
 
-  const handleManualPowerSubmit = () => {
-    if (product && selectedLensForPower) {
-      addToCart({ product, lens: selectedLensForPower, powerCategory: 'manual' });
-    }
-    setShowEnterPowerManuallyModal(false);
-    setSelectedLensForPower(null);
-  };
 
-  const handlePrescriptionSubmit = () => {
-    if (product && selectedLensForPower) {
-      addToCart({ product, lens: selectedLensForPower, powerCategory: 'prescription' });
-    }
-    setShowUploadPrescriptionModal(false);
-    setSelectedLensForPower(null);
-  };
 
 
   useEffect(() => {
@@ -395,20 +494,20 @@ const ProductDetailPage = () => {
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchEndX - touchStartX;
     if (diff > 50 && previewIndex > 0) {
-      setSwipeDirection("right");
-      setIsAnimating(true);
+      // setSwipeDirection("right");
+      // setIsAnimating(true);
       setTimeout(() => {
         setPreviewIndex((prev) => prev - 1);
-        setIsAnimating(false);
-        setSwipeDirection(null);
+        // setIsAnimating(false);
+        // setSwipeDirection(null);
       }, 300);
     } else if (diff < -50 && previewIndex < productImages.length - 1) {
-      setSwipeDirection("left");
-      setIsAnimating(true);
+      // setSwipeDirection("left");
+      // setIsAnimating(true);
       setTimeout(() => {
         setPreviewIndex((prev) => prev + 1);
-        setIsAnimating(false);
-        setSwipeDirection(null);
+        // setIsAnimating(false);
+        // setSwipeDirection(null);
       }, 300);
     }
     setTouchStartX(null);
@@ -453,7 +552,7 @@ const ProductDetailPage = () => {
             <p className="text-gray-600 mb-6">{error || 'The product you are looking for does not exist.'}</p>
             <button
               onClick={() => router.back()}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Go Back
             </button>
@@ -472,12 +571,7 @@ const ProductDetailPage = () => {
     setSelectedLensType(typeKey);
 
     if (typeKey === "frame-only") {
-      // Add to cart directly for frame only
-      if (product) {
-        addToCart({ product, powerCategory: "frame only" });
-        setShowPowerModal(false);
-        alert("Added to cart!");
-      }
+      // Do not add to cart or close modal automatically. Let the footer button handle it.
       return;
     }
 
@@ -508,46 +602,36 @@ const ProductDetailPage = () => {
   const handleAddToCart = () => {
     if (!product) return;
     addToCart({ product, powerCategory: 'frame only' });
-    alert('Added to cart!');
+    alert('Frame added to cart successfully!');
   };
   const handleRemoveFromCart = () => {
     if (!product) return;
     removeByDetails({ product, powerCategory: 'frame only' });
-    alert('Removed from cart!');
+    alert('Frame removed from cart!');
   };
   // Add to Cart with lens
   const handleAddLensToCart = (lens: Lens) => {
     if (!product) return;
     addToCart({ product, lens });
-    alert('Added to cart with lens!');
+    alert(`Added to cart with ${lens.title}!`);
   };
   const handleRemoveLensFromCart = (lens: Lens) => {
     if (!product) return;
     removeByDetails({ product, lens });
-    alert('Removed from cart!');
+    alert(`Removed from cart!`);
   };
   // Add to Cart with power (category and lens)
   const handleAddPowerToCart = (powerCategory: string, lens: Lens) => {
     if (!product) return;
     addToCart({ product, lens, powerCategory });
-    alert('Added to cart with power and lens!');
+    alert(`Added to cart with ${lens.title} and ${powerCategory}!`);
   };
 
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      
-      {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <nav className="flex items-center space-x-2 text-sm text-gray-500">
-          <button onClick={() => router.push('/')} className="hover:text-blue-600">Home</button>
-          <ChevronRight className="w-4 h-4" />
-          <button onClick={() => router.push('/products')} className="hover:text-blue-600">Products</button>
-          <ChevronRight className="w-4 h-4" />
-          <span className="text-gray-900">{product.title}</span>
-        </nav>
-      </div>
+
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative">
@@ -612,20 +696,19 @@ const ProductDetailPage = () => {
             {/* Magnifier Square (desktop only) */}
             {showMagnifier && productImages.length > 0 && (
               <div
-                className="hidden md:block"
+                className="hidden md:block rounded-2xl border-4 border-primary/30"
                 style={{
                   position: "absolute",
                   top: 0,
-                  left: "calc(100% + 32px)", // 32px gap to the right
+                  left: "calc(100% + 32px)",
                   width: 550,
                   height: 550,
-                  border: "2px solid #ccc",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
                   background: `url(${productImages[selectedImage]}) no-repeat`,
-                  backgroundSize: "1200px 1200px", // 2x zoom for 600x600 image
+                  backgroundSize: "1200px 1200px",
                   backgroundPosition: `-${magnifierPosition.x * 2 - 125}px -${magnifierPosition.y * 2 - 125}px`,
                   zIndex: 20,
                   backgroundColor: "#fff",
+                  boxShadow: "0 8px 32px 0 rgba(44, 108, 223, 0.25), 0 1.5px 8px 0 rgba(0,0,0,0.10)",
                 }}
               />
             )}
@@ -717,7 +800,7 @@ const ProductDetailPage = () => {
                         key={index}
                         onClick={() => setSelectedColor(index)}
                         className={`w-12 h-12 rounded-full border-2 transition-all ${
-                          selectedColor === index ? 'border-blue-600 scale-110' : 'border-gray-300'
+                          selectedColor === index ? 'border-primary scale-110' : 'border-gray-300'
                         }`}
                         style={{ background: background }}
                         title={colorArr.join(", ")}
@@ -728,33 +811,53 @@ const ProductDetailPage = () => {
               </div>
             )}
 
+             {/* Sizes */}
+             {product.sizes && product.sizes.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">{ product.sizes.length === 1 ? "Size" : "Sizes"}</h3>
+                <div className="flex gap-3">
+                  {product.sizes.map((size, index) => (
+                    <button
+                      key={index}
+                      className={`px-4 py-2 rounded-lg border-2 transition-all border-gray-300 text-gray-700 hover:border-gray-400`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Frame Measurements or Sizes */}
             {(product.lens_width || product.bridge_width || product.temple_length) ? (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-3 text-center">Frame Measurements</h3>
-                <div className="flex flex-wrap gap-4 justify-center">
+                <div className="flex flex-nowrap gap-2 md:gap-4 justify-center overflow-x-auto">
                   {/* Lens Width */}
                   {product.lens_width && (
-                    <div className="flex flex-col items-center bg-gray-50 rounded-lg p-6 min-w-[140px] shadow-sm">
-                      <Ruler className="w-10 h-10 mb-2 text-blue-500" />
+                    <div className="flex-shrink-0 flex flex-col items-center bg-gray-50 rounded-lg p-2 md:p-6 min-w-[80px] md:min-w-[140px] shadow-sm">
+                      {/* <Ruler className="w-6 h-6 md:w-10 md:h-10 mb-1 md:mb-2 text-blue-500" /> */}
+                      <Image  src="/image2.png" className="w-6 h-6 md:w-20 md:h-10 mb-1 md:mb-2 text-blue-500"  alt="Lens Width" width={20} height={20} />
                       <span className="text-xs text-gray-500">LENS WIDTH</span>
-                      <span className="text-xl font-bold mt-1">{product.lens_width}mm</span>
+                      <span className="text-sm md:text-xl font-bold mt-1">{product.lens_width}mm</span>
                     </div>
                   )}
                   {/* Bridge Width */}
                   {product.bridge_width && (
-                    <div className="flex flex-col items-center bg-gray-50 rounded-lg p-6 min-w-[140px] shadow-sm">
-                      <Divide className="w-10 h-10 mb-2 text-green-500" />
+                    <div className="flex-shrink-0 flex flex-col items-center bg-gray-50 rounded-lg p-2 md:p-6 min-w-[80px] md:min-w-[140px] shadow-sm">
+                      {/* <Divide className="w-6 h-6 md:w-10 md:h-10 mb-1 md:mb-2 text-green-500" /> */}
+                      <Image  src="/image3.png" className="w-6 h-6 md:w-20 md:h-10 mb-1 md:mb-2 text-green-500"  alt="Bridge Width" width={20} height={20} />
                       <span className="text-xs text-gray-500">BRIDGE WIDTH</span>
-                      <span className="text-xl font-bold mt-1">{product.bridge_width}mm</span>
+                      <span className="text-sm md:text-xl font-bold mt-1">{product.bridge_width}mm</span>
                     </div>
                   )}
                   {/* Temple Length */}
                   {product.temple_length && (
-                    <div className="flex flex-col items-center bg-gray-50 rounded-lg p-6 min-w-[140px] shadow-sm">
-                      <MoveHorizontal className="w-10 h-10 mb-2 text-purple-500" />
+                    <div className="flex-shrink-0 flex flex-col items-center bg-gray-50 rounded-lg p-2 md:p-6 min-w-[80px] md:min-w-[140px] shadow-sm">
+                      {/* <MoveHorizontal className="w-6 h-6 md:w-10 md:h-10 mb-1 md:mb-2 text-purple-500" /> */}
+                      <Image  src="/image.png" className="w-10 h-10 md:w-20 md:h-10 mb-1 md:mb-2 text-purple-500"  alt="Temple Length" width={20} height={20} />
                       <span className="text-xs text-gray-500">TEMPLE LENGTH</span>
-                      <span className="text-xl font-bold mt-1">{product.temple_length}mm</span>
+                      <span className="text-sm md:text-xl font-bold mt-1">{product.temple_length}mm</span>
                     </div>
                   )}
                 </div>
@@ -762,11 +865,11 @@ const ProductDetailPage = () => {
             ) : (product.sizes && product.sizes.length > 0) ? (
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Sizes</h3>
-                <div className="flex gap-3">
+                <div className="flex gap-2 md:gap-3 flex-wrap">
                   {product.sizes.map((size, index) => (
                     <button
                       key={index}
-                      className={`px-4 py-2 rounded-lg border-2 transition-all {'border-blue-600 bg-blue-50 text-blue-600'}`}
+                      className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg border-2 transition-all border-primary bg-primary text-white text-sm md:text-base min-w-[60px] md:min-w-[80px]`}
                     >
                       {size}
                     </button>
@@ -775,27 +878,7 @@ const ProductDetailPage = () => {
               </div>
             ) : null}
 
-            {/* Sizes */}
-            {/* {product.sizes && product.sizes.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Sizes</h3>
-                <div className="flex gap-3">
-                  {product.sizes.map((size, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedSize(index)}
-                      className={`px-4 py-2 rounded-lg border-2 transition-all ${
-                        selectedSize === index
-                          ? 'border-blue-600 bg-blue-50 text-blue-600'
-                          : 'border-gray-300 text-gray-700 hover:border-gray-400'
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )} */}
+           
 
             {/* Quantity */}
             <div>
@@ -838,7 +921,7 @@ const ProductDetailPage = () => {
                         </button>
                       )}
                       <button
-                        className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 cursor-pointer transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 bg-primary text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
                         onClick={handleAddLensClick}
                       >
                         <Ruler className="w-5 h-5" />
@@ -859,7 +942,7 @@ const ProductDetailPage = () => {
                 product.type_category &&
                 (product.type_category.includes("eyeglasses") || product.type_category.includes("computer glasses") || product.type_category.includes("computerglasses")) ? (
                   <button
-                    className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-semibold hover:bg-blue-700 cursor-pointer transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 bg-primary text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
                     onClick={handleAddPowerClick}
                   >
                     <Ruler className="w-5 h-5" />
@@ -898,7 +981,7 @@ const ProductDetailPage = () => {
                 <ul className="space-y-2">
                   {product.features.map((feature, index) => (
                     <li key={index} className="flex items-center gap-2 text-gray-600">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      <div className="w-2 h-2 bg-primary rounded-full"></div>
                       {feature}
                     </li>
                   ))}
@@ -1003,7 +1086,7 @@ const ProductDetailPage = () => {
                         onClick={(e) => handleRecommendationFavoriteClick(e, item)}
                         className="absolute top-3 right-3 z-10 bg-white rounded-full p-2 shadow hover:bg-gray-100 transition"
                       >
-                        <Heart 
+                        <Heart
                           className={`w-5 h-5 transition-colors ${
                             isFavorite(item.id!) ? 'text-red-500 fill-current' : 'text-gray-400 group-hover:text-red-500'
                           }`} 
@@ -1068,21 +1151,9 @@ const ProductDetailPage = () => {
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === 'ArrowLeft' && previewIndex > 0) {
-              setSwipeDirection("right");
-              setIsAnimating(true);
-              setTimeout(() => {
-                handlePreviewLeft();
-                setIsAnimating(false);
-                setSwipeDirection(null);
-              }, 300);
+              handlePreviewLeft();
             } else if (e.key === 'ArrowRight' && previewIndex < productImages.length - 1) {
-              setSwipeDirection("left");
-              setIsAnimating(true);
-              setTimeout(() => {
-                handlePreviewRight();
-                setIsAnimating(false);
-                setSwipeDirection(null);
-              }, 300);
+              handlePreviewRight();
             } else if (e.key === 'Escape') {
               setShowPreview(false);
             }
@@ -1108,22 +1179,14 @@ const ProductDetailPage = () => {
           )}
           {/* Image */}
           <div
-            className={`relative w-screen h-screen flex items-center justify-center transition-transform duration-300 z-0 ${
-              isAnimating
-                ? swipeDirection === "left"
-                  ? "-translate-x-full"
-                  : swipeDirection === "right"
-                  ? "translate-x-full"
-                  : "translate-x-0"
-                : "translate-x-0"
-            }`}
-            style={{ willChange: 'transform' }}
+            className="relative w-screen h-screen flex items-center justify-center z-0"
+            style={{ willChange: 'opacity' }}
           >
             <Image
               fill
               src={productImages[previewIndex]}
               alt={product.title}
-              className="object-contain"
+              className="object-contain transition-opacity duration-200"
               draggable={false}
             />
           </div>
@@ -1238,15 +1301,19 @@ const ProductDetailPage = () => {
                 <span className="text-gray-500 text-sm md:text-base">Subtotal (Frame):</span>
                 <span className="text-xl md:text-2xl font-bold text-gray-900">₹{product?.discounted_price || product?.original_price}</span>
               </div>
-              {selectedLensId && isInCart({ product, lens: lenses.find(l => l.id === selectedLensId) }) ? (
-                <button className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => handleRemoveLensFromCart(lenses.find(l => l.id === selectedLensId))}>
-                  Remove from Cart
-                </button>
-              ) : (
-                <button className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => selectedLensId && handleAddLensToCart(lenses.find(l => l.id === selectedLensId))}>
-                  Add to Cart
-                </button>
-              )}
+              {selectedLensId && (() => {
+                const selectedLens = lenses.find(l => l.id === selectedLensId);
+                const inCart = isInCart({ product, lens: selectedLens });
+                return inCart ? (
+                  <button className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => handleRemoveLensFromCart(selectedLens)}>
+                    Remove from Cart
+                  </button>
+                ) : (
+                  <button className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg" onClick={() => handleAddLensToCart(selectedLens)}>
+                    Add to Cart
+                  </button>
+                );
+              })()}
               <div className="text-gray-400 text-xs md:text-sm text-center mt-1">Need help? <span className="underline cursor-pointer">Contact Support</span></div>
             </div>
           </div>
@@ -1309,17 +1376,40 @@ const ProductDetailPage = () => {
                 <span className="text-gray-500 text-sm md:text-base">Subtotal (Frame):</span>
                 <span className="text-xl md:text-2xl font-bold text-gray-900">₹{product?.discounted_price || product?.original_price}</span>
               </div>
-              <button
-                className={`w-full py-3 rounded-xl font-bold text-white shadow-md transition-all duration-200 text-base md:text-lg ${selectedLensType ? 'bg-primary hover:bg-primary/80' : 'bg-gray-300 cursor-not-allowed'}`}
-                disabled={!selectedLensType}
-                onClick={() => selectedLensType && handlePowerLensTypeSelect(selectedLensType)}
-              >
-                {isInCart({ product, powerCategory: selectedLensType }) ? (
-                  <span>Remove from Cart</span>
+              {/* Frame Only logic */}
+              {selectedLensType === 'frame-only' ? (
+                isInCart({ product, powerCategory: 'frame only' }) ? (
+                  <button
+                    className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg"
+                    onClick={() => {
+                      removeByDetails({ product, powerCategory: 'frame only' });
+                      setShowPowerModal(false);
+                      alert('Removed from cart!');
+                    }}
+                  >
+                    Remove from Cart
+                  </button>
                 ) : (
-                  <span>Continue</span>
-                )}
-              </button>
+                  <button
+                    className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg"
+                    onClick={() => {
+                      addToCart({ product, powerCategory: 'frame only' });
+                      setShowPowerModal(false);
+                      alert('Added to cart!');
+                    }}
+                  >
+                    Add to Cart
+                  </button>
+                )
+              ) : (
+                <button
+                  className={`w-full py-3 rounded-xl font-bold text-white shadow-md transition-all duration-200 text-base md:text-lg ${selectedLensType ? 'bg-primary hover:bg-primary/80' : 'bg-gray-300 cursor-not-allowed'}`}
+                  disabled={!selectedLensType}
+                  onClick={() => selectedLensType && handlePowerLensTypeSelect(selectedLensType)}
+                >
+                  Continue
+                </button>
+              )}
               <div className="text-gray-400 text-xs md:text-sm text-center mt-1">Need help? <span className="underline cursor-pointer">Contact Support</span></div>
             </div>
           </div>
@@ -1404,25 +1494,55 @@ const ProductDetailPage = () => {
                 <span className="text-xl md:text-2xl font-bold text-gray-900">₹{product?.discounted_price || product?.original_price}</span>
               </div>
               {selectedPowerLensId && selectedLensType && (
-                isPowerFlow ? (
-                  <button
-                    className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg"
-                    onClick={() => {
-                      setShowPowerLensModal(false);
-                      setShowAddPowerModal(true);
-                      setSelectedLensForPower(powerLensList.find(l => l.id === selectedPowerLensId));
-                    }}
-                  >
-                    Continue
-                  </button>
-                ) : (
-                  <button
-                    className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg"
-                    onClick={() => selectedPowerLensId && selectedLensType && handleAddPowerToCart(selectedLensType, powerLensList.find(l => l.id === selectedPowerLensId))}
-                  >
-                    Add to Cart
-                  </button>
-                )
+                (() => {
+                  const selectedLens = powerLensList.find(l => l.id === selectedPowerLensId);
+                  const inCart = isInCart({ product, lens: selectedLens, powerCategory: selectedLensType });
+                  if (isPowerFlow) {
+                    return inCart ? (
+                      <button
+                        className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg"
+                        onClick={() => {
+                          removeByDetails({ product, lens: selectedLens, powerCategory: selectedLensType });
+                          setShowPowerLensModal(false);
+                          alert('Removed from cart!');
+                        }}
+                      >
+                        Remove from Cart
+                      </button>
+                    ) : (
+                      <button
+                        className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg"
+                        onClick={() => {
+                          setShowPowerLensModal(false);
+                          setShowAddPowerModal(true);
+                          setSelectedLensForPower(selectedLens);
+                        }}
+                      >
+                        Continue
+                      </button>
+                    );
+                  } else {
+                    return inCart ? (
+                      <button
+                        className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg"
+                        onClick={() => {
+                          removeByDetails({ product, lens: selectedLens, powerCategory: selectedLensType });
+                          setShowPowerLensModal(false);
+                          alert('Removed from cart!');
+                        }}
+                      >
+                        Remove from Cart
+                      </button>
+                    ) : (
+                      <button
+                        className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg"
+                        onClick={() => selectedPowerLensId && selectedLensType && handleAddPowerToCart(selectedLensType, selectedLens)}
+                      >
+                        Add to Cart
+                      </button>
+                    );
+                  }
+                })()
               )}
               <div className="text-gray-400 text-xs md:text-sm text-center mt-1">Need help? <span className="underline cursor-pointer">Contact Support</span></div>
             </div>
@@ -1432,11 +1552,12 @@ const ProductDetailPage = () => {
       <AddPowerModal
         open={showAddPowerModal}
         onClose={() => { setShowAddPowerModal(false); setSelectedLensForPower(null); setIsPowerFlow(false); }}
-        onSubmitPowerLater={handleSubmitPowerLater}
+        onSubmitPowerLater={() => handleSubmitPowerLater('', '')}
         onEnterPowerManually={handleEnterPowerManually}
-        onUploadPrescription={handleUploadPrescription}
+        onUploadPrescription={() => { setShowAddPowerModal(false); setShowUploadPrescriptionModal(true); }}
         onSelectSavedPower={handleSelectSavedPower}
-        savedPowers={savedPowers}
+        // savedPowers={Array.isArray((userProfile as any)?.powers) ? (userProfile as any).powers : []}
+        savedPowers={((userProfile && 'powers' in userProfile) ? (userProfile as { powers: PowerEntry[] }).powers : [])}
       />
       <EnterPowerManuallyModal
         open={showEnterPowerManuallyModal}
@@ -1447,8 +1568,64 @@ const ProductDetailPage = () => {
       <UploadPrescriptionModal
         open={showUploadPrescriptionModal}
         onClose={() => { setShowUploadPrescriptionModal(false); setSelectedLensForPower(null); }}
-        onSubmit={handlePrescriptionSubmit}
+        onSubmit={handleUploadPrescription}
       />
+      {/* Saved Powers Modal */}
+      {showSavedPowersModal && (
+        <div
+          className="fixed inset-0 z-70 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowSavedPowersModal(false)}
+        >
+          <div
+            className="w-full md:w-[600px] bg-white rounded-2xl shadow-2xl p-6"
+            onClick={event => event.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Saved Powers</h2>
+            {((userProfile && 'powers' in userProfile) ? (userProfile as { powers: PowerEntry[] }).powers : []).length === 0 ? (
+              <p className="text-gray-600">No saved powers found. Add a new one to continue.</p>
+            ) : (
+              <div className="space-y-4">
+                {((userProfile && 'powers' in userProfile) ? (userProfile as { powers: PowerEntry[] }).powers : []).map((power) => (
+                  <div
+                    key={power.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-200"
+                  >
+                    <div>
+                      <p className="font-semibold text-gray-900">{power.name}</p>
+                      <p className="text-sm text-gray-600">Phone: {power.phone}</p>
+                      <p className="text-sm text-gray-600">Method: {power.method}</p>
+                      {power.power_details && (
+                        <>
+                          <p className="text-sm text-gray-600">Power Details: {JSON.stringify(power.power_details)}</p>
+                          {power.prescription_image_url && (
+                            <p className="text-sm text-gray-600">Prescription: <a href={power.prescription_image_url} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">{power.prescription_image_url}</a></p>
+                          )}
+                        </>
+                      )}
+                      <p className="text-sm text-gray-600">Date: {new Date(power.created_at).toLocaleDateString()}</p>
+                    </div>
+                    <button
+                      className="text-red-600 hover:text-red-800"
+                      onClick={() => handleSelectSpecificSavedPower(power)}
+                      aria-label="Select saved power"
+                    >
+                      Select
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-6 flex justify-end">
+              <button
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors"
+                onClick={() => setShowSavedPowersModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
