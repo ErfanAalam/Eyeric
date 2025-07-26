@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 
 export interface PowerDetails {
   samePower: boolean;
-  cylindrical: boolean;
   leftSPH: string;
   rightSPH: string;
   leftCYL: string;
@@ -35,7 +34,7 @@ const ADDL_POWER_VALUES = [
 
 const EnterPowerManuallyModal: React.FC<EnterPowerManuallyModalProps> = ({ open, onClose, onSubmit, lensCategory }) => {
   const [samePower, setSamePower] = useState(false);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-  const [cylindrical, setCylindrical] = useState(false);
+  // const [cylindrical, setCylindrical] = useState(false);
   const [leftSPH, setLeftSPH] = useState('');
   const [rightSPH, setRightSPH] = useState('');
   const [name, setName] = useState('');
@@ -61,7 +60,6 @@ const EnterPowerManuallyModal: React.FC<EnterPowerManuallyModalProps> = ({ open,
     if (!isFormValid()) return;
     const powerDetails = {
       samePower,
-      cylindrical,
       leftSPH,
       rightSPH: samePower ? leftSPH : rightSPH,
       leftCYL,
@@ -102,10 +100,10 @@ const EnterPowerManuallyModal: React.FC<EnterPowerManuallyModalProps> = ({ open,
               <input type="checkbox" checked={samePower} onChange={e => setSamePower(e.target.checked)} />
               <span className="text-gray-700">I have same power for both eyes</span>
             </label>
-            <label className="flex items-center gap-2">
+            {/* <label className="flex items-center gap-2">
               <input type="checkbox" checked={cylindrical} onChange={e => setCylindrical(e.target.checked)} />
               <span className="text-gray-700">I have cylindrical power</span>
-            </label>
+            </label> */}
             <div className="flex flex-col gap-2 mt-2">
               <div className="flex items-center gap-4">
                 <span className="text-xs text-gray-500 w-12">Power</span>
@@ -138,7 +136,7 @@ const EnterPowerManuallyModal: React.FC<EnterPowerManuallyModalProps> = ({ open,
                 )}
               </div>
               {/* Optionally add CYL, AXIS fields here if cylindrical is checked */}
-              {cylindrical && (
+              {/* {cylindrical && ( */}
                 <>
                   <div className="flex items-center gap-4 mt-2">
                     <span className="text-xs text-gray-500 w-12">CYL</span>
@@ -187,7 +185,7 @@ const EnterPowerManuallyModal: React.FC<EnterPowerManuallyModalProps> = ({ open,
                     )}
                   </div>
                 </>
-              )}
+              {/* )} */}
               {/* Add Addl. Power if lensCategory is bifocal-progressive or progressive */}
               {(lensCategory === 'bifocal-progressive' || lensCategory === 'progressive') && (
                 <div className="flex items-center gap-4 mt-2">

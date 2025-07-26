@@ -71,7 +71,7 @@ const AddPowerModal: React.FC<AddPowerModalProps> = ({
                   <Clock className="w-8 h-8 text-blue-900" />
                 </span>
                 <div className="flex-1 text-left">
-                  <div className="font-semibold text-base text-gray-900">Submit Power Later in 15 days</div>
+                  <div className="font-semibold text-base text-gray-900">Submit Power Later in 7 days</div>
                   <div className="text-xs text-gray-500">After placing the order</div>
                 </div>
                 <CheckCircle className="text-green-500 w-7 h-7" />
