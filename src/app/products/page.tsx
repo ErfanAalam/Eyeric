@@ -73,7 +73,7 @@ const ProductsContent = () => {
     const fetchProducts = async () => {
       setLoading(true);
       const data = await getProducts();
-      setAllProducts(data);
+      setAllProducts(data as unknown as Product[]);
       setLoading(false);
     };
     fetchProducts();
