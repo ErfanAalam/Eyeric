@@ -3,7 +3,7 @@ import Image from "next/image";
 import { supabase } from "../../../../../lib/supabaseClient";
 import imageCompression from "browser-image-compression";
 
-type Slide = { id: string; image_url: string; created_at: string };
+type Slide = { id: string; image_url: string; created_at: string; redirect_url?: string };
 
 type SlidesTabProps = {
   slides?: Slide[];
@@ -18,6 +18,8 @@ const SlidesTab = (props: SlidesTabProps) => {
   const [slides, setSlides] = useState<Slide[]>(props.slides || []);
   const [slideLoading, setSlideLoading] = useState<boolean>(props.slideLoading || false);
   const [slideMsg, setSlideMsg] = useState<string>(props.slideMsg || "");
+  const [redirectUrl, setRedirectUrl] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!props.slides) fetchSlides();
@@ -34,10 +36,9 @@ const SlidesTab = (props: SlidesTabProps) => {
     setSlideLoading(false);
   }
 
-  async function handleSlideUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    if (props.handleSlideUpload) return props.handleSlideUpload(e);
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function handleAddSlide() {
+    if (!selectedFile) return;
+    
     setSlideLoading(true);
     setSlideMsg("");
 
@@ -52,7 +53,7 @@ const SlidesTab = (props: SlidesTabProps) => {
       img.onerror = function () {
         resolve(false);
       };
-      img.src = URL.createObjectURL(file);
+      img.src = URL.createObjectURL(selectedFile);
     });
     if (!isValidAspectRatio) {
       setSlideMsg("Image must have a 16:9 aspect ratio (e.g., 1600x900, 1920x1080). Upload canceled.");
@@ -71,14 +72,14 @@ const SlidesTab = (props: SlidesTabProps) => {
     };
     let compressedFile: File;
     try {
-      compressedFile = await imageCompression(file, options);
+      compressedFile = await imageCompression(selectedFile, options);
     } catch {
       setSlideMsg("Image compression failed");
       setSlideLoading(false);
       return;
     }
 
-    const filePath = `${Date.now()}_${file.name}`;
+    const filePath = `${Date.now()}_${selectedFile.name}`;
     const { error: storageError } = await supabase.storage
       .from("slides")
       .upload(filePath, compressedFile);
@@ -90,14 +91,21 @@ const SlidesTab = (props: SlidesTabProps) => {
     const { data: urlData } = supabase.storage
       .from("slides")
       .getPublicUrl(filePath);
-    await supabase.from("slide").insert({ image_url: urlData.publicUrl });
+    await supabase.from("slide").insert({ image_url: urlData.publicUrl, redirect_url: redirectUrl });
     setSlideMsg("Slide uploaded!");
     setSlideLoading(false);
+    setRedirectUrl("");
+    setSelectedFile(null);
     fetchSlides();
   }
 
   async function handleSlideDelete(id: string, imageUrl: string) {
     if (props.handleSlideDelete) return props.handleSlideDelete(id, imageUrl);
+    
+    // Show confirmation dialog
+    const isConfirmed = window.confirm("Are you sure you want to delete this slide? This action cannot be undone.");
+    if (!isConfirmed) return;
+    
     setSlideLoading(true);
     setSlideMsg("");
     try {
@@ -117,6 +125,7 @@ const SlidesTab = (props: SlidesTabProps) => {
         return;
       }
       await supabase.from("slide").delete().eq("id", id);
+      await supabase.from("slides").delete().eq("id", id);
       setSlideMsg("Slide deleted!");
     } catch (err) {
       console.error("Delete slide/image error:", err); // Debug log
@@ -142,13 +151,41 @@ const SlidesTab = (props: SlidesTabProps) => {
           <input
             type="file"
             accept="image/*"
-            onChange={handleSlideUpload}
+            onChange={(e) => {
+              // Store the file for later upload
+              const file = e.target.files?.[0];
+              if (file) {
+                setSelectedFile(file);
+              }
+            }}
             disabled={slideLoading}
             className="flex-1 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100 transition-colors"
           />
-          {slideLoading && (
-            <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-500 border-t-transparent"></div>
-          )}
+          <input
+            type="text"
+            placeholder="Redirect URL (optional)"
+            value={redirectUrl}
+            onChange={e => setRedirectUrl(e.target.value)}
+            disabled={slideLoading}
+            className="flex-1 text-sm border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-200"
+          />
+          <button
+            onClick={handleAddSlide}
+            disabled={slideLoading || !selectedFile}
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {slideLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                Uploading...
+              </>
+            ) : (
+              <>
+                <span>➕</span>
+                Add Slide
+              </>
+            )}
+          </button>
         </div>
       </div>
       {/* Messages */}
@@ -179,13 +216,25 @@ const SlidesTab = (props: SlidesTabProps) => {
         {slides.map((slide) => (
           <div key={slide.id} className="group relative bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-200">
             <div className="aspect-video bg-slate-100">
-              <Image 
-                src={slide.image_url} 
-                alt="slide" 
-                width={800} 
-                height={450} 
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
-              />
+              {slide.redirect_url ? (
+                <a href={slide.redirect_url} target="_blank" rel="noopener noreferrer">
+                  <Image 
+                    src={slide.image_url} 
+                    alt="slide" 
+                    width={800} 
+                    height={450} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                  />
+                </a>
+              ) : (
+                <Image 
+                  src={slide.image_url} 
+                  alt="slide" 
+                  width={800} 
+                  height={450} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" 
+                />
+              )}
             </div>
             <div className="p-4">
               <div className="text-xs text-slate-500 mb-3">

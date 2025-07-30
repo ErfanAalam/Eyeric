@@ -59,7 +59,7 @@ const AddCouponTab = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-100 py-8 px-2">
-      <div className="w-full max-w-2xl mx-auto bg-white rounded-3xl shadow-2xl p-8 border border-slate-200">
+      <div className="w-full  bg-white rounded-3xl shadow-2xl p-8 border border-slate-200">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl mb-4 shadow-lg">
             <span className="text-white text-3xl font-bold">🏷️</span>

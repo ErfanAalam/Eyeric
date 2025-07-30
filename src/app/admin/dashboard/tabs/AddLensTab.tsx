@@ -8,21 +8,62 @@ const CATEGORIES = [
   "single vision",
   'progressive + Biofocal',
   "zero power",
-  "frame only"
 ];
 
-const AddLensTab = () => {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [features, setFeatures] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState("");
+// Define Lens type for this file
+export type Lens = {
+  id?: string;
+  title: string;
+  description: string;
+  features: string[];
+  original_price: number;
+  category: string;
+  image_url?: string;
+  lens_category_id?: string | number;
+  name?: string; // Add name for category dropdowns
+};
+
+// Add prop types for edit mode
+export type AddLensTabProps = {
+  editLens?: Lens;
+  onFinishEdit?: () => void;
+};
+
+const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
+  const [title, setTitle] = useState(editLens?.title || "");
+  const [description, setDescription] = useState(editLens?.description || "");
+  const [features, setFeatures] = useState(editLens?.features ? editLens.features.join('; ') : "");
+  const [originalPrice, setOriginalPrice] = useState(editLens?.original_price?.toString() || "");
+  const [category, setCategory] = useState(editLens?.category || CATEGORIES[0]);
+  const [image, setImage] = useState<File | null>(null); // File
+  const [imagePreview, setImagePreview] = useState(editLens?.image_url || "");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [lensCategories, setLensCategories] = useState([]);
-  const [lensCategoryId, setLensCategoryId] = useState("");
+  const [lensCategories, setLensCategories] = useState<Lens[]>([]);
+  const [lensCategoryId, setLensCategoryId] = useState(editLens?.lens_category_id?.toString() || "");
+
+  // When editLens changes, update state
+  useEffect(() => {
+    if (editLens) {
+      setTitle(editLens.title || "");
+      setDescription(editLens.description || "");
+      setFeatures(editLens.features ? editLens.features.join('; ') : "");
+      setOriginalPrice(editLens.original_price?.toString() || "");
+      setCategory(editLens.category || CATEGORIES[0]);
+      setImage(null);
+      setImagePreview(editLens.image_url || "");
+      setLensCategoryId(editLens.lens_category_id?.toString() || "");
+    } else {
+      setTitle("");
+      setDescription("");
+      setFeatures("");
+      setOriginalPrice("");
+      setCategory(CATEGORIES[0]);
+      setImage(null);
+      setImagePreview("");
+      setLensCategoryId("");
+    }
+  }, [editLens]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -58,8 +99,13 @@ const AddLensTab = () => {
     setLoading(true);
     setMessage("");
     
-    let imageUrl = "";
+    let imageUrl = editLens?.image_url || "";
+    // If new image selected, upload and remove old if editing
     if (image) {
+      if (editLens && editLens.image_url) {
+        const path = editLens.image_url.split("/product-images/")[1];
+        if (path) await supabase.storage.from("product-images").remove([path]);
+      }
       const filePath = `lenses/${Date.now()}_${image.name}`;
       const { error: uploadError } = await supabase.storage.from("product-images").upload(filePath, image);
       if (uploadError) {
@@ -69,13 +115,36 @@ const AddLensTab = () => {
       }
       const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
       imageUrl = urlData.publicUrl;
-    } else {
+    } else if (!editLens && !image) {
       setMessage("Please select an image");
       setLoading(false);
       return;
     }
     
     const featuresArray = features.split(';').map(f => f.trim()).filter(f => f.length > 0);
+
+    if (editLens) {
+      // Update existing lens
+      const { error } = await supabase.from("lenses").update({
+        image_url: imageUrl,
+        title,
+        description,
+        features: featuresArray,
+        original_price: parseFloat(originalPrice),
+        category,
+        lens_category_id: lensCategoryId,
+      }).eq("id", editLens.id);
+      if (error) {
+        setMessage("Failed to update lens");
+      } else {
+        setMessage("Lens updated successfully!");
+        if (onFinishEdit) onFinishEdit();
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Add new lens
     const { error } = await supabase.from("lenses").insert({
       image_url: imageUrl,
       title,
@@ -85,7 +154,6 @@ const AddLensTab = () => {
       category,
       lens_category_id: lensCategoryId,
     });
-    
     if (error) {
       setMessage("Failed to add lens");
     } else {
@@ -97,13 +165,15 @@ const AddLensTab = () => {
       setCategory(CATEGORIES[0]);
       setImage(null);
       setImagePreview("");
+      setLensCategoryId("");
+      if (onFinishEdit) onFinishEdit();
     }
     setLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4 shadow-lg">

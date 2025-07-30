@@ -5,7 +5,7 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { AdminAuthProvider } from "../contexts/AdminAuthContext";
 import { FavoritesProvider } from "../contexts/FavoritesContext";
 import { CartProvider } from '../contexts/CartContext';
-import Script from "next/script";
+// import Script from "next/script";
 
 // ✅ Load Poppins font with CSS variable
 const poppins = Poppins({
@@ -29,7 +29,7 @@ export default function RootLayout({
     <html lang="en" className={poppins.variable}>
       <head>
         {/* Google Tag Manager */}
-        <Script
+        {/* <Script
           id="gtm-script"
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
@@ -41,18 +41,18 @@ export default function RootLayout({
               })(window,document,'script','dataLayer','GTM-5CJP3LN3');
             `,
           }}
-        />
+        /> */}
       </head>
       <body className="antialiased">
         {/* Google Tag Manager (noscript) */}
-        <noscript>
+        {/* <noscript>
           <iframe
             src="https://www.googletagmanager.com/ns.html?id=GTM-5CJP3LN3"
             height="0"
             width="0"
             style={{ display: 'none', visibility: 'hidden' }}
           />
-        </noscript>
+        </noscript> */}
         <AuthProvider>
           <AdminAuthProvider>
             <CartProvider>

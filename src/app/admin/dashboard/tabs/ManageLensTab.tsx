@@ -1,17 +1,15 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { supabase } from "../../../../../lib/supabaseClient";
 import Image from "next/image";
+import { Lens } from "./AddLensTab";
 
-const ManageLensTab = () => {
+// Accept onEditLens as a prop
+const ManageLensTab = ({ onEditLens }: { onEditLens: (lens: Lens) => void }) => {
   const [lenses, setLenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [lensCategories, setLensCategories] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
-  const [editingLens, setEditingLens] = useState(null);
-  const [editFields, setEditFields] = useState({ title: "", description: "", original_price: "", features: "", category: "", lens_category_id: "" });
-  const [editImageFile, setEditImageFile] = useState(null);
-  const [editImagePreview, setEditImagePreview] = useState("");
 
   const fetchLenses = useCallback(async () => {
     setLoading(true);
@@ -47,70 +45,8 @@ const ManageLensTab = () => {
     setLoading(false);
   };
 
-  const handleEditClick = (lens) => {
-    setEditingLens(lens);
-    setEditFields({
-      title: lens.title || "",
-      description: lens.description || "",
-      original_price: lens.original_price?.toString() || "",
-      features: lens.features ? lens.features.join("; ") : "",
-      category: lens.category || "",
-      lens_category_id: lens.lens_category_id || ""
-    });
-    setEditImageFile(null);
-    setEditImagePreview("");
-  };
-
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditFields((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleEditImageChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      setEditImageFile(e.target.files[0]);
-      setEditImagePreview(URL.createObjectURL(e.target.files[0]));
-    }
-  };
-
-  const handleEditSave = async () => {
-    setLoading(true);
-    let imageUrl = editingLens.image_url;
-    if (editImageFile) {
-      // Remove old image
-      if (editingLens.image_url) {
-        const path = editingLens.image_url.split("/product-images/")[1];
-        if (path) await supabase.storage.from("product-images").remove([path]);
-      }
-      // Upload new image
-      const filePath = `lenses/${Date.now()}_${editImageFile.name}`;
-      const { error: uploadError } = await supabase.storage.from("product-images").upload(filePath, editImageFile);
-      if (uploadError) {
-        setMessage("Image upload failed");
-        setLoading(false);
-        return;
-      }
-      const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
-      imageUrl = urlData.publicUrl;
-    }
-    const featuresArray = editFields.features.split(";").map(f => f.trim()).filter(f => f.length > 0);
-    const { error } = await supabase.from("lenses").update({
-      title: editFields.title,
-      description: editFields.description,
-      original_price: parseFloat(editFields.original_price),
-      features: featuresArray,
-      category: editFields.category,
-      lens_category_id: editFields.lens_category_id,
-      image_url: imageUrl,
-    }).eq("id", editingLens.id);
-    if (error) {
-      setMessage("Failed to update lens");
-    } else {
-      setMessage("Lens updated successfully");
-      setEditingLens(null);
-      fetchLenses();
-    }
-    setLoading(false);
+  const handleEditClick = (lens: Lens) => {
+    onEditLens(lens);
   };
 
   return (
@@ -250,138 +186,6 @@ const ManageLensTab = () => {
           </div>
         )}
       </div>
-
-      {/* Enhanced Edit Modal */}
-      {editingLens && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl border border-white/20 max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-3xl">
-              <h4 className="text-2xl font-bold flex items-center gap-3">
-                <span className="text-3xl">✏️</span>
-                Edit Lens
-              </h4>
-              <p className="text-blue-100 mt-1">Update lens information</p>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Title</label>
-                  <input 
-                    type="text" 
-                    name="title" 
-                    value={editFields.title} 
-                    onChange={handleEditChange} 
-                    className="w-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-4 py-3 rounded-xl transition-all duration-200 outline-none"
-                    placeholder="Enter lens title"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Original Price</label>
-                  <input 
-                    type="number" 
-                    name="original_price" 
-                    value={editFields.original_price} 
-                    onChange={handleEditChange} 
-                    className="w-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-4 py-3 rounded-xl transition-all duration-200 outline-none"
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Lens Image</label>
-                {editImagePreview ? (
-                  <Image src={editImagePreview} alt="Preview" width={128} height={128} className="w-32 h-32 object-cover rounded mb-2" />
-                ) : editingLens.image_url ? (
-                  <Image src={editingLens.image_url} alt="Current" width={128} height={128} className="w-32 h-32 object-cover rounded mb-2" />
-                ) : null}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleEditImageChange}
-                  className="block w-full"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Description</label>
-                <textarea 
-                  name="description" 
-                  value={editFields.description} 
-                  onChange={handleEditChange} 
-                  className="w-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-4 py-3 rounded-xl transition-all duration-200 outline-none resize-none"
-                  rows={4}
-                  placeholder="Enter lens description"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Features</label>
-                <div className="relative">
-                  <textarea 
-                    name="features" 
-                    value={editFields.features} 
-                    onChange={handleEditChange} 
-                    className="w-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-4 py-3 rounded-xl transition-all duration-200 outline-none resize-none"
-                    rows={3}
-                    placeholder="Enter features separated by semicolons"
-                  />
-                  <div className="absolute top-2 right-2 text-xs text-gray-400 bg-white px-2 py-1 rounded">
-                    Use ; to separate
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Category</label>
-                  <input 
-                    type="text" 
-                    name="category" 
-                    value={editFields.category} 
-                    onChange={handleEditChange} 
-                    className="w-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-4 py-3 rounded-xl transition-all duration-200 outline-none"
-                    placeholder="Enter category"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Lens Category</label>
-                  <select 
-                    name="lens_category_id" 
-                    value={editFields.lens_category_id} 
-                    onChange={handleEditChange} 
-                    className="w-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 px-4 py-3 rounded-xl transition-all duration-200 outline-none"
-                  >
-                    <option value="">Select Lens Category</option>
-                    {lensCategories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex gap-4 p-6 bg-gray-50 rounded-b-3xl">
-              <button 
-                onClick={handleEditSave} 
-                className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 hover:from-green-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-              >
-                💾 Save Changes
-              </button>
-              <button 
-                onClick={() => setEditingLens(null)} 
-                className="flex-1 bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-              >
-                ❌ Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

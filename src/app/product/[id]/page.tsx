@@ -163,20 +163,20 @@ const ProductDetailPage = () => {
       icon: <Glasses className="w-8 h-8 text-gray-700" />,
       title: "Single Vision",
       description:
-        "For distance or near vision (Thin, anti-glare, blue-cut options)",
+        "For distance or reading, Includes anti-glare, blue-light filter & thin lens options.",
     },
     {
       key: "bifocal-progressive",
       icon: <Glasses className="w-8 h-8 text-gray-700" />,
-      title: "Progressive + Bifocal",
-      description: "Bifocal and Progressives (For two powers in same lenses)",
+      title: "Progressive/Bifocal",
+      description: "Two-in-one lenses for distance and reading - no need to switch glasses.",
     },
     {
       key: "zero-power",
       icon: <Monitor className="w-8 h-8 text-gray-700" />,
       title: "Zero Power",
       description:
-        "Block 98% of harmful rays (Anti-glare and blue-cut options)",
+        "Protect your eyes from screens - Anti-glare & blue light protection.",
     },
     {
       key: "frame-only",
@@ -203,7 +203,7 @@ const ProductDetailPage = () => {
   );
   const [showSavedPowersModal, setShowSavedPowersModal] = useState(false);
   // No local savedPowers state; use userProfile?.powers as PowerEntry[]
-  const [isPowerFlow, setIsPowerFlow] = useState(false);
+  // const [isPowerFlow, setIsPowerFlow] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     description: false,
     features: false,
@@ -389,7 +389,7 @@ const ProductDetailPage = () => {
           .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))
           .slice(0, 8);
 
-        setRecommendations(sortedRecommendations);
+        setRecommendations(sortedRecommendations as unknown as Product[]);
       } catch (error) {
         console.error("Error fetching recommendations:", error);
       }
@@ -485,7 +485,7 @@ const ProductDetailPage = () => {
   };
 
   const handleAddLensClick = async () => {
-    setIsPowerFlow(false);
+    // setIsPowerFlow(false);
     if (!product?.lens_category_id && product?.lens_category_id !== 0) {
     }
     setShowLensModal(true);
@@ -493,7 +493,9 @@ const ProductDetailPage = () => {
     setLensesError(null);
     try {
       const data = await getLensesByCategory(product.lens_category_id!);
-      setLenses(data);
+      // Only show lenses with category 'single vision'
+      const singleVisionLenses = data.filter((lens) => lens.category === "single vision");
+      setLenses(singleVisionLenses);
     } catch {
       setLensesError("Failed to load lenses");
     } finally {
@@ -502,7 +504,7 @@ const ProductDetailPage = () => {
   };
 
   const handleAddPowerClick = () => {
-    setIsPowerFlow(true);
+    // setIsPowerFlow(true);
     setShowPowerModal(true);
   };
 
@@ -617,7 +619,7 @@ const ProductDetailPage = () => {
     setSelectedLensType(typeKey);
 
     if (typeKey === "frame-only") {
-      // Do not add to cart or close modal automatically. Let the footer button handle it.
+      // For frame-only, do not open lens modal, let the footer button handle it.
       return;
     }
 
@@ -1511,9 +1513,9 @@ const ProductDetailPage = () => {
                   );
                 })()}
               <div className="text-gray-400 text-xs md:text-sm text-center mt-1">
-                Need help?{" "}
+                Need help choosing?{" "}
                 <span className="underline cursor-pointer">
-                  Contact Support
+                  Talk to our expert : 8905344556
                 </span>
               </div>
             </div>
@@ -1575,7 +1577,7 @@ const ProductDetailPage = () => {
                       {type.icon}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-bold text-base md:text-xl text-gray-900 mb-1 truncate">
+                      <div className="font-semibold text-base md:text-lg text-gray-900 mb-1 truncate">
                         {type.title}
                       </div>
                       <div className="text-gray-700 text-xs md:text-base mb-1">
@@ -1602,7 +1604,7 @@ const ProductDetailPage = () => {
                   ₹{product?.discounted_price || product?.original_price}
                 </span>
               </div>
-              {/* Frame Only logic */}
+              {/* Frame Only and Zero Power logic */}
               {selectedLensType === "frame-only" ? (
                 isInCart({ product, powerCategory: "frame only" }) ? (
                   <button
@@ -1627,6 +1629,30 @@ const ProductDetailPage = () => {
                     Add to Cart
                   </button>
                 )
+              ) : selectedLensType === "zero-power" ? (
+                isInCart({ product, powerCategory: "zero power" }) ? (
+                  <button
+                    className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg"
+                    onClick={() => {
+                      removeByDetails({ product, powerCategory: "zero power" });
+                      setShowPowerModal(false);
+                      alert("Removed from cart!");
+                    }}
+                  >
+                    Remove from Cart
+                  </button>
+                ) : (
+                  <button
+                    className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg"
+                    onClick={() => {
+                      addToCart({ product, powerCategory: "zero power" });
+                      setShowPowerModal(false);
+                      alert("Added to cart!");
+                    }}
+                  >
+                    Add to Cart
+                  </button>
+                )
               ) : (
                 <button
                   className={`w-full py-3 rounded-xl font-bold text-white shadow-md transition-all duration-200 text-base md:text-lg ${
@@ -1644,9 +1670,9 @@ const ProductDetailPage = () => {
                 </button>
               )}
               <div className="text-gray-400 text-xs md:text-sm text-center mt-1">
-                Need help?{" "}
+              Need help choosing?{" "}
                 <span className="underline cursor-pointer">
-                  Contact Support
+                  Talk to our expert : 8905344556
                 </span>
               </div>
             </div>
@@ -1781,7 +1807,45 @@ const ProductDetailPage = () => {
                     lens: selectedLens,
                     powerCategory: selectedLensType,
                   });
-                  if (isPowerFlow) {
+
+                  if (selectedLensType === "zero-power") {
+                    // Zero Power: Add to cart directly, do NOT open Add Power modal
+                    return inCart ? (
+                      <button
+                        className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg"
+                        onClick={() => {
+                          removeByDetails({
+                            product,
+                            lens: selectedLens,
+                            powerCategory: "zero power",
+                          });
+                          setShowPowerLensModal(false);
+                          alert("Removed from cart!");
+                        }}
+                      >
+                        Remove from Cart
+                      </button>
+                    ) : (
+                      <button
+                        className="w-full py-3 rounded-xl font-bold text-white bg-primary hover:bg-primary/80 shadow-md transition-all duration-200 text-base md:text-lg"
+                        onClick={() => {
+                          addToCart({
+                            product,
+                            lens: selectedLens,
+                            powerCategory: "zero power",
+                          });
+                          setShowPowerLensModal(false);
+                          alert("Added to cart!");
+                        }}
+                      >
+                        Add to Cart
+                      </button>
+                    );
+                  } else if (
+                    selectedLensType === "single-vision" ||
+                    selectedLensType === "bifocal-progressive"
+                  ) {
+                    // Single Vision/Progressive: Open Add Power modal after lens selection
                     return inCart ? (
                       <button
                         className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg"
@@ -1810,6 +1874,7 @@ const ProductDetailPage = () => {
                       </button>
                     );
                   } else {
+                    // Any other type: Add to cart directly
                     return inCart ? (
                       <button
                         className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg"
@@ -1840,9 +1905,9 @@ const ProductDetailPage = () => {
                   }
                 })()}
               <div className="text-gray-400 text-xs md:text-sm text-center mt-1">
-                Need help?{" "}
+                Need help choosing?{" "}
                 <span className="underline cursor-pointer">
-                  Contact Support
+                  Talk to our expert : 8905344556
                 </span>
               </div>
             </div>
@@ -1854,7 +1919,7 @@ const ProductDetailPage = () => {
         onClose={() => {
           setShowAddPowerModal(false);
           setSelectedLensForPower(null);
-          setIsPowerFlow(false);
+          // setIsPowerFlow(false);
         }}
         onSubmitPowerLater={() => handleSubmitPowerLater("", "")}
         onEnterPowerManually={handleEnterPowerManually}
@@ -2031,9 +2096,9 @@ const ProductDetailPage = () => {
             {/* Footer */}
             <div className="sticky bottom-0 z-10 px-3 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gradient-to-t from-white/90 to-[#faf8f6]">
               <div className="text-gray-400 text-xs md:text-sm text-center">
-                Need help?{" "}
+              Need help choosing?{" "}
                 <span className="underline cursor-pointer">
-                  Contact Support
+                  Talk to our expert : 8905344556
                 </span>
               </div>
             </div>

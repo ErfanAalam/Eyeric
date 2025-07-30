@@ -13,11 +13,12 @@ import InviteTab from "./tabs/InviteTab";
 import AddProductTab from "./tabs/AddProductTab";
 import ManageProductTab from "./tabs/ManageProductTab";
 import ManageCategoryTab from "./tabs/ManageCategoryTab";
-import AddLensTab from "./tabs/AddLensTab";
+import AddLensTab, { Lens } from "./tabs/AddLensTab";
 import ManageLensTab from "./tabs/ManageLensTab";
 import ManageLensCategoriesTab from "./tabs/ManageLensCategoriesTab";
 import ManageSpecialProductCategoriesTab from "./tabs/ManageSpecialProductCategoriesTab";
 import CouponPage from "../coupon/page";
+import type { Product } from "./tabs/ManageProductTab";
 
 // Add Admin type
 interface AdminType {
@@ -323,6 +324,10 @@ const AdminDashboard = () => {
     { id: string; email: string; created_at: string }[]
   >([]);
 
+  // Add editingProduct state
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingLens, setEditingLens] = useState<Lens | null>(null);
+
   React.useEffect(() => {
     if (tab === "invite") fetchAdmins();
     if (tab === "users") fetchUsers();
@@ -559,13 +564,43 @@ const AdminDashboard = () => {
                 />
               )}
 
-              {tab === "products-add" && <AddProductTab />}
+              {tab === "products-add" && (
+                <AddProductTab
+                  editProduct={editingProduct}
+                  onFinishEdit={() => {
+                    setEditingProduct(null);
+                    setTab("products-manage");
+                  }}
+                />
+              )}
 
-              {tab === "products-manage" && <ManageProductTab />}
+              {tab === "products-manage" && (
+                <ManageProductTab
+                  onEditProduct={product => {
+                    setEditingProduct(product);
+                    setTab("products-add");
+                  }}
+                />
+              )}
 
-              {tab === "lenses-add" && <AddLensTab />}
+              {tab === "lenses-add" && (
+                <AddLensTab
+                  editLens={editingLens}
+                  onFinishEdit={() => {
+                    setEditingLens(null);
+                    setTab("lenses-manage");
+                  }}
+                />
+              )}
 
-              {tab === "lenses-manage" && <ManageLensTab />}
+              {tab === "lenses-manage" && (
+                <ManageLensTab
+                  onEditLens={lens => {
+                    setEditingLens(lens);
+                    setTab("lenses-add");
+                  }}
+                />
+              )}
 
               {tab === "lenses-categories" && <ManageLensCategoriesTab />}
 

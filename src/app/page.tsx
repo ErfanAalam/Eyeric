@@ -42,7 +42,7 @@ interface Product {
   sizes: string[];
   frame_material?: string;
   features: string[];
-  shape_category?: string;
+  shape_category: string;
   tags: string[];
   gender_category: string[];
   type_category: string[];
@@ -54,6 +54,7 @@ interface Product {
 interface Slide {
   image_url?: string;
   image?: string;
+  redirect_url?: string;
 }
 
 // Utility function to truncate description to 5 words
@@ -69,12 +70,28 @@ function truncateDescription(desc: string): string {
 // Hero Slider Component
 const HeroSlider = ({ slides }: { slides: Slide[] }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
   }, [slides.length]);
+
+  const handleSlideClick = (slide: Slide) => {
+    if (slide.redirect_url) {
+      window.open(slide.redirect_url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handlePrevious = () => {
+    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setCurrentSlide((prev) => (prev + 1) % slides.length);
+  };
+
   return (
     <div className="relative md:h-[65vh] h-[30vh] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {slides.map((slide, index) => (
@@ -86,7 +103,10 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
               : "opacity-0 scale-105"
           }`}
         >
-          <div className="w-full h-full aspect-video bg-gray-200">
+          <div 
+            className={`w-full h-full aspect-video bg-gray-200 ${slide.redirect_url ? 'cursor-pointer' : ''}`}
+            onClick={() => handleSlideClick(slide)}
+          >
             <Image
               src={slide.image_url || slide.image}
               alt="slide"
@@ -98,9 +118,41 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
               placeholder="blur"
               blurDataURL="/placeholder.png"
             />
+            {/* {slide.redirect_url && (
+              <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <div className="bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium text-gray-800">
+                  Click to learn more
+                </div>
+              </div>
+            )} */}
           </div>
         </div>
       ))}
+      
+      {/* Navigation Arrows */}
+      {slides.length > 1 && (
+        <>
+          <button
+            onClick={handlePrevious}
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <button
+            onClick={handleNext}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-all duration-300 shadow-lg hover:shadow-xl"
+          >
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </>
+      )}
+      
+      {/* Dots Navigation */}
       <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
         {slides.map((_, index) => (
           <button
@@ -295,7 +347,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
       if (isFavorite(product.id!)) {
         await removeFromFavorites(product.id!);
       } else {
-        await addToFavorites(product);
+        await addToFavorites(product as unknown as Product);
       }
     } catch (error) {
       console.error("Error handling favorite:", error);
@@ -436,7 +488,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
       if (isFavorite(product.id!)) {
         await removeFromFavorites(product.id!);
       } else {
-        await addToFavorites(product);
+        await addToFavorites(product as unknown as Product);
       }
     } catch (error) {
       console.error("Error handling favorite:", error);
@@ -842,7 +894,7 @@ export default function Home() {
           getCategoryBanners(),
           getShapeBanners(),
         ]);
-      setProducts(productsData);
+      setProducts(productsData as unknown as Product[]);
       setSlides(slidesData);
       setCategoryBanners(categoryBannersData);
       setShapeBanners(shapeBannersData);

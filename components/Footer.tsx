@@ -73,6 +73,7 @@ const Footer: React.FC = () => {
     {
       title: 'Support',
       links: [
+        { title: 'Contact Us', href: '/contact' },
         { title: 'Help Center', href: '/help' },
         { title: 'Size Guide', href: '/size-guide' },
         { title: 'Virtual Try-On', href: '/try-on' },
@@ -97,6 +98,8 @@ const Footer: React.FC = () => {
       links: [
         { title: 'Privacy Policy', href: '/privacy' },
         { title: 'Terms of Service', href: '/terms' },
+        { title: 'Shipping Policy', href: '/shipping' },
+        { title: 'Refund Policy', href: '/refund' },
         { title: 'Cookie Policy', href: '/cookies' },
         { title: 'Accessibility', href: '/accessibility' },
         { title: 'California Privacy', href: '/ccpa' },

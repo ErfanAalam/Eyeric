@@ -73,15 +73,22 @@ export type Product = {
   sizes: string[];
   frame_material?: string;
   features: string[];
-  shape_category: string;
+  shape_category?: string;
   tags: string[];
   gender_category: string[];
   type_category: string[];
   created_at?: string;
   updated_at?: string;
+  is_lens_used?: boolean;
+  quantity?: number;
+  style_category?: string;
+  lens_width?: number;
+  bridge_width?: number;
+  temple_length?: number;
+  lens_category_id?: string;
 };
 
-const AddProductTab = () => {
+const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | null, onFinishEdit?: () => void }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
@@ -105,8 +112,8 @@ const AddProductTab = () => {
   const [ovalDisplayOrder, setOvalDisplayOrder] = useState("");
   const [rectangleDisplayOrder, setRectangleDisplayOrder] = useState("");
   const [squareDisplayOrder, setSquareDisplayOrder] = useState("");
-  const [bannerImage1, setBannerImage1] = useState(null);
-  const [bannerImage2, setBannerImage2] = useState(null);
+  const [bannerImage1, setBannerImage1] = useState<File | null>(null);
+  const [bannerImage2, setBannerImage2] = useState<File | null>(null);
   const [colors, setColors] = useState([{ colors: ["#000000"], images: [] }]);
   const [sizes, setSizes] = useState([]);
   const [frameMaterial, setFrameMaterial] = useState("");
@@ -131,6 +138,12 @@ const AddProductTab = () => {
   const [selectedSpecialCategories, setSelectedSpecialCategories] = useState([]);
   const [allCoupons, setAllCoupons] = useState([]);
   const [selectedCoupons, setSelectedCoupons] = useState([]);
+
+  // Add state for previews and removal flags
+  const [bannerImage1Preview, setBannerImage1Preview] = useState<string | null>(null);
+  const [bannerImage2Preview, setBannerImage2Preview] = useState<string | null>(null);
+  const [colorImagePreviews, setColorImagePreviews] = useState<string[][]>([]); // array of arrays of URLs
+  const [removeColorImages, setRemoveColorImages] = useState<boolean[][]>([]); // array of arrays of bools
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -188,10 +201,181 @@ const AddProductTab = () => {
     fetchCoupons();
   }, []);
 
+  useEffect(() => {
+    if (editProduct) {
+      setTitle(editProduct.title || "");
+      setDescription(editProduct.description || "");
+      setOriginalPrice(editProduct.original_price?.toString() || "");
+      setDiscountedPrice(editProduct.discounted_price?.toString() || "");
+      setBannerImage1(null); // You may want to handle preview
+      setBannerImage2(null);
+      setColors(editProduct.colors || [{ colors: ["#000000"], images: [] }]);
+      setSizes(editProduct.sizes || []);
+      setFrameMaterial(editProduct.frame_material || "");
+      setFeatures((editProduct.features || []).join('; '));
+      setSelectedGenders(editProduct.gender_category || []);
+      setSelectedTypes(editProduct.type_category || []);
+      setShapeCategory(editProduct.shape_category || "");
+      setLatestTrend(!!editProduct.latest_trend);
+      setBestseller(!!editProduct.bestseller);
+      setIsLensUsed(!!editProduct.is_lens_used);
+      setQuantity(editProduct.quantity?.toString() || "");
+      setStyleCategory(editProduct.style_category || "");
+      setLensWidth(editProduct.lens_width?.toString() || "");
+      setBridgeWidth(editProduct.bridge_width?.toString() || "");
+      setTempleLength(editProduct.temple_length?.toString() || "");
+      setLensCategoryId(editProduct.lens_category_id?.toString() || "");
+      // TODO: handle special categories and coupons if needed
+      setBannerImage1Preview(editProduct.banner_image_1 || null);
+      setBannerImage2Preview(editProduct.banner_image_2 || null);
+      setColorImagePreviews((editProduct.colors || []).map(colorObj => colorObj.images || []));
+      setRemoveColorImages((editProduct.colors || []).map(colorObj => (colorObj.images || []).map(() => false)));
+    }
+  }, [editProduct]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+    if (editProduct && editProduct.id) {
+      // --- UPDATE LOGIC ---
+      let bannerImage1Url = editProduct.banner_image_1 || "";
+      let bannerImage2Url = editProduct.banner_image_2 || "";
+
+      // Banner Image 1
+      if (bannerImage1) {
+        // Remove old image from storage if exists
+        if (editProduct.banner_image_1) {
+          const path = editProduct.banner_image_1.split("/product-images/")[1];
+          if (path) await supabase.storage.from("product-images").remove([path]);
+        }
+        const filePath = `banners/${Date.now()}_1_${bannerImage1.name}`;
+        const { error: uploadError1 } = await supabase.storage.from("product-images").upload(filePath, bannerImage1);
+        if (uploadError1) {
+          setMessage("Banner Image 1 upload failed");
+          setLoading(false);
+          return;
+        }
+        const { data: urlData1 } = supabase.storage.from("product-images").getPublicUrl(filePath);
+        bannerImage1Url = urlData1.publicUrl;
+      } else if (!bannerImage1Preview && editProduct.banner_image_1) {
+        // Remove old image if user removed it
+        const path = editProduct.banner_image_1.split("/product-images/")[1];
+        if (path) await supabase.storage.from("product-images").remove([path]);
+        bannerImage1Url = "";
+      }
+
+      // Banner Image 2
+      if (bannerImage2) {
+        if (editProduct.banner_image_2) {
+          const path = editProduct.banner_image_2.split("/product-images/")[1];
+          if (path) await supabase.storage.from("product-images").remove([path]);
+        }
+        const filePath = `banners/${Date.now()}_2_${bannerImage2.name}`;
+        const { error: uploadError2 } = await supabase.storage.from("product-images").upload(filePath, bannerImage2);
+        if (uploadError2) {
+          setMessage("Banner Image 2 upload failed");
+          setLoading(false);
+          return;
+        }
+        const { data: urlData2 } = supabase.storage.from("product-images").getPublicUrl(filePath);
+        bannerImage2Url = urlData2.publicUrl;
+      } else if (!bannerImage2Preview && editProduct.banner_image_2) {
+        const path = editProduct.banner_image_2.split("/product-images/")[1];
+        if (path) await supabase.storage.from("product-images").remove([path]);
+        bannerImage2Url = "";
+      }
+
+      // Handle color images
+      const colorUploads = await Promise.all(colors.map(async (colorObj, idx) => {
+        const newImages: string[] = [];
+        if (colorObj.images && colorObj.images.length > 0) {
+          for (let i = 0; i < colorObj.images.length; i++) {
+            const img = colorObj.images[i];
+            if (img instanceof File || img instanceof Blob) {
+              // Upload new file
+              const fileName = (img instanceof File && img.name) ? img.name : `image_${i}`;
+              const filePath = `colors/${Date.now()}_${idx}_${i}_${fileName}`;
+              const { error: uploadError } = await supabase.storage.from("product-images").upload(filePath, img);
+              if (uploadError) {
+                setMessage(`Image upload failed for color entry ${idx + 1}`);
+                setLoading(false);
+                return null;
+              }
+              const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
+              newImages.push(urlData.publicUrl);
+            }
+            else if (typeof img === 'string') {
+              // Existing image URL, keep it
+              newImages.push(img);
+            }
+          }
+          // Remove any images that were deleted by the user
+          if (colorObj.images && colorObj.images.length > 0) {
+            for (const oldImgUrl of colorObj.images) {
+              if (typeof oldImgUrl === 'string' && !newImages.includes(oldImgUrl)) {
+                // Image was removed and is a URL
+                const path = oldImgUrl.split("/product-images/")[1];
+                if (path) await supabase.storage.from("product-images").remove([path]);
+              }
+            }
+          }
+          return { colors: colorObj.colors, images: newImages };
+        } else {
+          // No new files, but check for removed images
+          let newImages = [...(colorObj.images || [])];
+          if (colorImagePreviews[idx]) {
+            for (let i = 0; i < colorObj.images.length; i++) {
+              if (!colorImagePreviews[idx].includes(colorObj.images[i])) {
+                // Image was removed
+                const path = colorObj.images[i].split("/product-images/")[1];
+                if (path) await supabase.storage.from("product-images").remove([path]);
+                newImages = newImages.filter(img => img !== colorObj.images[i]);
+              }
+            }
+          }
+          return { colors: colorObj.colors, images: newImages };
+        }
+      }));
+      console.log('colorUploads', colorUploads);
+      if (colorUploads.some(c => c === null)) return; // error already set
+
+      const updateObj: Partial<Product> = {
+        title,
+        description,
+        original_price: parseFloat(originalPrice),
+        discounted_price: discountedPrice ? parseFloat(discountedPrice) : null,
+        bestseller,
+        latest_trend: latestTrend,
+        banner_image_1: bannerImage1Url,
+        banner_image_2: bannerImage2Url,
+        colors: colorUploads,
+        sizes,
+        frame_material: frameMaterial,
+        features: features.split(';').map(f => f.trim()).filter(f => f.length > 0),
+        gender_category: selectedGenders,
+        type_category: selectedTypes,
+        shape_category: shapeCategory,
+        is_lens_used: isLensUsed,
+        quantity: quantity ? parseInt(quantity, 10) : 0,
+        style_category: styleCategory,
+        lens_width: lensWidth ? parseFloat(lensWidth) : null,
+        bridge_width: bridgeWidth ? parseFloat(bridgeWidth) : null,
+        temple_length: templeLength ? parseFloat(templeLength) : null,
+        lens_category_id: lensCategoryId,
+      };
+      const { error } = await supabase.from("products").update(updateObj).eq("id", editProduct.id);
+      if (error) {
+        setMessage("Failed to update product");
+        setLoading(false);
+        return;
+      }
+      setMessage("Product updated successfully!");
+      if (onFinishEdit) onFinishEdit();
+      setLoading(false);
+      return;
+    }
 
       // --- Category-specific Display Order Shift Logic ---
     const categoryDisplayOrders: Record<string, number> = {};
@@ -435,16 +619,17 @@ const AddProductTab = () => {
     setLoading(false);
   };
 
-  // Banner Image Handlers
+  // Banner image file input handlers
   const handleBannerImage1Change = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       try {
         const compressedFile = await imageCompression(e.target.files[0], {
-          maxSizeMB: 0.5, // adjust as needed
-          maxWidthOrHeight: 1280, // adjust as needed
+          maxSizeMB: 0.5,
+          maxWidthOrHeight: 1280,
           useWebWorker: true,
         });
         setBannerImage1(compressedFile);
+        setBannerImage1Preview(URL.createObjectURL(compressedFile));
       } catch (_err: unknown) {
         console.error(_err);
         setMessage('Failed to compress Banner Image 1');
@@ -460,11 +645,22 @@ const AddProductTab = () => {
           useWebWorker: true,
         });
         setBannerImage2(compressedFile);
+        setBannerImage2Preview(URL.createObjectURL(compressedFile));
       } catch (_err: unknown) {
         console.error(_err);
         setMessage('Failed to compress Banner Image 2');
       }
     }
+  };
+
+  // Remove banner image handlers
+  const handleRemoveBannerImage1 = () => {
+    setBannerImage1(null);
+    setBannerImage1Preview(null);
+  };
+  const handleRemoveBannerImage2 = () => {
+    setBannerImage2(null);
+    setBannerImage2Preview(null);
   };
 
   // Color Handlers
@@ -473,7 +669,7 @@ const AddProductTab = () => {
     updatedColors[colorIndex].colors[pickerIndex] = value;
     setColors(updatedColors);
   };
-  const handleColorImagesChange = async (index: number, files: FileList) => {
+  const handleColorImagesChange = async (colorIdx: number, files: FileList) => {
     try {
       const compressedFiles = await Promise.all(
         Array.from(files).map(file =>
@@ -485,11 +681,21 @@ const AddProductTab = () => {
         )
       );
       const updatedColors = [...colors];
-      updatedColors[index].images = compressedFiles;
+      updatedColors[colorIdx].images = compressedFiles;
       setColors(updatedColors);
+      console.log('Updated colors after file input:', updatedColors);
+      // Set previews for new files
+      const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
+      const previewsCopy = [...colorImagePreviews];
+      previewsCopy[colorIdx] = newPreviews;
+      setColorImagePreviews(previewsCopy);
+      // Reset removal flags for this color
+      const removeCopy = [...removeColorImages];
+      removeCopy[colorIdx] = newPreviews.map(() => false);
+      setRemoveColorImages(removeCopy);
     } catch (_err: unknown) {
       console.error(_err);
-      setMessage(`Failed to compress color images for entry ${index + 1}`);
+      setMessage(`Failed to compress color images for entry ${colorIdx + 1}`);
     }
   };
   const addColorPicker = (colorIndex: number) => {
@@ -512,9 +718,25 @@ const AddProductTab = () => {
     setColors(updatedColors);
   };
 
+  // Remove color image handler
+  const handleRemoveColorImage = (colorIdx: number, imgIdx: number) => {
+    const previewsCopy = [...colorImagePreviews];
+    previewsCopy[colorIdx] = previewsCopy[colorIdx].map((url, i) => (i === imgIdx ? null : url)).filter(Boolean) as string[];
+    setColorImagePreviews(previewsCopy);
+    const removeCopy = [...removeColorImages];
+    removeCopy[colorIdx][imgIdx] = true;
+    setRemoveColorImages(removeCopy);
+    // If editing, also clear from colors array
+    if (editProduct) {
+      const updatedColors = [...colors];
+      updatedColors[colorIdx].images = updatedColors[colorIdx].images.filter((_, i) => i !== imgIdx);
+      setColors(updatedColors);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-5xl">
+      <div className="w-full ">
         <div className="bg-white rounded-3xl shadow-2xl p-8 border border-slate-300 shadow-black">
           {/* Header */}
           <div className="text-center mb-10">
@@ -543,14 +765,11 @@ const AddProductTab = () => {
                   onChange={handleBannerImage1Change}
                   className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
-                {bannerImage1 && (
-                  <Image
-                    height={128}
-                    width={192}
-                    src={URL.createObjectURL(bannerImage1)}
-                    alt="Banner 1 Preview"
-                    className="w-32 h-20 object-cover rounded-xl mt-2 border shadow"
-                  />
+                {bannerImage1Preview && (
+                  <div className="relative w-32 h-20 mt-2">
+                    <Image height={128} width={192} src={bannerImage1Preview} alt="Banner 1 Preview" className="w-32 h-20 object-cover rounded-xl border shadow" />
+                    <button type="button" onClick={handleRemoveBannerImage1} className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-red-600 hover:bg-red-100">✕</button>
+                  </div>
                 )}
               </div>
               <div>
@@ -563,14 +782,11 @@ const AddProductTab = () => {
                   onChange={handleBannerImage2Change}
                   className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
-                {bannerImage2 && (
-                  <Image
-                    height={128}
-                    width={192}
-                    src={URL.createObjectURL(bannerImage2)}
-                    alt="Banner 2 Preview"
-                    className="w-32 h-20 object-cover rounded-xl mt-2 border shadow"
-                  />
+                {bannerImage2Preview && (
+                  <div className="relative w-32 h-20 mt-2">
+                    <Image height={128} width={192} src={bannerImage2Preview} alt="Banner 2 Preview" className="w-32 h-20 object-cover rounded-xl border shadow" />
+                    <button type="button" onClick={handleRemoveBannerImage2} className="absolute top-1 right-1 bg-white/80 rounded-full p-1 text-red-600 hover:bg-red-100">✕</button>
+                  </div>
                 )}
               </div>
             </div>
@@ -643,17 +859,13 @@ const AddProductTab = () => {
                       }}
                       className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                     />
-                    {colorObj.images.length > 0 && (
+                    {colorImagePreviews[idx] && colorImagePreviews[idx].length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {colorObj.images.map((img, i) => (
-                          <Image
-                            height={64}
-                            width={64}
-                            key={i}
-                            src={URL.createObjectURL(img)}
-                            alt={`Preview ${i}`}
-                            className="w-16 h-16 object-cover rounded border shadow"
-                          />
+                        {colorImagePreviews[idx].map((img, imgIdx) => (
+                          <div key={imgIdx} className="relative w-16 h-16">
+                            <Image height={64} width={64} src={img} alt={`Preview ${imgIdx}`} className="w-16 h-16 object-cover rounded border shadow" />
+                            <button type="button" onClick={() => handleRemoveColorImage(idx, imgIdx)} className="absolute top-0 right-0 bg-white/80 rounded-full p-1 text-red-600 hover:bg-red-100">✕</button>
+                          </div>
                         ))}
                       </div>
                     )}
