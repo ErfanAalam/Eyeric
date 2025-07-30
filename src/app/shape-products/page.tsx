@@ -69,7 +69,7 @@ const ShapeProductsContent = () => {
     const fetchProducts = async () => {
       setLoading(true);
       const data = await getProducts();
-      setAllProducts(data);
+      setAllProducts(data as unknown as Product[]);
       setLoading(false);
     };
     fetchProducts();
@@ -140,7 +140,7 @@ const ShapeProductsContent = () => {
       if (isFavorite(product.id!)) {
         await removeFromFavorites(product.id!);
       } else {
-        await addToFavorites(product);
+        await addToFavorites(product as unknown as Product);
       }
     } catch (error) {
       console.error('Error handling favorite:', error);
