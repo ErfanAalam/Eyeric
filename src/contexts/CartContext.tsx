@@ -44,10 +44,11 @@ interface Lens {
   lens_category_id: number;
 }
 
-interface CartItem {
+export interface CartItem {
   product: Product;
   lens?: Lens;
   powerCategory?: string;
+  quantity?: number;
 }
 
 interface CartContextType {
@@ -57,6 +58,9 @@ interface CartContextType {
   clearCart: () => void;
   isInCart: (item: CartItem) => boolean;
   removeByDetails: (item: CartItem) => void;
+  updateQuantity: (index: number, quantity: number) => void;
+  getCartTotal: () => number;
+  getCartCount: () => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -102,7 +106,26 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push('/login');
       return;
     }
-    setCartItems(prev => [...prev, item]);
+    setCartItems(prev => {
+      // Check if item already exists in cart
+      const existingIndex = prev.findIndex(cartItem =>
+        cartItem.product.id === item.product.id &&
+        (item.lens ? cartItem.lens?.id === item.lens.id : !cartItem.lens) &&
+        (item.powerCategory ? cartItem.powerCategory === item.powerCategory : !cartItem.powerCategory)
+      );
+      
+      if (existingIndex >= 0) {
+        // Update quantity if item exists
+        return prev.map((cartItem, index) =>
+          index === existingIndex 
+            ? { ...cartItem, quantity: (cartItem.quantity || 1) + (item.quantity || 1) }
+            : cartItem
+        );
+      } else {
+        // Add new item if it doesn't exist
+        return [...prev, { ...item, quantity: item.quantity || 1 }];
+      }
+    });
   };
 
   const removeFromCart = (index: number) => {
@@ -145,8 +168,47 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     ));
   };
 
+  // Update quantity of a cart item
+  const updateQuantity = (index: number, quantity: number) => {
+    if (!userProfile) {
+      router.push('/login');
+      return;
+    }
+    if (quantity <= 0) {
+      removeFromCart(index);
+      return;
+    }
+    setCartItems(prev => prev.map((item, i) => 
+      i === index ? { ...item, quantity: quantity || 1 } : item
+    ));
+  };
+
+  // Calculate total cart value
+  const getCartTotal = () => {
+    return cartItems.reduce((total, item) => {
+      const productPrice = item.product.discounted_price || item.product.original_price || 0;
+      const lensPrice = item.lens?.original_price || 0;
+      return total + (productPrice + lensPrice) * (item.quantity || 1);
+    }, 0);
+  };
+
+  // Get total number of items in cart
+  const getCartCount = () => {
+    return cartItems.reduce((count, item) => count + (item.quantity || 1), 0);
+  };
+
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, isInCart, removeByDetails }}>
+    <CartContext.Provider value={{ 
+      cartItems, 
+      addToCart, 
+      removeFromCart, 
+      clearCart, 
+      isInCart, 
+      removeByDetails,
+      updateQuantity,
+      getCartTotal,
+      getCartCount
+    }}>
       {children}
     </CartContext.Provider>
   );

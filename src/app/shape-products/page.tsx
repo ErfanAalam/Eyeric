@@ -273,7 +273,7 @@ const ShapeProductsContent = () => {
                     </button>
                     {/* Sale Badge */}
                     {product.discounted_price && (
-                      <span className="absolute top-3 left-3 z-10 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full">Sale</span>
+                      <span className="absolute top-3 left-3 z-10 bg-secondary text-white text-xs font-semibold px-3 py-1 rounded-full">Sale</span>
                     )}
                     {/* Product Image */}
                     <div className="aspect-[4/3] w-full overflow-hidden">
@@ -297,7 +297,7 @@ const ShapeProductsContent = () => {
                       <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
                         <span className="cursor-pointer hover:underline">Compare</span>
                       </div>
-                      <button className="mt-auto flex items-center justify-center gap-2 bg-primary hover:bg-primary/80 text-white rounded-full py-2 px-4 font-semibold shadow transition-all text-sm" onClick={() => handleProductClick(product)}>
+                      <button className="mt-auto flex items-center justify-center gap-2 bg-button hover:bg-button/80 text-white rounded-full py-2 px-4 font-semibold shadow transition-all text-sm" onClick={() => handleProductClick(product)}>
                         <ShoppingBag className="w-4 h-4" /> Buy Now
                       </button>
                     </div>

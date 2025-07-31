@@ -520,9 +520,9 @@ const Navbar: React.FC = () => {
                   <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${activeDropdown === key ? 'rotate-180' : ''}`} />
                   {/* Full Width Dropdown Menu */}
                   {activeDropdown === key && (
-                    <div className="absolute top-full w-[1200px] left-0 right-0 mt-2 glass-effect shadow-2xl border border-white/20 z-50 dropdown-enter">
-                      <div className="max-w-7xl mx-auto p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+                    <div className="absolute top-full w-[1000px] left-0 right-0 mt-2 glass-effect shadow-2xl border border-white/20 z-50 dropdown-enter">
+                      <div className="max-w-6xl p-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
                           {/* SELECT CATEGORY Column */}
                           <div className="space-y-4">
                             <h3 className="text-sm font-bold text-left text-gray-400 uppercase tracking-wider mb-6">SELECT CATEGORY</h3>
@@ -534,16 +534,16 @@ const Navbar: React.FC = () => {
                                   className="flex items-center justify-between w-full p-4 rounded-xl hover:bg-gray-50/80 transition-all duration-300 group"
                                 >
                                   <div className="flex items-center space-x-4">
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                                    <div className="w-8 h-2 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
                                       <span className="text-xl">👤</span>
                                     </div>
                                     <div className="text-left">
-                                      <div className="font-semibold text-gray-800 text-base">{gender.name}</div>
-                                      <div className="text-xs text-gray-500 mt-1">
+                                      <div className="font-semibold text-gray-800 text-base">{(gender.name).toUpperCase()}</div>
+                                      {/* <div className="text-xs text-gray-500 mt-1">
                                         {gender.name === 'Men' ? 'CLASSIC EYEGLASSES Starting From ₹2000' :
                                          gender.name === 'Women' ? 'PREMIUM EYEGLASSES Starting From ₹4000' :
                                          'SCREEN EYEGLASSES Starting From ₹600'}
-                                      </div>
+                                      </div> */}
                                     </div>
                                   </div>
                                   <div className="text-gray-400 group-hover:text-primary transition-colors text-lg">
@@ -578,7 +578,7 @@ const Navbar: React.FC = () => {
                                   onClick={() => handleNavItemClick(key, style.name)}
                                   className="block w-full text-left px-4 py-3 text-sm font-medium rounded-lg hover:bg-primary hover:text-white transition-all duration-300"
                                 >
-                                  {style.name}
+                                  {style.name.toUpperCase()}
                                 </button>
                               ))}
                               
@@ -604,7 +604,7 @@ const Navbar: React.FC = () => {
                                   onClick={() => handleNavItemClick(key, shape.name)}
                                   className="block w-full text-left px-4 py-3 text-sm font-medium rounded-lg hover:bg-primary hover:text-white transition-all duration-300"
                                 >
-                                  {shape.name}
+                                  {shape.name.toUpperCase()}
                                 </button>
                               ))}
                             </div>

@@ -119,13 +119,43 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
     
     setLoading(true);
     setMessage("");
-    const { error } = await supabase.from("products").delete().eq("id", id);
-    if (error) {
+    console.log(id)
+    
+    try {
+      // First, delete related records from product_coupons table
+      const { error: couponError } = await supabase
+        .from("product_coupons")
+        .delete()
+        .eq("product_id", id);
+      
+      if (couponError) {
+        console.log("Error deleting product coupons:", couponError);
+      }
+      
+      // Delete related records from product_special_categories table
+      const { error: specialCatError } = await supabase
+        .from("product_special_categories")
+        .delete()
+        .eq("product_id", id);
+      
+      if (specialCatError) {
+        console.log("Error deleting product special categories:", specialCatError);
+      }
+      
+      // Finally, delete the product
+      const { error } = await supabase.from("products").delete().eq("id", id);
+      if (error) {
+        showMessage("Failed to delete product", "error");
+        console.log(error)
+      } else {
+        showMessage("Product deleted successfully", "success");
+        setProducts(products.filter((p) => p.id !== id));
+      }
+    } catch (error) {
+      console.log("Error during deletion:", error);
       showMessage("Failed to delete product", "error");
-    } else {
-      showMessage("Product deleted successfully", "success");
-      setProducts(products.filter((p) => p.id !== id));
     }
+    
     setLoading(false);
   };
 

@@ -271,7 +271,7 @@ const CategoryTabs = ({
                   onClick={() => setActiveTab(category)}
                   className={`px-3 sm:px-4 md:px-6 py-2 rounded-full text-xs sm:text-sm md:text-base font-semibold transition-all duration-300 capitalize m-0.5 ${
                     activeTab === category
-                      ? `bg-primary text-white shadow-lg transform scale-105`
+                      ? `bg-button text-white shadow-lg transform scale-105`
                       : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
                   }`}
                 >
@@ -377,7 +377,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                   onClick={() => handleProductClick(item)}
                 >
                   <div className="absolute top-3 left-3 z-10">
-                    <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    <span className="bg-secondary text-white px-2 py-1 rounded-full text-xs font-semibold">
                       Sale
                     </span>
                   </div>
@@ -444,7 +444,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                         )}
                       </div>
                       <button
-                        className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                        className="bg-button text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
                         onClick={() => handleProductClick(item)}
                       >
                         Buy Now
@@ -518,7 +518,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                   onClick={() => handleProductClick(item)}
                 >
                   <div className="absolute top-3 left-3 z-10">
-                    <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    <span className="bg-secondary text-white px-2 py-1 rounded-full text-xs font-semibold">
                       Sale
                     </span>
                   </div>
@@ -581,7 +581,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                         )}
                       </div>
                       <button
-                        className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                        className="bg-button text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
                         onClick={() => handleProductClick(item)}
                       >
                         Buy Now
@@ -791,7 +791,7 @@ const MakeInIndia = () => (
       {makeInIndia.subtitle}
     </div>
     <a href={makeInIndia.buttonUrl}>
-      <button className="bg-primary text-white px-8 py-3 rounded-md text-base font-medium hover:bg-gray-900 transition-all">
+      <button className="bg-button text-white px-8 py-3 rounded-md text-base font-medium hover:bg-gray-900 transition-all">
         {makeInIndia.buttonText}
       </button>
     </a>
@@ -860,7 +860,7 @@ const HowToKnowFaceSize = () => {
 
         <div className="text-center">
           <button
-            className="bg-primary text-white px-8 py-3 rounded-full text-base font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            className="bg-button text-white px-8 py-3 rounded-full text-base font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
             onClick={() => router.push("/size-guide")}
           >
             View Size Guide

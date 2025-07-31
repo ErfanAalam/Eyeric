@@ -15,6 +15,7 @@ import {
   Ruler,
   Monitor,
   Glasses,
+  Dot,
 } from "lucide-react";
 import Navbar from "../../../../components/Navbar";
 import Footer from "../../../../components/Footer";
@@ -169,7 +170,8 @@ const ProductDetailPage = () => {
       key: "bifocal-progressive",
       icon: <Glasses className="w-8 h-8 text-gray-700" />,
       title: "Progressive/Bifocal",
-      description: "Two-in-one lenses for distance and reading - no need to switch glasses.",
+      description:
+        "Two-in-one lenses for distance and reading - no need to switch glasses.",
     },
     {
       key: "zero-power",
@@ -248,7 +250,12 @@ const ProductDetailPage = () => {
       created_at: new Date().toISOString(),
     };
     await addPowerToUserTable(userProfile.id, newPower);
-    addToCart({ product, lens: selectedLensForPower, powerCategory: "manual" });
+    addToCart({
+      product,
+      lens: selectedLensForPower,
+      powerCategory: "manual",
+      quantity: 1,
+    });
     setShowEnterPowerManuallyModal(false);
     setSelectedLensForPower(null);
     alert("Power details saved and added to cart successfully!");
@@ -284,6 +291,7 @@ const ProductDetailPage = () => {
       product,
       lens: selectedLensForPower,
       powerCategory: "prescription",
+      quantity: 1,
     });
     setShowUploadPrescriptionModal(false);
     setSelectedLensForPower(null);
@@ -319,6 +327,7 @@ const ProductDetailPage = () => {
       product,
       lens: selectedLensForPower,
       powerCategory: "submit-later",
+      quantity: 1,
     });
     setShowAddPowerModal(false);
     setSelectedLensForPower(null);
@@ -334,7 +343,12 @@ const ProductDetailPage = () => {
   // Handler for selecting a specific saved power
   const handleSelectSpecificSavedPower = (power: PowerEntry) => {
     if (!product || !selectedLensForPower) return;
-    addToCart({ product, lens: selectedLensForPower, powerCategory: "saved" });
+    addToCart({
+      product,
+      lens: selectedLensForPower,
+      powerCategory: "saved",
+      quantity: 1,
+    });
     setShowSavedPowersModal(false);
     setSelectedLensForPower(null);
     alert(`Item added to cart with saved power for ${power.name}!`);
@@ -494,7 +508,9 @@ const ProductDetailPage = () => {
     try {
       const data = await getLensesByCategory(product.lens_category_id!);
       // Only show lenses with category 'single vision'
-      const singleVisionLenses = data.filter((lens) => lens.category === "single vision");
+      const singleVisionLenses = data.filter(
+        (lens) => lens.category === "single vision"
+      );
       setLenses(singleVisionLenses);
     } catch {
       setLensesError("Failed to load lenses");
@@ -600,7 +616,7 @@ const ProductDetailPage = () => {
             </p>
             <button
               onClick={() => router.back()}
-              className="bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-button text-white px-6 py-3 rounded-lg hover:bg-button/80 transition-colors"
             >
               Go Back
             </button>
@@ -649,29 +665,29 @@ const ProductDetailPage = () => {
   // Add to Cart (frame only)
   const handleAddToCart = () => {
     if (!product) return;
-    addToCart({ product, powerCategory: "frame only" });
+    addToCart({ product, powerCategory: "frame only", quantity: 1 });
     alert("Frame added to cart successfully!");
   };
   const handleRemoveFromCart = () => {
     if (!product) return;
-    removeByDetails({ product, powerCategory: "frame only" });
+    removeByDetails({ product, powerCategory: "frame only", quantity: 1 });
     alert("Frame removed from cart!");
   };
   // Add to Cart with lens
   const handleAddLensToCart = (lens: Lens) => {
     if (!product) return;
-    addToCart({ product, lens });
+    addToCart({ product, lens, quantity: 1 });
     alert(`Added to cart with ${lens.title}!`);
   };
   const handleRemoveLensFromCart = (lens: Lens) => {
     if (!product) return;
-    removeByDetails({ product, lens });
+    removeByDetails({ product, lens, quantity: 1 });
     alert(`Removed from cart!`);
   };
   // Add to Cart with power (category and lens)
   const handleAddPowerToCart = (powerCategory: string, lens: Lens) => {
     if (!product) return;
-    addToCart({ product, lens, powerCategory });
+    addToCart({ product, lens, powerCategory, quantity: 1 });
     alert(`Added to cart with ${lens.title} and ${powerCategory}!`);
   };
 
@@ -1013,7 +1029,11 @@ const ProductDetailPage = () => {
                 product.is_lens_used ? (
                   <>
                     {product &&
-                    isInCart({ product, powerCategory: "frame only" }) ? (
+                    isInCart({
+                      product,
+                      powerCategory: "frame only",
+                      quantity: 1,
+                    }) ? (
                       <button
                         className="flex-1 bg-red-500 text-white py-4 rounded-xl font-semibold hover:bg-red-600 cursor-pointer transition-colors flex items-center justify-center gap-2"
                         onClick={handleRemoveFromCart}
@@ -1022,7 +1042,7 @@ const ProductDetailPage = () => {
                       </button>
                     ) : (
                       <button
-                        className="flex-1 bg-primary/80 text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
+                        className="flex-1 bg-button text-white py-4 rounded-xl font-semibold hover:bg-button/90 cursor-pointer transition-colors flex items-center justify-center gap-2"
                         onClick={handleAddToCart}
                       >
                         <ShoppingBag className="w-5 h-5" />
@@ -1030,7 +1050,7 @@ const ProductDetailPage = () => {
                       </button>
                     )}
                     <button
-                      className="flex-1 bg-primary text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
+                      className="flex-1 bg-button text-white py-4 rounded-xl font-semibold hover:bg-button/90 cursor-pointer transition-colors flex items-center justify-center gap-2"
                       onClick={handleAddLensClick}
                     >
                       <Ruler className="w-5 h-5" />
@@ -1039,7 +1059,7 @@ const ProductDetailPage = () => {
                   </>
                 ) : (
                   <button
-                    className="flex-1 bg-primary/80 text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
+                    className="flex-1 bg-button/80 text-white py-4 rounded-xl font-semibold hover:bg-button cursor-pointer transition-colors flex items-center justify-center gap-2"
                     onClick={handleAddToCart}
                   >
                     <ShoppingBag className="w-5 h-5" />
@@ -1052,7 +1072,7 @@ const ProductDetailPage = () => {
                   product.type_category.includes("computer glasses") ||
                   product.type_category.includes("computerglasses")) ? (
                 <button
-                  className="flex-1 bg-primary text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-button text-white py-4 rounded-xl font-semibold hover:bg-button cursor-pointer transition-colors flex items-center justify-center gap-2"
                   onClick={handleAddPowerClick}
                 >
                   <Ruler className="w-5 h-5" />
@@ -1061,7 +1081,7 @@ const ProductDetailPage = () => {
               ) : (
                 // Default fallback (show Add to Cart)
                 <button
-                  className="flex-1 bg-primary/80 text-white py-4 rounded-xl font-semibold hover:bg-primary cursor-pointer transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-button/80 text-white py-4 rounded-xl font-semibold hover:bg-button cursor-pointer transition-colors flex items-center justify-center gap-2"
                   onClick={handleAddToCart}
                 >
                   <ShoppingBag className="w-5 h-5" />
@@ -1115,21 +1135,23 @@ const ProductDetailPage = () => {
                 </button>
                 {expandedSections.features && (
                   <div className="px-4 pb-4">
-                    <ul className="space-y-2">
-                      {product.features.map((feature, index) => (
-                        <li
-                          key={index}
-                          className="flex items-center gap-2 text-gray-600"
-                        >
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          {feature}
-                        </li>
-                      ))}
+                    <ul className="space-y-2 text-gray-600 list-disc">
+                      {product.features.map((feature, index) =>
+                        feature.split(";").map((f, idx) => (
+                          <li
+                            key={`${index}-${idx}`}
+                            className="flex items-center gap-2"
+                          >
+                            <Dot />{f}
+                          </li>
+                        ))
+                      )}
                     </ul>
                   </div>
                 )}
               </div>
             )}
+
 
             {/* Product Details Dropdown */}
             <div className="border border-gray-200 rounded-lg">
@@ -1196,7 +1218,7 @@ const ProductDetailPage = () => {
           <div className="mt-16">
             <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 bg-text bg-clip-text text-transparent">
               More {product.shape_category} Styles
-            </h2>
+            </h2>``
             <div className="relative">
               <div className="overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <div className="flex space-x-6 min-w-min">
@@ -1211,7 +1233,7 @@ const ProductDetailPage = () => {
                       {/* Sale Badge */}
                       {item.discounted_price && (
                         <div className="absolute top-3 left-3 z-10">
-                          <span className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold">
+                          <span className="bg-secondary text-white px-2 py-1 rounded-full text-xs font-semibold">
                             Sale
                           </span>
                         </div>
@@ -1273,7 +1295,7 @@ const ProductDetailPage = () => {
                           <span className="text-md md:text-xl font-bold text-text">
                             ₹{item.discounted_price || item.original_price}
                           </span>
-                          <button className="bg-primary text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                          <button className="bg-button text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105">
                             View Details
                           </button>
                         </div>
@@ -1495,7 +1517,11 @@ const ProductDetailPage = () => {
                   const selectedLens = lenses.find(
                     (l) => l.id === selectedLensId
                   );
-                  const inCart = isInCart({ product, lens: selectedLens });
+                  const inCart = isInCart({
+                    product,
+                    lens: selectedLens,
+                    quantity: 1,
+                  });
                   return inCart ? (
                     <button
                       className="w-full py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 shadow-md transition-all duration-200 text-base md:text-lg"
@@ -1670,7 +1696,7 @@ const ProductDetailPage = () => {
                 </button>
               )}
               <div className="text-gray-400 text-xs md:text-sm text-center mt-1">
-              Need help choosing?{" "}
+                Need help choosing?{" "}
                 <span className="underline cursor-pointer">
                   Talk to our expert : 8905344556
                 </span>
@@ -2096,7 +2122,7 @@ const ProductDetailPage = () => {
             {/* Footer */}
             <div className="sticky bottom-0 z-10 px-3 md:px-6 py-3 md:py-4 border-t border-gray-100 bg-gradient-to-t from-white/90 to-[#faf8f6]">
               <div className="text-gray-400 text-xs md:text-sm text-center">
-              Need help choosing?{" "}
+                Need help choosing?{" "}
                 <span className="underline cursor-pointer">
                   Talk to our expert : 8905344556
                 </span>

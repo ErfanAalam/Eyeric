@@ -180,13 +180,13 @@ export default function FilterSidebar({
       </details>
       <div className="flex flex-col gap-2 pt-2">
         <button
-          className="w-full bg-primary text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+          className="w-full bg-button text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
           onClick={handleApply}
         >
           Apply Filters
         </button>
         <button
-          className="w-full bg-primary text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+          className="w-full bg-button text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
           onClick={handleClear}
         >
           Clear Filters
