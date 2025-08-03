@@ -60,12 +60,93 @@ const ManageCouponTab = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this coupon?")) return;
     setLoading(true);
-    const { error } = await supabase.from("coupons").delete().eq("id", id);
+    
+    try {
+      // First, check if the coupon is being used in product_coupons
+      const { data: productCoupons, error: pcError } = await supabase
+        .from("product_coupons")
+        .select("product_id")
+        .eq("coupon_id", id);
+      
+      if (pcError) {
+        setMessage("Failed to check coupon dependencies: " + pcError.message);
+        setLoading(false);
+        return;
+      }
+      
+      // Check for any other potential foreign key references
+      // This is a generic approach to catch any other tables that might reference coupons
+      let dependenciesFound = false;
+      let dependencyMessage = "";
+      
+      if (productCoupons && productCoupons.length > 0) {
+        dependenciesFound = true;
+        dependencyMessage += `- Associated with ${productCoupons.length} product(s)\n`;
+      }
+      
+      // If dependencies found, show warning
+      if (dependenciesFound) {
+        const shouldDelete = window.confirm(
+          `This coupon has the following dependencies:\n${dependencyMessage}\nDeleting it will remove these associations. Do you want to continue?`
+        );
+        
+        if (!shouldDelete) {
+          setLoading(false);
+          return;
+        }
+        
+        // Delete product_coupons associations first
+        if (productCoupons && productCoupons.length > 0) {
+          const { error: deletePcError } = await supabase
+            .from("product_coupons")
+            .delete()
+            .eq("coupon_id", id);
+          
+          if (deletePcError) {
+            setMessage("Failed to remove product associations: " + deletePcError.message);
+            setLoading(false);
+            return;
+          }
+        }
+      }
+      
+      // Now delete the coupon
+      const { error } = await supabase.from("coupons").delete().eq("id", id);
+      if (error) {
+        // If we still get a foreign key error, provide a more helpful message
+        if (error.code === '23503' || error.message.includes('foreign key')) {
+          setMessage("Cannot delete coupon: It is being used by other parts of the system. Consider deactivating it instead.");
+        } else {
+          setMessage("Failed to delete coupon: " + error.message);
+        }
+      } else {
+        setMessage("Coupon deleted successfully");
+        setCoupons(coupons.filter((c) => c.id !== id));
+      }
+    } catch (error) {
+      setMessage("An unexpected error occurred: " + error.message);
+    }
+    
+    setLoading(false);
+  };
+
+  const handleDeactivate = async (id, currentStatus) => {
+    const action = currentStatus ? "deactivate" : "activate";
+    if (!window.confirm(`Are you sure you want to ${action} this coupon?`)) return;
+    
+    setLoading(true);
+    const { error } = await supabase
+      .from("coupons")
+      .update({ is_active: !currentStatus })
+      .eq("id", id);
+    
     if (error) {
-      setMessage("Failed to delete coupon");
+      setMessage(`Failed to ${action} coupon: ` + error.message);
     } else {
-      setMessage("Coupon deleted successfully");
-      setCoupons(coupons.filter((c) => c.id !== id));
+      setMessage(`Coupon ${action}d successfully`);
+      setCoupons(coupons.map((c) => 
+        c.id === id ? { ...c, is_active: !currentStatus } : c
+      ));
     }
     setLoading(false);
   };
@@ -164,6 +245,17 @@ const ManageCouponTab = () => {
                           title="Edit Coupon"
                         >
                           <Edit3 className="w-4 h-4" /> Edit
+                        </button>
+                        <button
+                          className={`px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1 hover:shadow-lg ${
+                            coupon.is_active 
+                              ? "bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white"
+                              : "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white"
+                          }`}
+                          onClick={() => handleDeactivate(coupon.id, coupon.is_active)}
+                          title={coupon.is_active ? "Deactivate Coupon" : "Activate Coupon"}
+                        >
+                          {coupon.is_active ? "Deactivate" : "Activate"}
                         </button>
                         <button
                           className="bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-3 py-2 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1 hover:shadow-lg"

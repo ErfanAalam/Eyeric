@@ -15,10 +15,32 @@ import {
   Users,
   Eye,
   Tag,
+  Palette,
+  X,
+  MousePointer,
 } from "lucide-react";
 import Image from "next/image";
 import Select from 'react-select';
 import imageCompression from 'browser-image-compression';
+
+// Helper function to get color from image at specific coordinates
+const getColorFromImage = (imageElement: HTMLImageElement, x: number, y: number): string => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  canvas.width = imageElement.naturalWidth;
+  canvas.height = imageElement.naturalHeight;
+  
+  ctx?.drawImage(imageElement, 0, 0);
+  
+  const imageData = ctx?.getImageData(x, y, 1, 1);
+  if (!imageData) return '#000000';
+  
+  const [r, g, b] = imageData.data;
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+};
+
+
 
 // Helper function to shift display orders for a specific category
 const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
@@ -86,6 +108,7 @@ export type Product = {
   bridge_width?: number;
   temple_length?: number;
   lens_category_id?: string;
+  is_active?: boolean;
 };
 
 const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | null, onFinishEdit?: () => void }) => {
@@ -138,12 +161,27 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
   const [selectedSpecialCategories, setSelectedSpecialCategories] = useState([]);
   const [allCoupons, setAllCoupons] = useState([]);
   const [selectedCoupons, setSelectedCoupons] = useState([]);
+  const [isActive, setIsActive] = useState(true);
 
   // Add state for previews and removal flags
   const [bannerImage1Preview, setBannerImage1Preview] = useState<string | null>(null);
   const [bannerImage2Preview, setBannerImage2Preview] = useState<string | null>(null);
   const [colorImagePreviews, setColorImagePreviews] = useState<string[][]>([]); // array of arrays of URLs
   const [removeColorImages, setRemoveColorImages] = useState<boolean[][]>([]); // array of arrays of bools
+
+  // Color picker modal state
+  const [colorPickerModal, setColorPickerModal] = useState<{
+    isOpen: boolean;
+    colorIdx: number;
+    imageIdx: number;
+    imageUrl: string;
+  }>({
+    isOpen: false,
+    colorIdx: -1,
+    imageIdx: -1,
+    imageUrl: '',
+  });
+  const [pickedColors, setPickedColors] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -225,6 +263,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setBridgeWidth(editProduct.bridge_width?.toString() || "");
       setTempleLength(editProduct.temple_length?.toString() || "");
       setLensCategoryId(editProduct.lens_category_id?.toString() || "");
+      setIsActive(editProduct.is_active !== false); // Default to true if not set
       // TODO: handle special categories and coupons if needed
       setBannerImage1Preview(editProduct.banner_image_1 || null);
       setBannerImage2Preview(editProduct.banner_image_2 || null);
@@ -364,6 +403,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         bridge_width: bridgeWidth ? parseFloat(bridgeWidth) : null,
         temple_length: templeLength ? parseFloat(templeLength) : null,
         lens_category_id: lensCategoryId,
+        is_active: isActive,
       };
       const { error } = await supabase.from("products").update(updateObj).eq("id", editProduct.id);
       if (error) {
@@ -549,6 +589,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       bridge_width: bridgeWidth ? parseFloat(bridgeWidth) : null,
       temple_length: templeLength ? parseFloat(templeLength) : null,
       lens_category_id: lensCategoryId,
+      is_active: isActive,
       ...categoryDisplayOrders, // Spread all category display orders
     }).select();
 
@@ -597,6 +638,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     setBridgeWidth("");
     setTempleLength("");
     setLensCategoryId("");
+    setIsActive(true);
     setSelectedSpecialCategories([]);
     setSelectedCoupons([]);
     
@@ -669,7 +711,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     updatedColors[colorIndex].colors[pickerIndex] = value;
     setColors(updatedColors);
   };
-  const handleColorImagesChange = async (colorIdx: number, files: FileList) => {
+
+  const handleColorImagesChange = async (colorIdx: number, files: FileList, replaceExisting: boolean = false) => {
     try {
       const compressedFiles = await Promise.all(
         Array.from(files).map(file =>
@@ -680,23 +723,105 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
           })
         )
       );
+
       const updatedColors = [...colors];
-      updatedColors[colorIdx].images = compressedFiles;
+      
+      if (replaceExisting) {
+        // Replace existing images
+        updatedColors[colorIdx].images = compressedFiles;
+      } else {
+        // Add to existing images
+        const existingImages = updatedColors[colorIdx].images || [];
+        updatedColors[colorIdx].images = [...existingImages, ...compressedFiles];
+      }
+      
       setColors(updatedColors);
-      console.log('Updated colors after file input:', updatedColors);
-      // Set previews for new files
+      
+      // Update previews
       const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
       const previewsCopy = [...colorImagePreviews];
-      previewsCopy[colorIdx] = newPreviews;
+      
+      if (replaceExisting) {
+        previewsCopy[colorIdx] = newPreviews;
+      } else {
+        const existingPreviews = previewsCopy[colorIdx] || [];
+        previewsCopy[colorIdx] = [...existingPreviews, ...newPreviews];
+      }
+      
       setColorImagePreviews(previewsCopy);
-      // Reset removal flags for this color
+      
+      // Update removal flags
       const removeCopy = [...removeColorImages];
-      removeCopy[colorIdx] = newPreviews.map(() => false);
+      if (replaceExisting) {
+        removeCopy[colorIdx] = newPreviews.map(() => false);
+      } else {
+        const existingFlags = removeCopy[colorIdx] || [];
+        removeCopy[colorIdx] = [...existingFlags, ...newPreviews.map(() => false)];
+      }
       setRemoveColorImages(removeCopy);
+      
     } catch (_err: unknown) {
       console.error(_err);
       setMessage(`Failed to compress color images for entry ${colorIdx + 1}`);
     }
+  };
+
+  const openColorPicker = (colorIdx: number, imageIdx: number, imageUrl: string) => {
+    setColorPickerModal({
+      isOpen: true,
+      colorIdx,
+      imageIdx,
+      imageUrl,
+    });
+    setPickedColors([]);
+  };
+
+  const closeColorPicker = () => {
+    setColorPickerModal({
+      isOpen: false,
+      colorIdx: -1,
+      imageIdx: -1,
+      imageUrl: '',
+    });
+    setPickedColors([]);
+  };
+
+  const handleImageClick = (event: React.MouseEvent<HTMLImageElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    
+    // Calculate the scale factor between display size and natural size
+    const scaleX = event.currentTarget.naturalWidth / rect.width;
+    const scaleY = event.currentTarget.naturalHeight / rect.height;
+    
+    // Get the actual pixel coordinates
+    const pixelX = Math.floor(x * scaleX);
+    const pixelY = Math.floor(y * scaleY);
+    
+    const color = getColorFromImage(event.currentTarget, pixelX, pixelY);
+    
+    if (!pickedColors.includes(color)) {
+      setPickedColors([...pickedColors, color]);
+    }
+  };
+
+  const applyPickedColors = () => {
+    if (pickedColors.length > 0) {
+      const updatedColors = [...colors];
+      const existingColors = updatedColors[colorPickerModal.colorIdx].colors || [];
+      // Add new colors to existing ones, avoiding duplicates
+      const newColors = [...existingColors];
+      pickedColors.forEach(color => {
+        if (!newColors.includes(color)) {
+          newColors.push(color);
+        }
+      });
+      updatedColors[colorPickerModal.colorIdx].colors = newColors;
+      setColors(updatedColors);
+      setMessage(`Added ${pickedColors.length} new colors from image`);
+    }
+    closeColorPicker();
   };
   const addColorPicker = (colorIndex: number) => {
     const updatedColors = [...colors];
@@ -840,31 +965,78 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                       </button>
                     </div>
                     {/* Show color swatches */}
-                    <div className="flex gap-1 mb-2">
-                      {colorObj.colors.map((color, cidx) => (
-                        <div
-                          key={cidx}
-                          className="w-6 h-6 rounded-full border border-slate-300"
-                          style={{ backgroundColor: color }}
-                          title={color}
-                        />
-                      ))}
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="flex gap-1">
+                        {colorObj.colors.map((color, cidx) => (
+                          <div
+                            key={cidx}
+                            className="w-6 h-6 rounded-full border border-slate-300 relative group"
+                            style={{ backgroundColor: color }}
+                            title={color}
+                          >
+                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full transition-all duration-200 flex items-center justify-center">
+                              <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-bold">
+                                {cidx + 1}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {colorObj.images && colorObj.images.length > 0 && colorObj.colors.length > 0 && (
+                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                          <Palette className="w-3 h-3" />
+                          {colorObj.colors.length} picked colors
+                        </span>
+                      )}
                     </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={async e => {
-                        if (e.target.files) await handleColorImagesChange(idx, e.target.files);
-                      }}
-                      className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                    />
+                    <div className="flex gap-2 mb-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={async e => {
+                          if (e.target.files) await handleColorImagesChange(idx, e.target.files, true);
+                        }}
+                        className="flex-1 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.multiple = true;
+                          input.onchange = async (e) => {
+                            const target = e.target as HTMLInputElement;
+                            if (target.files) await handleColorImagesChange(idx, target.files, false);
+                          };
+                          input.click();
+                        }}
+                        className="px-3 py-2 bg-green-100 text-green-700 rounded-lg font-semibold text-xs hover:bg-green-200 flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" /> Add More
+                      </button>
+                    </div>
                     {colorImagePreviews[idx] && colorImagePreviews[idx].length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
                         {colorImagePreviews[idx].map((img, imgIdx) => (
-                          <div key={imgIdx} className="relative w-16 h-16">
+                          <div key={imgIdx} className="relative w-16 h-16 group">
                             <Image height={64} width={64} src={img} alt={`Preview ${imgIdx}`} className="w-16 h-16 object-cover rounded border shadow" />
-                            <button type="button" onClick={() => handleRemoveColorImage(idx, imgIdx)} className="absolute top-0 right-0 bg-white/80 rounded-full p-1 text-red-600 hover:bg-red-100">✕</button>
+                            <button 
+                              type="button" 
+                              onClick={() => handleRemoveColorImage(idx, imgIdx)} 
+                              className="absolute top-0 right-0 bg-white/80 rounded-full p-1 text-red-600 hover:bg-red-100"
+                            >
+                              ✕
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openColorPicker(idx, imgIdx, img)}
+                              className="absolute bottom-0 left-0 bg-white/80 rounded-full p-1 text-blue-600 hover:bg-blue-100 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Pick colors from this image"
+                            >
+                              <MousePointer className="w-3 h-3" />
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -1552,6 +1724,32 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   <span className="text-sm font-medium">Lens Used</span>
                 </div>
               </label>
+
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-5 h-5 rounded border-2 transition-all duration-200 ${
+                      isActive
+                        ? "bg-gradient-to-r from-green-500 to-emerald-500 border-green-500 scale-110"
+                        : "border-slate-300 group-hover:border-green-400 group-hover:scale-105"
+                    }`}
+                  >
+                    {isActive && (
+                      <Check className="w-3 h-3 text-white absolute top-0.5 left-0.5" />
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 group-hover:text-green-600 transition-colors duration-200">
+                  <div className={`w-4 h-4 rounded-full ${isActive ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                  <span className="text-sm font-medium">{isActive ? 'Active' : 'Inactive'}</span>
+                </div>
+              </label>
             </div>
 
             {/* Message */}
@@ -1595,6 +1793,84 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
           </form>
         </div>
       </div>
+
+      {/* Color Picker Modal */}
+      {colorPickerModal.isOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <MousePointer className="w-6 h-6 text-blue-600" />
+                <h3 className="text-xl font-semibold text-gray-900">Pick Colors from Image</h3>
+              </div>
+              <button
+                onClick={closeColorPicker}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6">
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  Click on different parts of the image to pick colors. Selected colors will appear below.
+                </p>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {pickedColors.map((color, idx) => (
+                    <div
+                      key={idx}
+                      className="w-8 h-8 rounded-full border-2 border-gray-300 relative group"
+                      style={{ backgroundColor: color }}
+                      title={color}
+                    >
+                      <button
+                        onClick={() => setPickedColors(pickedColors.filter((_, i) => i !== idx))}
+                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Image Container */}
+              <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-4">
+                <img
+                  src={colorPickerModal.imageUrl}
+                  alt="Color picker"
+                  className="w-full h-auto max-h-[60vh] object-contain cursor-crosshair"
+                  onClick={handleImageClick}
+                  style={{ imageRendering: 'pixelated' }}
+                />
+                <div className="absolute top-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
+                  Click to pick colors
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={closeColorPicker}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={applyPickedColors}
+                  disabled={pickedColors.length === 0}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Apply Colors ({pickedColors.length})
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

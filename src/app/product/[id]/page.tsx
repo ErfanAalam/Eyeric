@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import toast from "react-hot-toast";
 import {
   Heart,
   ShoppingBag,
@@ -236,7 +237,7 @@ const ProductDetailPage = () => {
 
     // Validate required fields
     if (!name || !phone) {
-      alert("Please provide name and phone number.");
+      toast.error("Please provide name and phone number.");
       return;
     }
 
@@ -258,7 +259,7 @@ const ProductDetailPage = () => {
     });
     setShowEnterPowerManuallyModal(false);
     setSelectedLensForPower(null);
-    alert("Power details saved and added to cart successfully!");
+    toast.success("Power details saved and added to cart successfully!");
   };
 
   // Handler for prescription upload
@@ -271,7 +272,7 @@ const ProductDetailPage = () => {
 
     // Validate required fields
     if (!imageUrl || !name || !phone) {
-      alert(
+      toast.error(
         "Please provide all required information: prescription image, name, and phone number."
       );
       return;
@@ -295,7 +296,7 @@ const ProductDetailPage = () => {
     });
     setShowUploadPrescriptionModal(false);
     setSelectedLensForPower(null);
-    alert("Prescription uploaded and added to cart successfully!");
+    toast.success("Prescription uploaded and added to cart successfully!");
   };
 
   const handleEnterPowerManually = () => {
@@ -309,7 +310,7 @@ const ProductDetailPage = () => {
 
     // Validate required fields
     if (!name || !phone) {
-      alert("Please provide name and phone number to submit power later.");
+      toast.error("Please provide name and phone number to submit power later.");
       return;
     }
 
@@ -331,7 +332,7 @@ const ProductDetailPage = () => {
     });
     setShowAddPowerModal(false);
     setSelectedLensForPower(null);
-    alert("Item added to cart! You can submit your power within 15 days.");
+    toast.success("Item added to cart! You can submit your power within 15 days.");
   };
 
   // Handler for saved power
@@ -351,7 +352,7 @@ const ProductDetailPage = () => {
     });
     setShowSavedPowersModal(false);
     setSelectedLensForPower(null);
-    alert(`Item added to cart with saved power for ${power.name}!`);
+    toast.success(`Item added to cart with saved power for ${power.name}!`);
   };
 
   useEffect(() => {
@@ -666,29 +667,29 @@ const ProductDetailPage = () => {
   const handleAddToCart = () => {
     if (!product) return;
     addToCart({ product, powerCategory: "frame only", quantity: 1 });
-    alert("Frame added to cart successfully!");
+    toast.success("Frame added to cart successfully!");
   };
   const handleRemoveFromCart = () => {
     if (!product) return;
     removeByDetails({ product, powerCategory: "frame only", quantity: 1 });
-    alert("Frame removed from cart!");
+    toast.success("Frame removed from cart!");
   };
   // Add to Cart with lens
   const handleAddLensToCart = (lens: Lens) => {
     if (!product) return;
     addToCart({ product, lens, quantity: 1 });
-    alert(`Added to cart with ${lens.title}!`);
+    toast.success(`Added to cart with ${lens.title}!`);
   };
   const handleRemoveLensFromCart = (lens: Lens) => {
     if (!product) return;
     removeByDetails({ product, lens, quantity: 1 });
-    alert(`Removed from cart!`);
+    toast.success(`Removed from cart!`);
   };
   // Add to Cart with power (category and lens)
   const handleAddPowerToCart = (powerCategory: string, lens: Lens) => {
     if (!product) return;
     addToCart({ product, lens, powerCategory, quantity: 1 });
-    alert(`Added to cart with ${lens.title} and ${powerCategory}!`);
+    toast.success(`Added to cart with ${lens.title} and ${powerCategory}!`);
   };
 
   return (
@@ -1638,7 +1639,7 @@ const ProductDetailPage = () => {
                     onClick={() => {
                       removeByDetails({ product, powerCategory: "frame only" });
                       setShowPowerModal(false);
-                      alert("Removed from cart!");
+                      toast.success("Removed from cart!");
                     }}
                   >
                     Remove from Cart
@@ -1649,7 +1650,7 @@ const ProductDetailPage = () => {
                     onClick={() => {
                       addToCart({ product, powerCategory: "frame only" });
                       setShowPowerModal(false);
-                      alert("Added to cart!");
+                      toast.success("Added to cart!");
                     }}
                   >
                     Add to Cart
@@ -1662,7 +1663,7 @@ const ProductDetailPage = () => {
                     onClick={() => {
                       removeByDetails({ product, powerCategory: "zero power" });
                       setShowPowerModal(false);
-                      alert("Removed from cart!");
+                      toast.success("Removed from cart!");
                     }}
                   >
                     Remove from Cart
@@ -1673,7 +1674,7 @@ const ProductDetailPage = () => {
                     onClick={() => {
                       addToCart({ product, powerCategory: "zero power" });
                       setShowPowerModal(false);
-                      alert("Added to cart!");
+                      toast.success("Added to cart!");
                     }}
                   >
                     Add to Cart
@@ -1846,7 +1847,7 @@ const ProductDetailPage = () => {
                             powerCategory: "zero power",
                           });
                           setShowPowerLensModal(false);
-                          alert("Removed from cart!");
+                          toast.success("Removed from cart!");
                         }}
                       >
                         Remove from Cart
@@ -1861,7 +1862,7 @@ const ProductDetailPage = () => {
                             powerCategory: "zero power",
                           });
                           setShowPowerLensModal(false);
-                          alert("Added to cart!");
+                          toast.success("Added to cart!");
                         }}
                       >
                         Add to Cart
@@ -1882,7 +1883,7 @@ const ProductDetailPage = () => {
                             powerCategory: selectedLensType,
                           });
                           setShowPowerLensModal(false);
-                          alert("Removed from cart!");
+                          toast.success("Removed from cart!");
                         }}
                       >
                         Remove from Cart
@@ -1911,7 +1912,7 @@ const ProductDetailPage = () => {
                             powerCategory: selectedLensType,
                           });
                           setShowPowerLensModal(false);
-                          alert("Removed from cart!");
+                          toast.success("Removed from cart!");
                         }}
                       >
                         Remove from Cart

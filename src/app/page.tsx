@@ -52,9 +52,13 @@ interface Product {
 
 // Define Slide type for hero slider
 interface Slide {
+  id?: string;
   image_url?: string;
   image?: string;
   redirect_url?: string;
+  is_active?: boolean;
+  display_order?: number;
+  created_at?: string;
 }
 
 // Utility function to truncate description to 5 words
@@ -71,12 +75,17 @@ function truncateDescription(desc: string): string {
 const HeroSlider = ({ slides }: { slides: Slide[] }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   
+  // Filter out inactive slides and ensure we have valid slides
+  const activeSlides = slides.filter(slide => slide.is_active !== false);
+  
   useEffect(() => {
+    if (activeSlides.length === 0) return;
+    
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [activeSlides.length]);
 
   const handleSlideClick = (slide: Slide) => {
     if (slide.redirect_url) {
@@ -85,52 +94,63 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
   };
 
   const handlePrevious = () => {
-    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+    setCurrentSlide((prev) => (prev === 0 ? activeSlides.length - 1 : prev - 1));
   };
 
   const handleNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
+    setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
   };
 
   return (
-    <div className="relative md:h-[65vh] h-[30vh] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {slides.map((slide, index) => (
-        <div
-          key={index}
-          className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-            index === currentSlide
-              ? "opacity-100 scale-100"
-              : "opacity-0 scale-105"
-          }`}
-        >
-          <div 
-            className={`w-full h-full aspect-video bg-gray-200 ${slide.redirect_url ? 'cursor-pointer' : ''}`}
-            onClick={() => handleSlideClick(slide)}
-          >
-            <Image
-              src={slide.image_url || slide.image}
-              alt="slide"
-              fill
-              style={{ objectFit: "cover", objectPosition: "center" }}
-              className="w-full h-full object-cover object-center"
-              quality={90}
-              sizes="(max-width: 768px) 100vw, 100vw"
-              placeholder="blur"
-              blurDataURL="/placeholder.png"
-            />
-            {/* {slide.redirect_url && (
-              <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <div className="bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium text-gray-800">
-                  Click to learn more
-                </div>
-              </div>
-            )} */}
+    <div className="relative md:h-[60vh] h-[30vh] overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {activeSlides.length === 0 ? (
+        // Fallback when no active slides
+        <div className="w-full h-full flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="text-4xl mb-4">🖼️</div>
+            <h2 className="text-xl md:text-2xl font-semibold mb-2">Welcome to EYERIC</h2>
+            <p className="text-sm md:text-base opacity-80">Discover amazing eyewear collections</p>
           </div>
         </div>
-      ))}
+      ) : (
+        activeSlides.map((slide, index) => (
+          <div
+            key={slide.id || index}
+            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+              index === currentSlide
+                ? "opacity-100 scale-100"
+                : "opacity-0 scale-105"
+            }`}
+          >
+            <div 
+              className={`w-full h-full aspect-video bg-gray-200 ${slide.redirect_url ? 'cursor-pointer' : ''}`}
+              onClick={() => handleSlideClick(slide)}
+            >
+              <Image
+                src={slide.image_url || slide.image}
+                alt="slide"
+                fill
+                style={{ objectFit: "cover", objectPosition: "center" }}
+                className="w-full h-full object-cover object-center"
+                quality={90}
+                sizes="(max-width: 768px) 100vw, 100vw"
+                placeholder="blur"
+                blurDataURL="/placeholder.png"
+              />
+              {/* {slide.redirect_url && (
+                <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <div className="bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 text-sm font-medium text-gray-800">
+                    Click to learn more
+                  </div>
+                </div>
+              )} */}
+            </div>
+          </div>
+        ))
+      )}
       
       {/* Navigation Arrows */}
-      {slides.length > 1 && (
+      {activeSlides.length > 1 && (
         <>
           <button
             onClick={handlePrevious}
@@ -153,19 +173,21 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
       )}
       
       {/* Dots Navigation */}
-      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === currentSlide
-                ? "bg-white scale-125"
-                : "bg-white/50 hover:bg-white/75"
-            }`}
-          />
-        ))}
-      </div>
+      {activeSlides.length > 1 && (
+        <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
+          {activeSlides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === currentSlide
+                  ? "bg-white scale-125"
+                  : "bg-white/50 hover:bg-white/75"
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

@@ -2,13 +2,20 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { supabase } from "../../../../../lib/supabaseClient";
 import imageCompression from "browser-image-compression";
+import toast from "react-hot-toast";
 
-type Slide = { id: string; image_url: string; created_at: string; redirect_url?: string };
+type Slide = { 
+  id: string; 
+  image_url: string; 
+  created_at: string; 
+  redirect_url?: string;
+  is_active?: boolean;
+  display_order?: number;
+};
 
 type SlidesTabProps = {
   slides?: Slide[];
   slideLoading?: boolean;
-  slideMsg?: string;
   handleSlideUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSlideDelete?: (id: string, imageUrl: string) => void;
 };
@@ -17,9 +24,10 @@ const SlidesTab = (props: SlidesTabProps) => {
   // If props are not provided, manage state internally
   const [slides, setSlides] = useState<Slide[]>(props.slides || []);
   const [slideLoading, setSlideLoading] = useState<boolean>(props.slideLoading || false);
-  const [slideMsg, setSlideMsg] = useState<string>(props.slideMsg || "");
   const [redirectUrl, setRedirectUrl] = useState<string>("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [editingOrder, setEditingOrder] = useState<{ [key: string]: number }>({});
+  const [inputValues, setInputValues] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (!props.slides) fetchSlides();
@@ -31,6 +39,7 @@ const SlidesTab = (props: SlidesTabProps) => {
     const { data, error } = await supabase
       .from("slide")
       .select("*")
+      .order("display_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (!error && data) setSlides(data);
     setSlideLoading(false);
@@ -40,7 +49,6 @@ const SlidesTab = (props: SlidesTabProps) => {
     if (!selectedFile) return;
     
     setSlideLoading(true);
-    setSlideMsg("");
 
     // Aspect ratio validation (16:9)
     const isValidAspectRatio = await new Promise<boolean>((resolve) => {
@@ -56,7 +64,7 @@ const SlidesTab = (props: SlidesTabProps) => {
       img.src = URL.createObjectURL(selectedFile);
     });
     if (!isValidAspectRatio) {
-      setSlideMsg("Image must have a 16:9 aspect ratio (e.g., 1600x900, 1920x1080). Upload canceled.");
+      toast.error("Image must have a 16:9 aspect ratio (e.g., 1600x900, 1920x1080). Upload canceled.");
       setSlideLoading(false);
       return;
     }
@@ -74,7 +82,7 @@ const SlidesTab = (props: SlidesTabProps) => {
     try {
       compressedFile = await imageCompression(selectedFile, options);
     } catch {
-      setSlideMsg("Image compression failed");
+      toast.error("Image compression failed");
       setSlideLoading(false);
       return;
     }
@@ -84,15 +92,30 @@ const SlidesTab = (props: SlidesTabProps) => {
       .from("slides")
       .upload(filePath, compressedFile);
     if (storageError) {
-      setSlideMsg("Upload failed");
+      toast.error("Upload failed");
       setSlideLoading(false);
       return;
     }
     const { data: urlData } = supabase.storage
       .from("slides")
       .getPublicUrl(filePath);
-    await supabase.from("slide").insert({ image_url: urlData.publicUrl, redirect_url: redirectUrl });
-    setSlideMsg("Slide uploaded!");
+    
+    // Get the next display order number
+    const { data: maxOrderData } = await supabase
+      .from("slide")
+      .select("display_order")
+      .order("display_order", { ascending: false })
+      .limit(1);
+    
+    const nextOrder = maxOrderData && maxOrderData.length > 0 ? (maxOrderData[0].display_order || 0) + 1 : 0;
+    
+    await supabase.from("slide").insert({ 
+      image_url: urlData.publicUrl, 
+      redirect_url: redirectUrl,
+      is_active: true,
+      display_order: nextOrder
+    });
+    toast.success("Slide uploaded successfully!");
     setSlideLoading(false);
     setRedirectUrl("");
     setSelectedFile(null);
@@ -107,7 +130,6 @@ const SlidesTab = (props: SlidesTabProps) => {
     if (!isConfirmed) return;
     
     setSlideLoading(true);
-    setSlideMsg("");
     try {
       // Parse the path after the bucket name
       const url = new URL(imageUrl);
@@ -120,19 +142,100 @@ const SlidesTab = (props: SlidesTabProps) => {
       const { error: removeError } = await supabase.storage.from("slides").remove([path]);
       if (removeError) {
         console.error("Supabase remove error:", removeError); // Debug log
-        setSlideMsg("Failed to delete image from storage");
+        toast.error("Failed to delete image from storage");
         setSlideLoading(false);
         return;
       }
       await supabase.from("slide").delete().eq("id", id);
       await supabase.from("slides").delete().eq("id", id);
-      setSlideMsg("Slide deleted!");
+      toast.success("Slide deleted successfully!");
     } catch (err) {
       console.error("Delete slide/image error:", err); // Debug log
-      setSlideMsg("Failed to delete slide or image");
+      toast.error("Failed to delete slide or image");
     }
     setSlideLoading(false);
     fetchSlides();
+  }
+
+  async function handleToggleActive(id: string, currentStatus: boolean) {
+    setSlideLoading(true);
+    try {
+      const { error } = await supabase
+        .from("slide")
+        .update({ is_active: !currentStatus })
+        .eq("id", id);
+      
+      if (error) {
+        toast.error("Failed to update slide status");
+      } else {
+        toast.success(`Slide ${!currentStatus ? 'activated' : 'deactivated'} successfully!`);
+        fetchSlides();
+      }
+    } catch {
+      toast.error("Failed to update slide status");
+    }
+    setSlideLoading(false);
+  }
+
+  async function handleUpdateDisplayOrder(id: string, newOrder: number) {
+    // Show confirmation dialog
+    const isConfirmed = window.confirm(`Are you sure you want to change the display order to ${newOrder}?`);
+    if (!isConfirmed) return;
+    
+    setSlideLoading(true);
+    try {
+      const { error } = await supabase
+        .from("slide")
+        .update({ display_order: newOrder })
+        .eq("id", id);
+      
+      if (error) {
+        toast.error("Failed to update display order");
+      } else {
+        toast.success("Display order updated successfully!");
+        // Clear the editing state for this slide
+        setEditingOrder(prev => {
+          const newState = { ...prev };
+          delete newState[id];
+          return newState;
+        });
+        setInputValues(prev => {
+          const newState = { ...prev };
+          delete newState[id];
+          return newState;
+        });
+        fetchSlides();
+      }
+    } catch {
+      toast.error("Failed to update display order");
+    }
+    setSlideLoading(false);
+  }
+
+  function handleOrderInputChange(id: string, value: string) {
+    // Store the raw input value for display
+    setInputValues(prev => ({
+      ...prev,
+      [id]: value
+    }));
+    
+    // Allow empty string for better UX when user is typing
+    if (value === '') {
+      setEditingOrder(prev => ({
+        ...prev,
+        [id]: 0
+      }));
+      return;
+    }
+    
+    // Only allow digits
+    if (/^\d*$/.test(value)) {
+      const numValue = parseInt(value) || 0;
+      setEditingOrder(prev => ({
+        ...prev,
+        [id]: numValue
+      }));
+    }
   }
 
   return (
@@ -188,16 +291,7 @@ const SlidesTab = (props: SlidesTabProps) => {
           </button>
         </div>
       </div>
-      {/* Messages */}
-      {slideMsg && (
-        <div className={`mb-6 p-4 rounded-xl text-sm font-medium ${
-          slideMsg.includes("uploaded") || slideMsg.includes("deleted")
-            ? "bg-green-50 text-green-700 border border-green-200"
-            : "bg-red-50 text-red-700 border border-red-200"
-        }`}>
-          {slideMsg}
-        </div>
-      )}
+
     </div>
     {/* Slides Grid */}
     {slideLoading && slides.length === 0 ? (
@@ -212,9 +306,34 @@ const SlidesTab = (props: SlidesTabProps) => {
         <p className="text-sm">Upload your first slide using the form above</p>
       </div>
     ) : (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {slides.map((slide) => (
-          <div key={slide.id} className="group relative bg-white rounded-xl border border-slate-200 overflow-hidden hover:shadow-lg transition-all duration-200">
+          <div key={slide.id} className={`group relative bg-white rounded-xl border overflow-hidden hover:shadow-lg transition-all duration-200 ${
+            slide.is_active ? 'border-slate-200' : 'border-red-200 bg-red-50'
+          }`}>
+            {/* Status Badge */}
+            <div className="absolute top-2 left-2 z-10">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                slide.is_active 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {slide.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </div>
+            
+            {/* Display Order Badge */}
+            <div className="absolute top-2 right-2 z-10">
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                editingOrder[slide.id] !== undefined 
+                  ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' 
+                  : 'bg-blue-100 text-blue-800'
+              }`}>
+                #{editingOrder[slide.id] !== undefined ? (inputValues[slide.id] || editingOrder[slide.id]) : (slide.display_order || 0)}
+                {editingOrder[slide.id] !== undefined && ' (editing)'}
+              </span>
+            </div>
+
             <div className="aspect-video bg-slate-100">
               {slide.redirect_url ? (
                 <a href={slide.redirect_url} target="_blank" rel="noopener noreferrer">
@@ -236,17 +355,79 @@ const SlidesTab = (props: SlidesTabProps) => {
                 />
               )}
             </div>
-            <div className="p-4">
-              <div className="text-xs text-slate-500 mb-3">
+            
+            <div className="p-4 space-y-3">
+              <div className="text-xs text-slate-500">
                 {new Date(slide.created_at).toLocaleDateString()}
               </div>
-              <button
-                onClick={() => handleSlideDelete(slide.id, slide.image_url)}
-                className="w-full bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={slideLoading}
-              >
-                {slideLoading ? "Deleting..." : "Delete Slide"}
-              </button>
+              
+              {/* Display Order Input */}
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <label className="text-xs font-medium text-slate-700">Order:</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={inputValues[slide.id] !== undefined ? inputValues[slide.id] : (slide.display_order || 0).toString()}
+                    onChange={(e) => handleOrderInputChange(slide.id, e.target.value)}
+                    disabled={slideLoading}
+                    className="w-16 px-2 py-1 text-xs border rounded focus:outline-none focus:ring-1 focus:ring-blue-200 text-center"
+                  />
+                </div>
+                {editingOrder[slide.id] !== undefined && (
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => handleUpdateDisplayOrder(slide.id, editingOrder[slide.id] || slide.display_order || 0)}
+                      disabled={slideLoading}
+                      className="flex-1 px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Update
+                    </button>
+                    <button
+                      onClick={() => {
+                                              setEditingOrder(prev => {
+                        const newState = { ...prev };
+                        delete newState[slide.id];
+                        return newState;
+                      });
+                      setInputValues(prev => {
+                        const newState = { ...prev };
+                        delete newState[slide.id];
+                        return newState;
+                      });
+                      }}
+                      disabled={slideLoading}
+                      className="flex-1 px-2 py-1 bg-gray-500 hover:bg-gray-600 text-white text-xs rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => handleToggleActive(slide.id, slide.is_active || false)}
+                  disabled={slideLoading}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                    slide.is_active
+                      ? 'bg-yellow-500 hover:bg-yellow-600 text-white'
+                      : 'bg-green-500 hover:bg-green-600 text-white'
+                  }`}
+                >
+                  {slideLoading ? "Updating..." : (slide.is_active ? "Deactivate" : "Activate")}
+                </button>
+                
+                <button
+                  onClick={() => handleSlideDelete(slide.id, slide.image_url)}
+                  className="flex-1 bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={slideLoading}
+                >
+                  {slideLoading ? "Deleting..." : "Delete"}
+                </button>
+              </div>
             </div>
           </div>
         ))}

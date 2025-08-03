@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useAdminAuth } from "../../../contexts/AdminAuthContext";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabaseClient";
+import toast from "react-hot-toast";
 import OverviewTab from "./tabs/OverviewTab";
 import OrdersTab from "./tabs/OrdersTab";
 import ProductsTab from "./tabs/ProductsTab";
@@ -558,7 +559,7 @@ const AdminDashboard = () => {
                     if (!error) {
                       setAdmins((prev) => prev.filter((a) => a.id !== id));
                     } else {
-                      alert("Failed to delete admin.");
+                      toast.error("Failed to delete admin.");
                     }
                   }}
                 />

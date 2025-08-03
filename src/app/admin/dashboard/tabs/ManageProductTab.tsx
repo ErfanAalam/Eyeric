@@ -31,6 +31,7 @@ export type Product = {
   lens_width?: number;
   bridge_width?: number;
   temple_length?: number;
+  is_active?: boolean;
 };
 
 const GENDER_TABS = [
@@ -52,6 +53,7 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
   const [filterQuantity, setFilterQuantity] = useState("");
   const [specialCategories, setSpecialCategories] = useState([]);
   const [filterSpecialCategories, setFilterSpecialCategories] = useState([]);
+  const [filterActive, setFilterActive] = useState("");
   const [productSpecialCategories, setProductSpecialCategories] = useState({}); // { productId: [catId, ...] }
 
   const fetchProducts = async () => {
@@ -163,6 +165,30 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
     onEditProduct(product);
   };
 
+  const toggleActiveStatus = async (productId: string, currentStatus: boolean) => {
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("products")
+        .update({ is_active: !currentStatus })
+        .eq("id", productId);
+      
+      if (error) {
+        showMessage("Failed to update product status", "error");
+      } else {
+        // Update the local state
+        setProducts(products.map(p => 
+          p.id === productId ? { ...p, is_active: !currentStatus } : p
+        ));
+        showMessage(`Product ${!currentStatus ? 'activated' : 'deactivated'} successfully`, "success");
+      }
+    } catch (error) {
+      console.error("Error toggling product status:", error);
+      showMessage("Failed to update product status", "error");
+    }
+    setLoading(false);
+  };
+
   const getMessageStyles = () => {
     const baseStyles = "mb-6 p-4 rounded-lg font-medium text-sm flex items-center gap-2 animate-in fade-in duration-300";
     switch (messageType) {
@@ -268,7 +294,15 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
                 min="0"
               />
             </div>
-            <button className="px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 font-semibold flex items-center gap-2 shadow" onClick={() => { setFilterType(""); setFilterShape(""); setFilterStyle(""); setFilterSpecialCategories([]); setFilterQuantity(""); }}>
+            <div className="min-w-[160px]">
+              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Status</label>
+              <select value={filterActive} onChange={e => setFilterActive(e.target.value)} className="px-4 py-2 rounded-full border border-purple-200 bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-200">
+                <option value="">All</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+            <button className="px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 font-semibold flex items-center gap-2 shadow" onClick={() => { setFilterType(""); setFilterShape(""); setFilterStyle(""); setFilterSpecialCategories([]); setFilterQuantity(""); setFilterActive(""); }}>
               <X className="w-4 h-4" /> Clear All
             </button>
           </div>
@@ -311,8 +345,9 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
             .filter(product => !filterStyle || product.style_category === filterStyle)
             .filter(product => filterSpecialCategories.length === 0 || (productSpecialCategories[product.id] && productSpecialCategories[product.id].some(catId => filterSpecialCategories.includes(catId.toString()))))
             .filter(product => !filterQuantity || (product.quantity !== undefined && product.quantity !== null && product.quantity.toString() === filterQuantity))
+            .filter(product => !filterActive || (filterActive === 'active' && product.is_active !== false) || (filterActive === 'inactive' && product.is_active === false))
             .map((product) => (
-              <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 hover:border-blue-400 p-5 flex flex-col items-center justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 min-h-[340px] max-h-[340px] min-w-[240px] max-w-[260px] mx-auto">
+              <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 hover:border-blue-400 p-5 flex flex-col items-center justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 min-h-[380px] max-h-[380px] min-w-[240px] max-w-[260px] mx-auto">
                 {/* Product Image */}
                 <div className="relative mb-4 w-32 h-32 flex items-center justify-center overflow-hidden rounded-xl bg-slate-100">
                   {product.banner_image_1 ? (
@@ -331,19 +366,36 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
                   <div className="flex gap-2 mt-1">
                     {product.latest_trend && <span className="px-2 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-semibold">Trend</span>}
                     {product.bestseller && <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-semibold">Bestseller</span>}
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${product.is_active !== false ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                      {product.is_active !== false ? 'Active' : 'Inactive'}
+                    </span>
                   </div>
                   {/* Quantity Display */}
                   <div className="mt-2 text-xs text-slate-600 font-medium">Quantity: {product.quantity ?? 0}</div>
                 </div>
                 {/* Action Buttons */}
-                <div className="flex gap-2 mt-4 pt-4 border-t border-slate-100 w-full">
-                  <button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg" onClick={() => startEdit(product)} disabled={loading}>
-                    <Edit3 className="w-4 h-4" />
-                    Edit
-                  </button>
-                  <button className="flex-1 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg" onClick={() => handleDelete(product.id || "")} disabled={loading}>
-                    <Trash2 className="w-4 h-4" />
-                    Delete
+                <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-slate-100 w-full">
+                  <div className="flex gap-2">
+                    <button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1 hover:shadow-lg" onClick={() => startEdit(product)} disabled={loading}>
+                      <Edit3 className="w-3 h-3" />
+                      Edit
+                    </button>
+                    <button className="flex-1 bg-gradient-to-r from-red-500 to-rose-500 hover:from-red-600 hover:to-rose-600 text-white px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-1 hover:shadow-lg" onClick={() => handleDelete(product.id || "")} disabled={loading}>
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </button>
+                  </div>
+                  <button 
+                    className={`w-full px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg ${
+                      product.is_active !== false 
+                        ? 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white' 
+                        : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white'
+                    }`} 
+                    onClick={() => toggleActiveStatus(product.id || "", product.is_active !== false)} 
+                    disabled={loading}
+                  >
+                    <div className={`w-3 h-3 rounded-full ${product.is_active !== false ? 'bg-white' : 'bg-white'}`}></div>
+                    {product.is_active !== false ? 'Deactivate' : 'Activate'}
                   </button>
                 </div>
               </div>
