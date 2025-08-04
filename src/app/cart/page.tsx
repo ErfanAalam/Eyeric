@@ -10,7 +10,7 @@ import Footer from '../../../components/Footer';
 
 
 const CartPage = () => {
-  const { cartItems, removeFromCart, clearCart, updateQuantity, getCartTotal, getCartCount } = useCart();
+  const { cartItems, cartLoading, removeFromCart, clearCart, updateQuantity, getCartTotal, getCartCount } = useCart();
   const [savedItems, setSavedItems] = useState<CartItem[]>([]);
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
@@ -45,6 +45,23 @@ const CartPage = () => {
   const removeCoupon = () => {
     setAppliedCoupon(null);
   };
+
+  // Show loading state while cart is being fetched
+  if (cartLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center bg-white rounded-3xl shadow-xl p-12">
+            <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">Loading Cart...</h1>
+            <p className="text-gray-600 mb-8 text-lg">Please wait while we load your cart items.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (

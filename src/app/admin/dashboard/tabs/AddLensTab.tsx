@@ -20,6 +20,7 @@ export type Lens = {
   category: string;
   image_url?: string;
   lens_category_id?: string | number;
+  display_order?: number;
   name?: string; // Add name for category dropdowns
 };
 
@@ -41,9 +42,11 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
   const [message, setMessage] = useState("");
   const [lensCategories, setLensCategories] = useState<Lens[]>([]);
   const [lensCategoryId, setLensCategoryId] = useState(editLens?.lens_category_id?.toString() || "");
+  const [displayOrder, setDisplayOrder] = useState(editLens?.display_order?.toString() || "");
 
   // When editLens changes, update state
   useEffect(() => {
+    // console.log('useEffect triggered, editLens:', editLens); // Debug log
     if (editLens) {
       setTitle(editLens.title || "");
       setDescription(editLens.description || "");
@@ -53,6 +56,7 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
       setImage(null);
       setImagePreview(editLens.image_url || "");
       setLensCategoryId(editLens.lens_category_id?.toString() || "");
+      setDisplayOrder(editLens.display_order?.toString() || "");
     } else {
       setTitle("");
       setDescription("");
@@ -62,6 +66,7 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
       setImage(null);
       setImagePreview("");
       setLensCategoryId("");
+      setDisplayOrder("");
     }
   }, [editLens]);
 
@@ -123,6 +128,10 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
     
     const featuresArray = features.split(';').map(f => f.trim()).filter(f => f.length > 0);
 
+    // Handle display order properly - only parse if it's a valid number
+    const displayOrderValue = displayOrder && displayOrder.trim() !== "" ? parseInt(displayOrder, 10) : 0;
+    // console.log('Submitting display order:', { displayOrder, displayOrderValue }); // Debug log
+
     if (editLens) {
       // Update existing lens
       const { error } = await supabase.from("lenses").update({
@@ -133,6 +142,7 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
         original_price: parseFloat(originalPrice),
         category,
         lens_category_id: lensCategoryId,
+        display_order: displayOrderValue,
       }).eq("id", editLens.id);
       if (error) {
         setMessage("Failed to update lens");
@@ -153,6 +163,7 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
       original_price: parseFloat(originalPrice),
       category,
       lens_category_id: lensCategoryId,
+      display_order: displayOrderValue,
     });
     if (error) {
       setMessage("Failed to add lens");
@@ -166,6 +177,7 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
       setImage(null);
       setImagePreview("");
       setLensCategoryId("");
+      setDisplayOrder("");
       if (onFinishEdit) onFinishEdit();
     }
     setLoading(false);
@@ -270,6 +282,34 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
                     <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* Display Order */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                  <Package className="w-4 h-4" />
+                  Display Order
+                </label>
+                <input 
+                  type="text" 
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  value={displayOrder} 
+                  onChange={e => {
+                    const value = e.target.value;
+                    // console.log('Display order input changed:', value); // Debug log
+                    // Only allow positive integers or empty string
+                    if (value === "" || /^\d+$/.test(value)) {
+                      setDisplayOrder(value);
+                    }
+                  }} 
+                  // onBlur={e => {
+                  //   // console.log('Display order on blur:', e.target.value); // Debug log
+                  // }}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 bg-gray-50 focus:bg-white" 
+                  placeholder="0"
+                />
+                <p className="text-xs text-gray-500 mt-2">Enter a number (0, 1, 2, etc.) - lower numbers appear first</p>
               </div>
 
               {/* Category */}

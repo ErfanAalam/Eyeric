@@ -53,6 +53,7 @@ export interface CartItem {
 
 interface CartContextType {
   cartItems: CartItem[];
+  cartLoading: boolean;
   addToCart: (item: CartItem) => void;
   removeFromCart: (index: number) => void;
   clearCart: () => void;
@@ -67,38 +68,86 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const { userProfile } = useAuth();
+  const [cartLoading, setCartLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const { userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
 
   // Fetch cart from user table on mount if logged in
   useEffect(() => {
     const fetchCart = async () => {
-      if (userProfile) {
-        const { data } = await supabase
-          .from('user')
-          .select('cart_items')
-          .eq('id', userProfile.id)
-          .single();
-        if (data && data.cart_items) {
-          setCartItems(data.cart_items);
+      if (userProfile && !hasInitialized) {
+        try {
+          setCartLoading(true);
+          console.log('Fetching cart for user:', userProfile.id);
+          
+          const { data, error } = await supabase
+            .from('user')
+            .select('cart_items')
+            .eq('id', userProfile.id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching cart from database:', error);
+            // If the column doesn't exist, start with empty cart
+            console.log('Cart column may not exist, starting with empty cart');
+            setCartItems([]);
+          } else if (data && data.cart_items) {
+            console.log('Cart loaded from database:', data.cart_items);
+            setCartItems(data.cart_items);
+          } else {
+            console.log('No cart items found in database, starting with empty cart');
+            setCartItems([]);
+          }
+          setHasInitialized(true);
+        } catch (error) {
+          console.error('Error fetching cart:', error);
+          setCartItems([]);
+          setHasInitialized(true);
+        } finally {
+          setCartLoading(false);
+        }
+      } else if (!userProfile && !authLoading) {
+        // User is not logged in and auth is not loading
+        console.log('User not logged in, clearing cart');
+        setCartItems([]);
+        setHasInitialized(true);
+        setCartLoading(false);
+      }
+    };
+    
+    fetchCart();
+  }, [userProfile, authLoading, hasInitialized]);
+
+  // Update database when cart changes
+  useEffect(() => {
+    const updateCart = async () => {
+      if (userProfile && hasInitialized && !cartLoading) {
+        try {
+          console.log('Updating cart in database for user:', userProfile.id, 'Items:', cartItems);
+          const { error } = await supabase
+            .from('user')
+            .update({ cart_items: cartItems })
+            .eq('id', userProfile.id);
+          
+          if (error) {
+            console.error('Error updating cart in database:', error);
+            // Don't throw error, just log it
+            // The cart will still work in memory until page refresh
+          } else {
+            console.log('Cart updated successfully in database');
+          }
+        } catch (error) {
+          console.error('Error updating cart:', error);
+          // Don't throw error, just log it
         }
       }
     };
-    fetchCart();
-  }, [userProfile]);
-
-  // Update user table when cart changes (if logged in)
-  useEffect(() => {
-    const updateCart = async () => {
-      if (userProfile) {
-        await supabase
-          .from('user')
-          .update({ cart_items: cartItems })
-          .eq('id', userProfile.id);
-      }
-    };
-    if (userProfile) updateCart();
-  }, [cartItems, userProfile]);
+    
+    if (hasInitialized && !cartLoading) {
+      updateCart();
+    }
+  }, [cartItems, userProfile, hasInitialized, cartLoading]);
 
   // Add to cart with auth check
   const addToCart = (item: CartItem) => {
@@ -106,6 +155,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push('/login');
       return;
     }
+    
+    if (cartLoading) {
+      console.log('Cart is still loading, cannot add item');
+      return;
+    }
+    
+    console.log('Adding item to cart:', item);
     setCartItems(prev => {
       // Check if item already exists in cart
       const existingIndex = prev.findIndex(cartItem =>
@@ -116,14 +172,18 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (existingIndex >= 0) {
         // Update quantity if item exists
-        return prev.map((cartItem, index) =>
+        const updatedCart = prev.map((cartItem, index) =>
           index === existingIndex 
             ? { ...cartItem, quantity: (cartItem.quantity || 1) + (item.quantity || 1) }
             : cartItem
         );
+        console.log('Updated existing item in cart:', updatedCart);
+        return updatedCart;
       } else {
         // Add new item if it doesn't exist
-        return [...prev, { ...item, quantity: item.quantity || 1 }];
+        const newCart = [...prev, { ...item, quantity: item.quantity || 1 }];
+        console.log('Added new item to cart:', newCart);
+        return newCart;
       }
     });
   };
@@ -133,6 +193,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push('/login');
       return;
     }
+    
+    if (cartLoading) {
+      console.log('Cart is still loading, cannot remove item');
+      return;
+    }
+    
+    console.log('Removing item from cart at index:', index);
     setCartItems(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -141,11 +208,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push('/login');
       return;
     }
+    
+    if (cartLoading) {
+      console.log('Cart is still loading, cannot clear cart');
+      return;
+    }
+    
+    console.log('Clearing cart');
     setCartItems([]);
   };
 
   // Check if a product (with optional lens and powerCategory) is already in the cart
   const isInCart = (item: CartItem) => {
+    if (cartLoading) return false;
+    
     return cartItems.some(cartItem =>
       cartItem.product.id === item.product.id &&
       (item.lens ? cartItem.lens?.id === item.lens.id : !cartItem.lens) &&
@@ -159,6 +235,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push('/login');
       return;
     }
+    
+    if (cartLoading) {
+      console.log('Cart is still loading, cannot remove item');
+      return;
+    }
+    
+    console.log('Removing item by details:', item);
     setCartItems(prev => prev.filter(cartItem =>
       !(
         cartItem.product.id === item.product.id &&
@@ -174,10 +257,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       router.push('/login');
       return;
     }
+    
+    if (cartLoading) {
+      console.log('Cart is still loading, cannot update quantity');
+      return;
+    }
+    
     if (quantity <= 0) {
       removeFromCart(index);
       return;
     }
+    console.log('Updating quantity at index:', index, 'to:', quantity);
     setCartItems(prev => prev.map((item, i) => 
       i === index ? { ...item, quantity: quantity || 1 } : item
     ));
@@ -200,6 +290,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <CartContext.Provider value={{ 
       cartItems, 
+      cartLoading,
       addToCart, 
       removeFromCart, 
       clearCart, 

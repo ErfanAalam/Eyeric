@@ -5,13 +5,14 @@ const ManageSpecialProductCategoriesTab = () => {
   const [categories, setCategories] = useState([]);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [displayOrder, setDisplayOrder] = useState("");
   const [editing, setEditing] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   const fetchCategories = async () => {
     setLoading(true);
-    const { data } = await supabase.from("special_product_categories").select("*").order("id");
+    const { data } = await supabase.from("special_product_categories").select("*").order("display_order", { ascending: true }).order("id");
     setCategories(data || []);
     setLoading(false);
   };
@@ -23,15 +24,26 @@ const ManageSpecialProductCategoriesTab = () => {
   const handleAddOrUpdate = async (e) => {
     e.preventDefault();
     setLoading(true);
+    const orderValue = displayOrder ? parseInt(displayOrder) : null;
+    
     if (editing) {
-      await supabase.from("special_product_categories").update({ name, description }).eq("id", editing);
+      await supabase.from("special_product_categories").update({ 
+        name, 
+        description, 
+        display_order: orderValue 
+      }).eq("id", editing);
       setMessage("Category updated!");
     } else {
-      await supabase.from("special_product_categories").insert({ name, description });
+      await supabase.from("special_product_categories").insert({ 
+        name, 
+        description, 
+        display_order: orderValue 
+      });
       setMessage("Category added!");
     }
     setName("");
     setDescription("");
+    setDisplayOrder("");
     setEditing(null);
     fetchCategories();
     setLoading(false);
@@ -42,6 +54,7 @@ const ManageSpecialProductCategoriesTab = () => {
     setEditing(cat.id);
     setName(cat.name);
     setDescription(cat.description || "");
+    setDisplayOrder(cat.display_order ? cat.display_order.toString() : "");
   };
 
   const handleDelete = async (id) => {
@@ -73,11 +86,23 @@ const ManageSpecialProductCategoriesTab = () => {
           onChange={e => setDescription(e.target.value)}
           className="border px-2 py-1 rounded flex-1"
         />
+        <input
+          type="number"
+          placeholder="Display Order"
+          value={displayOrder}
+          onChange={e => setDisplayOrder(e.target.value)}
+          className="border px-2 py-1 rounded w-24"
+        />
         <button type="submit" className="bg-blue-600 text-white px-4 py-1 rounded">
           {editing ? "Update" : "Add"}
         </button>
         {editing && (
-          <button type="button" onClick={() => { setEditing(null); setName(""); setDescription(""); }} className="ml-2 px-2 py-1 bg-gray-200 rounded">
+          <button type="button" onClick={() => { 
+            setEditing(null); 
+            setName(""); 
+            setDescription(""); 
+            setDisplayOrder("");
+          }} className="ml-2 px-2 py-1 bg-gray-200 rounded">
             Cancel
           </button>
         )}
@@ -87,6 +112,7 @@ const ManageSpecialProductCategoriesTab = () => {
       <ul>
         {categories.map(cat => (
           <li key={cat.id} className="flex items-center gap-2 mb-2 border-b py-2">
+            <span className="text-gray-400 text-sm w-8">#{cat.display_order || '-'}</span>
             <span className="font-semibold">{cat.name}</span>
             <span className="text-gray-500 text-sm">{cat.description}</span>
             <button onClick={() => handleEdit(cat)} className="text-blue-600 px-2">Edit</button>

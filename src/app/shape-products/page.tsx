@@ -177,12 +177,12 @@ const ShapeProductsContent = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="px-3 py-8">
         {/* Breadcrumb and Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
-          <div className="text-gray-400 text-sm mb-2 md:mb-0">
+          {/* <div className="text-gray-400 text-sm mb-2 md:mb-0">
             Home / <span className="text-black font-semibold">{shape ? `${shape.charAt(0).toUpperCase() + shape.slice(1)} Shape Collection` : 'All Shapes'}</span>
-          </div>
+          </div> */}
           <div className="flex items-center gap-4 w-full justify-between sm:justify-end">
             <span className="text-gray-600 text-sm">{filteredProducts.length} products</span>
             <button className="lg:hidden flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl shadow hover:bg-gray-50 transition" onClick={() => setShowFilters(true)}>
@@ -297,7 +297,7 @@ const ShapeProductsContent = () => {
                       <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
                         <span className="cursor-pointer hover:underline">Compare</span>
                       </div>
-                      <button className="mt-auto flex items-center justify-center gap-2 bg-button hover:bg-button/80 text-white rounded-full py-2 px-4 font-semibold shadow transition-all text-sm" onClick={() => handleProductClick(product)}>
+                      <button className="mt-auto flex items-center justify-center gap-2 bg-button hover:bg-button/80 text-white rounded-full py-2 px-4 md:py-4 md:px-6 font-semibold shadow transition-all text-sm md:text-base" onClick={() => handleProductClick(product)}>
                         <ShoppingBag className="w-4 h-4" /> Buy Now
                       </button>
                     </div>

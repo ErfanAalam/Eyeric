@@ -416,9 +416,9 @@ const Navbar: React.FC = () => {
               <div className="relative">
                 <div className={`text-3xl tracking-tight font-bold text-primary`}>EYERIC</div>
               </div>
-              <div className={`hidden lg:block text-xs font-medium`} style={{color:colors.text}}>
+              {/* <div className={`hidden lg:block text-xs font-medium`} style={{color:colors.text}}>
                 Premium Eyewear
-              </div>
+              </div> */}
             </Link>
           </div>
           {/* Center: Search Bar */}

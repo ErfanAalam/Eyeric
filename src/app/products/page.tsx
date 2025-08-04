@@ -218,7 +218,7 @@ const ProductsContent = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <div className=" px-10 py-8">
+      <div className=" px-3 py-8">
         {/* Breadcrumb and Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
           {/* Search Bar replaces breadcrumb */}
