@@ -14,7 +14,7 @@ export type Product = {
   latest_trend?: boolean;
   banner_image_1?: string;
   banner_image_2?: string;
-  colors: { colors: string[]; images: string[] }[];
+  images: { url: string; display_order: number }[];
   sizes: string[];
   frame_material?: string;
   features: string[];
@@ -32,6 +32,9 @@ export type Product = {
   bridge_width?: number;
   temple_length?: number;
   is_active?: boolean;
+  product_serial_number?: string;
+  frame_colour?: string;
+  temple_colour?: string;
 };
 
 const GENDER_TABS = [
@@ -165,29 +168,29 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
     onEditProduct(product);
   };
 
-  const toggleActiveStatus = async (productId: string, currentStatus: boolean) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from("products")
-        .update({ is_active: !currentStatus })
-        .eq("id", productId);
+  // const toggleActiveStatus = async (productId: string, currentStatus: boolean) => {
+  //   setLoading(true);
+  //   try {
+  //     const { error } = await supabase
+  //       .from("products")
+  //       .update({ is_active: !currentStatus })
+  //       .eq("id", productId);
       
-      if (error) {
-        showMessage("Failed to update product status", "error");
-      } else {
-        // Update the local state
-        setProducts(products.map(p => 
-          p.id === productId ? { ...p, is_active: !currentStatus } : p
-        ));
-        showMessage(`Product ${!currentStatus ? 'activated' : 'deactivated'} successfully`, "success");
-      }
-    } catch (error) {
-      console.error("Error toggling product status:", error);
-      showMessage("Failed to update product status", "error");
-    }
-    setLoading(false);
-  };
+  //     if (error) {
+  //       showMessage("Failed to update product status", "error");
+  //     } else {
+  //       // Update the local state
+  //       setProducts(products.map(p => 
+  //         p.id === productId ? { ...p, is_active: !currentStatus } : p
+  //       ));
+  //       showMessage(`Product ${!currentStatus ? 'activated' : 'deactivated'} successfully`, "success");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error toggling product status:", error);
+  //     showMessage("Failed to update product status", "error");
+  //   }
+  //   setLoading(false);
+  // };
 
   const getMessageStyles = () => {
     const baseStyles = "mb-6 p-4 rounded-lg font-medium text-sm flex items-center gap-2 animate-in fade-in duration-300";
@@ -385,7 +388,7 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
                       Delete
                     </button>
                   </div>
-                  <button 
+                  {/* <button 
                     className={`w-full px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-200 flex items-center justify-center gap-2 hover:shadow-lg ${
                       product.is_active !== false 
                         ? 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white' 
@@ -396,7 +399,7 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
                   >
                     <div className={`w-3 h-3 rounded-full ${product.is_active !== false ? 'bg-white' : 'bg-white'}`}></div>
                     {product.is_active !== false ? 'Deactivate' : 'Activate'}
-                  </button>
+                  </button> */}
                 </div>
               </div>
             ))}

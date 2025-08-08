@@ -15,30 +15,12 @@ import {
   Users,
   Eye,
   Tag,
-  Palette,
-  X,
-  MousePointer,
 } from "lucide-react";
 import Image from "next/image";
 import Select from 'react-select';
 import imageCompression from 'browser-image-compression';
 
-// Helper function to get color from image at specific coordinates
-const getColorFromImage = (imageElement: HTMLImageElement, x: number, y: number): string => {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  
-  canvas.width = imageElement.naturalWidth;
-  canvas.height = imageElement.naturalHeight;
-  
-  ctx?.drawImage(imageElement, 0, 0);
-  
-  const imageData = ctx?.getImageData(x, y, 1, 1);
-  if (!imageData) return '#000000';
-  
-  const [r, g, b] = imageData.data;
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-};
+
 
 
 
@@ -91,7 +73,7 @@ export type Product = {
   latest_trend?: boolean;
   banner_image_1?: string;
   banner_image_2?: string;
-  colors: { colors: string[]; images: string[] }[];
+  images: { url: string; display_order: number }[];
   sizes: string[];
   frame_material?: string;
   features: string[];
@@ -109,6 +91,9 @@ export type Product = {
   temple_length?: number;
   lens_category_id?: string;
   is_active?: boolean;
+  product_serial_number?: string;
+  frame_colour?: string;
+  temple_colour?: string;
 };
 
 const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | null, onFinishEdit?: () => void }) => {
@@ -137,7 +122,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
   const [squareDisplayOrder, setSquareDisplayOrder] = useState("");
   const [bannerImage1, setBannerImage1] = useState<File | null>(null);
   const [bannerImage2, setBannerImage2] = useState<File | null>(null);
-  const [colors, setColors] = useState([{ colors: ["#000000"], images: [] }]);
+  const [images, setImages] = useState<{ url: string; display_order: number }[]>([]);
+  const [newImages, setNewImages] = useState<File[]>([]);
   const [sizes, setSizes] = useState([]);
   const [frameMaterial, setFrameMaterial] = useState("");
   const [features, setFeatures] = useState("");
@@ -152,6 +138,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
   const [quantity, setQuantity] = useState("");
   const [styleCategory, setStyleCategory] = useState("");
   const [styleOptions, setStyleOptions] = useState<string[]>([]);
+  const [frameMaterialOptions, setFrameMaterialOptions] = useState<string[]>([]);
   const [lensWidth, setLensWidth] = useState("");
   const [bridgeWidth, setBridgeWidth] = useState("");
   const [templeLength, setTempleLength] = useState("");
@@ -162,26 +149,17 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
   const [allCoupons, setAllCoupons] = useState([]);
   const [selectedCoupons, setSelectedCoupons] = useState([]);
   const [isActive, setIsActive] = useState(true);
+  const [productSerialNumber, setProductSerialNumber] = useState("");
+  const [frameColour, setFrameColour] = useState("");
+  const [templeColour, setTempleColour] = useState("");
 
   // Add state for previews and removal flags
   const [bannerImage1Preview, setBannerImage1Preview] = useState<string | null>(null);
   const [bannerImage2Preview, setBannerImage2Preview] = useState<string | null>(null);
-  const [colorImagePreviews, setColorImagePreviews] = useState<string[][]>([]); // array of arrays of URLs
-  const [removeColorImages, setRemoveColorImages] = useState<boolean[][]>([]); // array of arrays of bools
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]); // array of URLs
+  const [removeImages, setRemoveImages] = useState<boolean[]>([]); // array of bools
 
-  // Color picker modal state
-  const [colorPickerModal, setColorPickerModal] = useState<{
-    isOpen: boolean;
-    colorIdx: number;
-    imageIdx: number;
-    imageUrl: string;
-  }>({
-    isOpen: false,
-    colorIdx: -1,
-    imageIdx: -1,
-    imageUrl: '',
-  });
-  const [pickedColors, setPickedColors] = useState<string[]>([]);
+
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -206,6 +184,11 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         .select("name")
         .eq("category_type", "style")
         .order("id", { ascending: true });
+      const frameMaterialRes = await supabase
+        .from("categories")
+        .select("name")
+        .eq("category_type", "frame_material")
+        .order("id", { ascending: true });
       setGenderOptions(
         genderRes.data
           ? (genderRes.data as CategoryRow[]).map((c) => c.name)
@@ -219,6 +202,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       );
       setStyleOptions(
         styleRes.data ? (styleRes.data as CategoryRow[]).map((c) => c.name) : []
+      );
+      setFrameMaterialOptions(
+        frameMaterialRes.data ? (frameMaterialRes.data as CategoryRow[]).map((c) => c.name) : []
       );
     };
     fetchCategories();
@@ -247,7 +233,10 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setDiscountedPrice(editProduct.discounted_price?.toString() || "");
       setBannerImage1(null); // You may want to handle preview
       setBannerImage2(null);
-      setColors(editProduct.colors || [{ colors: ["#000000"], images: [] }]);
+      // Convert database images to state format
+      const dbImages = editProduct.images || [];
+      setImages(dbImages.map(img => ({ url: img.url, display_order: img.display_order })));
+      setImagePreviews(dbImages.map(img => img.url));
       setSizes(editProduct.sizes || []);
       setFrameMaterial(editProduct.frame_material || "");
       setFeatures((editProduct.features || []).join('; '));
@@ -267,8 +256,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       // TODO: handle special categories and coupons if needed
       setBannerImage1Preview(editProduct.banner_image_1 || null);
       setBannerImage2Preview(editProduct.banner_image_2 || null);
-      setColorImagePreviews((editProduct.colors || []).map(colorObj => colorObj.images || []));
-      setRemoveColorImages((editProduct.colors || []).map(colorObj => (colorObj.images || []).map(() => false)));
+      setImagePreviews((editProduct.images || []).map(img => img.url));
+      setRemoveImages((editProduct.images || []).map(() => false));
     }
   }, [editProduct]);
 
@@ -326,59 +315,30 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         bannerImage2Url = "";
       }
 
-      // Handle color images
-      const colorUploads = await Promise.all(colors.map(async (colorObj, idx) => {
-        const newImages: string[] = [];
-        if (colorObj.images && colorObj.images.length > 0) {
-          for (let i = 0; i < colorObj.images.length; i++) {
-            const img = colorObj.images[i];
-            if (img instanceof File || img instanceof Blob) {
-              // Upload new file
-              const fileName = (img instanceof File && img.name) ? img.name : `image_${i}`;
-              const filePath = `colors/${Date.now()}_${idx}_${i}_${fileName}`;
-              const { error: uploadError } = await supabase.storage.from("product-images").upload(filePath, img);
-              if (uploadError) {
-                setMessage(`Image upload failed for color entry ${idx + 1}`);
-                setLoading(false);
-                return null;
-              }
-              const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
-              newImages.push(urlData.publicUrl);
-            }
-            else if (typeof img === 'string') {
-              // Existing image URL, keep it
-              newImages.push(img);
-            }
-          }
-          // Remove any images that were deleted by the user
-          if (colorObj.images && colorObj.images.length > 0) {
-            for (const oldImgUrl of colorObj.images) {
-              if (typeof oldImgUrl === 'string' && !newImages.includes(oldImgUrl)) {
-                // Image was removed and is a URL
-                const path = oldImgUrl.split("/product-images/")[1];
-                if (path) await supabase.storage.from("product-images").remove([path]);
-              }
-            }
-          }
-          return { colors: colorObj.colors, images: newImages };
-        } else {
-          // No new files, but check for removed images
-          let newImages = [...(colorObj.images || [])];
-          if (colorImagePreviews[idx]) {
-            for (let i = 0; i < colorObj.images.length; i++) {
-              if (!colorImagePreviews[idx].includes(colorObj.images[i])) {
-                // Image was removed
-                const path = colorObj.images[i].split("/product-images/")[1];
-                if (path) await supabase.storage.from("product-images").remove([path]);
-                newImages = newImages.filter(img => img !== colorObj.images[i]);
-              }
-            }
-          }
-          return { colors: colorObj.colors, images: newImages };
+      // Handle product images - combine existing images with new uploaded images
+      const existingImages = images.filter(img => typeof img.url === 'string');
+      const newImageFiles = newImages;
+      
+      // Upload new images
+      const uploadedImages = await Promise.all(newImageFiles.map(async (file, idx) => {
+        const fileName = file.name;
+        const filePath = `products/${Date.now()}_${idx}_${fileName}`;
+        const { error: uploadError } = await supabase.storage.from("product-images").upload(filePath, file);
+        if (uploadError) {
+          setMessage(`Image upload failed for image ${idx + 1}`);
+          setLoading(false);
+          return null;
         }
+        const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
+        return { url: urlData.publicUrl, display_order: existingImages.length + idx + 1 };
       }));
-      console.log('colorUploads', colorUploads);
-      if (colorUploads.some(c => c === null)) return; // error already set
+      
+      if (uploadedImages.some(img => img === null)) return; // error already set
+      
+      // Combine existing and new images
+      const imageUploads = [...existingImages, ...uploadedImages.filter(img => img !== null)];
+      console.log('imageUploads', imageUploads);
+      if (imageUploads.some(img => img === null)) return; // error already set
 
       const updateObj: Partial<Product> = {
         title,
@@ -389,7 +349,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         latest_trend: latestTrend,
         banner_image_1: bannerImage1Url,
         banner_image_2: bannerImage2Url,
-        colors: colorUploads,
+        images: imageUploads,
         sizes,
         frame_material: frameMaterial,
         features: features.split(';').map(f => f.trim()).filter(f => f.length > 0),
@@ -404,6 +364,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         temple_length: templeLength ? parseFloat(templeLength) : null,
         lens_category_id: lensCategoryId,
         is_active: isActive,
+        product_serial_number: productSerialNumber,
+        frame_colour: frameColour,
+        temple_colour: templeColour,
       };
       const { error } = await supabase.from("products").update(updateObj).eq("id", editProduct.id);
       if (error) {
@@ -530,30 +493,25 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       bannerImage2Url = urlData2.publicUrl;
     }
 
-    // Upload color images
-    const colorUploads = await Promise.all(
-      colors.map(async (colorObj, idx) => {
-        const uploadedImages: string[] = [];
-        for (let i = 0; i < colorObj.images.length; i++) {
-          const img = colorObj.images[i];
-          const filePath = `colors/${Date.now()}_${idx}_${i}_${img.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from("product-images")
-            .upload(filePath, img);
-          if (uploadError) {
-            setMessage(`Image upload failed for color entry ${idx + 1}`);
-            setLoading(false);
-            return null;
-          }
-          const { data: urlData } = supabase.storage
-            .from("product-images")
-            .getPublicUrl(filePath);
-          uploadedImages.push(urlData.publicUrl);
+    // Upload product images
+    const imageUploads = await Promise.all(
+      newImages.map(async (file, idx) => {
+        const filePath = `products/${Date.now()}_${idx}_${file.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("product-images")
+          .upload(filePath, file);
+        if (uploadError) {
+          setMessage(`Image upload failed for image ${idx + 1}`);
+          setLoading(false);
+          return null;
         }
-        return { colors: colorObj.colors, images: uploadedImages };
+        const { data: urlData } = supabase.storage
+          .from("product-images")
+          .getPublicUrl(filePath);
+        return { url: urlData.publicUrl, display_order: idx + 1 };
       })
     );
-    if (colorUploads.some((c) => c === null)) return; // error already set
+    if (imageUploads.some((img) => img === null)) return; // error already set
 
     // Prepare features array
     const featuresArray = features
@@ -574,7 +532,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       latest_trend: latestTrend,
       banner_image_1: bannerImage1Url,
       banner_image_2: bannerImage2Url,
-      colors: colorUploads,
+      images: [...images, ...imageUploads.filter(img => img !== null)],
       sizes,
       shape_category: shapeCategory,
       style_category: styleCategory,
@@ -590,6 +548,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       temple_length: templeLength ? parseFloat(templeLength) : null,
       lens_category_id: lensCategoryId,
       is_active: isActive,
+      product_serial_number: productSerialNumber,
+      frame_colour: frameColour,
+      temple_colour: templeColour,
       ...categoryDisplayOrders, // Spread all category display orders
     }).select();
 
@@ -623,7 +584,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     setDiscountedPrice("");
     setBannerImage1(null);
     setBannerImage2(null);
-    setColors([{ colors: ["#000000"], images: [] }]);
+    setImages([]);
+    setNewImages([]);
     setSizes([]);
     setFrameMaterial("");
     setFeatures("");
@@ -639,8 +601,12 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     setTempleLength("");
     setLensCategoryId("");
     setIsActive(true);
-    setSelectedSpecialCategories([]);
-    setSelectedCoupons([]);
+          setSelectedSpecialCategories([]);
+      setSelectedCoupons([]);
+      setProductSerialNumber("");
+      setFrameColour("");
+      setTempleColour("");
+      setFrameMaterial("");
     
     // Reset category-specific display orders
     setMensDisplayOrder("");
@@ -705,14 +671,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     setBannerImage2Preview(null);
   };
 
-  // Color Handlers
-  const handleColorChange = (colorIndex: number, pickerIndex: number, value: string) => {
-    const updatedColors = [...colors];
-    updatedColors[colorIndex].colors[pickerIndex] = value;
-    setColors(updatedColors);
-  };
+  // Image Handlers
 
-  const handleColorImagesChange = async (colorIdx: number, files: FileList, replaceExisting: boolean = false) => {
+  const handleImagesChange = async (files: FileList, replaceExisting: boolean = false) => {
     try {
       const compressedFiles = await Promise.all(
         Array.from(files).map(file =>
@@ -724,138 +685,53 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         )
       );
 
-      const updatedColors = [...colors];
-      
       if (replaceExisting) {
         // Replace existing images
-        updatedColors[colorIdx].images = compressedFiles;
+        setNewImages(compressedFiles);
       } else {
         // Add to existing images
-        const existingImages = updatedColors[colorIdx].images || [];
-        updatedColors[colorIdx].images = [...existingImages, ...compressedFiles];
+        setNewImages(prev => [...prev, ...compressedFiles]);
       }
-      
-      setColors(updatedColors);
       
       // Update previews
       const newPreviews = compressedFiles.map(file => URL.createObjectURL(file));
-      const previewsCopy = [...colorImagePreviews];
+      const previewsCopy = [...imagePreviews];
       
       if (replaceExisting) {
-        previewsCopy[colorIdx] = newPreviews;
+        setImagePreviews(newPreviews);
       } else {
-        const existingPreviews = previewsCopy[colorIdx] || [];
-        previewsCopy[colorIdx] = [...existingPreviews, ...newPreviews];
+        setImagePreviews([...previewsCopy, ...newPreviews]);
       }
-      
-      setColorImagePreviews(previewsCopy);
       
       // Update removal flags
-      const removeCopy = [...removeColorImages];
+      const removeCopy = [...removeImages];
       if (replaceExisting) {
-        removeCopy[colorIdx] = newPreviews.map(() => false);
+        setRemoveImages(newPreviews.map(() => false));
       } else {
-        const existingFlags = removeCopy[colorIdx] || [];
-        removeCopy[colorIdx] = [...existingFlags, ...newPreviews.map(() => false)];
+        setRemoveImages([...removeCopy, ...newPreviews.map(() => false)]);
       }
-      setRemoveColorImages(removeCopy);
       
     } catch (_err: unknown) {
       console.error(_err);
-      setMessage(`Failed to compress color images for entry ${colorIdx + 1}`);
+      setMessage(`Failed to compress images`);
     }
   };
 
-  const openColorPicker = (colorIdx: number, imageIdx: number, imageUrl: string) => {
-    setColorPickerModal({
-      isOpen: true,
-      colorIdx,
-      imageIdx,
-      imageUrl,
-    });
-    setPickedColors([]);
-  };
 
-  const closeColorPicker = () => {
-    setColorPickerModal({
-      isOpen: false,
-      colorIdx: -1,
-      imageIdx: -1,
-      imageUrl: '',
-    });
-    setPickedColors([]);
-  };
 
-  const handleImageClick = (event: React.MouseEvent<HTMLImageElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    
-    // Calculate the scale factor between display size and natural size
-    const scaleX = event.currentTarget.naturalWidth / rect.width;
-    const scaleY = event.currentTarget.naturalHeight / rect.height;
-    
-    // Get the actual pixel coordinates
-    const pixelX = Math.floor(x * scaleX);
-    const pixelY = Math.floor(y * scaleY);
-    
-    const color = getColorFromImage(event.currentTarget, pixelX, pixelY);
-    
-    if (!pickedColors.includes(color)) {
-      setPickedColors([...pickedColors, color]);
-    }
-  };
-
-  const applyPickedColors = () => {
-    if (pickedColors.length > 0) {
-      const updatedColors = [...colors];
-      const existingColors = updatedColors[colorPickerModal.colorIdx].colors || [];
-      // Add new colors to existing ones, avoiding duplicates
-      const newColors = [...existingColors];
-      pickedColors.forEach(color => {
-        if (!newColors.includes(color)) {
-          newColors.push(color);
-        }
-      });
-      updatedColors[colorPickerModal.colorIdx].colors = newColors;
-      setColors(updatedColors);
-      setMessage(`Added ${pickedColors.length} new colors from image`);
-    }
-    closeColorPicker();
-  };
-  const addColorPicker = (colorIndex: number) => {
-    const updatedColors = [...colors];
-    updatedColors[colorIndex].colors.push("#000000");
-    setColors(updatedColors);
-  };
-  const removeColorPicker = (colorIndex: number, pickerIndex: number) => {
-    const updatedColors = [...colors];
-    if (updatedColors[colorIndex].colors.length > 1) {
-      updatedColors[colorIndex].colors.splice(pickerIndex, 1);
-      setColors(updatedColors);
-    }
-  };
-  const addColorField = () => {
-    setColors([...colors, { colors: ["#000000"], images: [] }]);
-  };
-  const removeColorField = (index: number) => {
-    const updatedColors = colors.filter((_, i) => i !== index);
-    setColors(updatedColors);
-  };
-
-  // Remove color image handler
-  const handleRemoveColorImage = (colorIdx: number, imgIdx: number) => {
-    const previewsCopy = [...colorImagePreviews];
-    previewsCopy[colorIdx] = previewsCopy[colorIdx].map((url, i) => (i === imgIdx ? null : url)).filter(Boolean) as string[];
-    setColorImagePreviews(previewsCopy);
-    const removeCopy = [...removeColorImages];
-    removeCopy[colorIdx][imgIdx] = true;
-    setRemoveColorImages(removeCopy);
-    // If editing, also clear from colors array
+  // Remove image handler
+  const handleRemoveImage = (imgIdx: number) => {
+    const previewsCopy = [...imagePreviews];
+    previewsCopy[imgIdx] = null;
+    setImagePreviews(previewsCopy.filter(Boolean) as string[]);
+    const removeCopy = [...removeImages];
+    removeCopy[imgIdx] = true;
+    setRemoveImages(removeCopy);
+    // If editing, also clear from images array
     if (editProduct) {
-      const updatedColors = [...colors];
-      updatedColors[colorIdx].images = updatedColors[colorIdx].images.filter((_, i) => i !== imgIdx);
-      setColors(updatedColors);
+      const updatedImages = [...images];
+      updatedImages.splice(imgIdx, 1);
+      setImages(updatedImages);
     }
   };
 
@@ -916,140 +792,61 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
               </div>
             </div>
 
-            {/* Product Colors & Images */}
+            {/* Product Images */}
             <div>
               <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
-                <Upload className="w-4 h-4" /> Product Colors & Images
+                <Upload className="w-4 h-4" /> Product Images
               </label>
               <div className="space-y-4">
-                {colors.map((colorObj, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-2"
-                  >
-                    <div className="flex flex-wrap items-center gap-2 mb-2">
-                      {colorObj.colors.map((color, cidx) => (
-                        <div key={cidx} className="flex items-center gap-1">
-                          <input
-                            type="color"
-                            value={color}
-                            onChange={e => handleColorChange(idx, cidx, e.target.value)}
-                            className="w-8 h-8 border-2 border-slate-300 rounded"
-                          />
-                          {colorObj.colors.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => removeColorPicker(idx, cidx)}
-                              className="text-xs text-red-500 px-1 hover:bg-red-50 rounded"
-                              title="Remove this color"
-                            >
-                              ×
-                            </button>
-                          )}
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-2">
+                  <div className="flex gap-2 mb-2">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={async e => {
+                        if (e.target.files) await handleImagesChange(e.target.files, true);
+                      }}
+                      className="flex-1 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.multiple = true;
+                        input.onchange = async (e) => {
+                          const target = e.target as HTMLInputElement;
+                          if (target.files) await handleImagesChange(target.files, false);
+                        };
+                        input.click();
+                      }}
+                      className="px-3 py-2 bg-green-100 text-green-700 rounded-lg font-semibold text-xs hover:bg-green-200 flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> Add More
+                    </button>
+                  </div>
+                  {imagePreviews.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {imagePreviews.map((img, imgIdx) => (
+                        <div key={imgIdx} className="relative w-16 h-16 group">
+                          <Image height={64} width={64} src={img} alt={`Preview ${imgIdx}`} className="w-16 h-16 object-cover rounded border shadow" />
+                          <button 
+                            type="button" 
+                            onClick={() => handleRemoveImage(imgIdx)} 
+                            className="absolute top-0 right-0 bg-white/80 rounded-full p-1 text-red-600 hover:bg-red-100"
+                          >
+                            ✕
+                          </button>
+                          <div className="absolute bottom-0 left-0 bg-white/80 rounded-full px-1 text-xs text-gray-600">
+                            {imgIdx + 1}
+                          </div>
                         </div>
                       ))}
-                      <button
-                        type="button"
-                        onClick={() => addColorPicker(idx)}
-                        className="ml-2 px-2 py-1 bg-blue-100 text-blue-700 rounded font-semibold text-xs hover:bg-blue-200"
-                      >
-                        + Add Color
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeColorField(idx)}
-                        className="ml-2 text-red-500 font-bold px-2 hover:bg-red-50 rounded"
-                        title="Remove this color entry"
-                      >
-                        X
-                      </button>
                     </div>
-                    {/* Show color swatches */}
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="flex gap-1">
-                        {colorObj.colors.map((color, cidx) => (
-                          <div
-                            key={cidx}
-                            className="w-6 h-6 rounded-full border border-slate-300 relative group"
-                            style={{ backgroundColor: color }}
-                            title={color}
-                          >
-                            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-full transition-all duration-200 flex items-center justify-center">
-                              <span className="text-white text-xs opacity-0 group-hover:opacity-100 font-bold">
-                                {cidx + 1}
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      {colorObj.images && colorObj.images.length > 0 && colorObj.colors.length > 0 && (
-                        <span className="text-xs text-slate-500 flex items-center gap-1">
-                          <Palette className="w-3 h-3" />
-                          {colorObj.colors.length} picked colors
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex gap-2 mb-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={async e => {
-                          if (e.target.files) await handleColorImagesChange(idx, e.target.files, true);
-                        }}
-                        className="flex-1 text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const input = document.createElement('input');
-                          input.type = 'file';
-                          input.accept = 'image/*';
-                          input.multiple = true;
-                          input.onchange = async (e) => {
-                            const target = e.target as HTMLInputElement;
-                            if (target.files) await handleColorImagesChange(idx, target.files, false);
-                          };
-                          input.click();
-                        }}
-                        className="px-3 py-2 bg-green-100 text-green-700 rounded-lg font-semibold text-xs hover:bg-green-200 flex items-center gap-1"
-                      >
-                        <Plus className="w-3 h-3" /> Add More
-                      </button>
-                    </div>
-                    {colorImagePreviews[idx] && colorImagePreviews[idx].length > 0 && (
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {colorImagePreviews[idx].map((img, imgIdx) => (
-                          <div key={imgIdx} className="relative w-16 h-16 group">
-                            <Image height={64} width={64} src={img} alt={`Preview ${imgIdx}`} className="w-16 h-16 object-cover rounded border shadow" />
-                            <button 
-                              type="button" 
-                              onClick={() => handleRemoveColorImage(idx, imgIdx)} 
-                              className="absolute top-0 right-0 bg-white/80 rounded-full p-1 text-red-600 hover:bg-red-100"
-                            >
-                              ✕
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openColorPicker(idx, imgIdx, img)}
-                              className="absolute bottom-0 left-0 bg-white/80 rounded-full p-1 text-blue-600 hover:bg-blue-100 opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Pick colors from this image"
-                            >
-                              <MousePointer className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={addColorField}
-                  className="mt-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg font-semibold hover:bg-blue-200"
-                >
-                  + Add Color
-                </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1069,17 +866,61 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   placeholder="Enter product title..."
                 />
               </div>
+              {/* Product Serial Number */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  <Package className="w-4 h-4" /> Product Serial Number
+                </label>
+                <input
+                  type="text"
+                  value={productSerialNumber}
+                  onChange={(e) => setProductSerialNumber(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
+                  placeholder="Enter product serial number..."
+                />
+              </div>
               {/* Frame Material */}
               <div>
                 <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
                   <Shapes className="w-4 h-4" /> Frame Material
                 </label>
-                <input
-                  type="text"
+                <select
                   value={frameMaterial}
                   onChange={(e) => setFrameMaterial(e.target.value)}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
-                  placeholder="Enter frame material..."
+                >
+                  <option value="">Select Frame Material</option>
+                  {frameMaterialOptions.map((material) => (
+                    <option key={material} value={material}>
+                      {material}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {/* Frame Colour */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  <Shapes className="w-4 h-4" /> Frame Colour
+                </label>
+                <input
+                  type="text"
+                  value={frameColour}
+                  onChange={(e) => setFrameColour(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                  placeholder="Enter frame colour..."
+                />
+              </div>
+              {/* Temple Colour */}
+              <div>
+                <label className="text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
+                  <Shapes className="w-4 h-4" /> Temple Colour
+                </label>
+                <input
+                  type="text"
+                  value={templeColour}
+                  onChange={(e) => setTempleColour(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
+                  placeholder="Enter temple colour..."
                 />
               </div>
               {/* Original Price */}
@@ -1794,83 +1635,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         </div>
       </div>
 
-      {/* Color Picker Modal */}
-      {colorPickerModal.isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <div className="flex items-center gap-3">
-                <MousePointer className="w-6 h-6 text-blue-600" />
-                <h3 className="text-xl font-semibold text-gray-900">Pick Colors from Image</h3>
-              </div>
-              <button
-                onClick={closeColorPicker}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
 
-            {/* Modal Content */}
-            <div className="p-6">
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">
-                  Click on different parts of the image to pick colors. Selected colors will appear below.
-                </p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {pickedColors.map((color, idx) => (
-                    <div
-                      key={idx}
-                      className="w-8 h-8 rounded-full border-2 border-gray-300 relative group"
-                      style={{ backgroundColor: color }}
-                      title={color}
-                    >
-                      <button
-                        onClick={() => setPickedColors(pickedColors.filter((_, i) => i !== idx))}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Image Container */}
-              <div className="relative bg-gray-100 rounded-lg overflow-hidden mb-4">
-                <img
-                  src={colorPickerModal.imageUrl}
-                  alt="Color picker"
-                  className="w-full h-auto max-h-[60vh] object-contain cursor-crosshair"
-                  onClick={handleImageClick}
-                  style={{ imageRendering: 'pixelated' }}
-                />
-                <div className="absolute top-4 left-4 bg-black bg-opacity-75 text-white px-3 py-1 rounded-full text-sm">
-                  Click to pick colors
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={closeColorPicker}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={applyPickedColors}
-                  disabled={pickedColors.length === 0}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Apply Colors ({pickedColors.length})
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

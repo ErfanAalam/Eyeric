@@ -8,6 +8,7 @@ const DEFAULTS = {
   type: ["sunglasses", "eyeglasses", "computerglasses", "powered sunglasses"],
   shape: ["round", "cat-eye", "aviator", "wayfarer", "oval", "rectangle", "square"],
   style: ["Half-Rim", "Full-Rim"],
+  frame_material: ["Metal", "Plastic", "Acetate", "Titanium", "Stainless Steel"],
 };
 
 const CATEGORY_TYPES = [
@@ -42,6 +43,14 @@ const CATEGORY_TYPES = [
     color: "from-yellow-500 to-amber-500",
     bgColor: "bg-gradient-to-br from-yellow-50 to-amber-50",
     activeColor: "border-yellow-500 bg-yellow-500"
+  },
+  { 
+    label: "Frame Material", 
+    value: "frame_material", 
+    icon: Shapes,
+    color: "from-purple-500 to-violet-500",
+    bgColor: "bg-gradient-to-br from-purple-50 to-violet-50",
+    activeColor: "border-purple-500 bg-purple-500"
   }
 ];
 

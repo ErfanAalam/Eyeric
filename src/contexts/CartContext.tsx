@@ -16,11 +16,11 @@ interface Product {
   latest_trend?: boolean;
   banner_image_1?: string;
   banner_image_2?: string;
-  colors: ({ color: string; images: string[] } | { colors: string[]; images: string[] })[];
+  images: { url: string; display_order: number }[];
   sizes: string[];
   frame_material?: string;
   features: string[];
-  shape_category?: string;
+  shape_category: string;
   tags: string[];
   gender_category: string[];
   type_category: string[];
@@ -31,6 +31,9 @@ interface Product {
   temple_length?: number;
   is_lens_used?: boolean;
   lens_category_id?: number;
+  product_serial_number?: string;
+  frame_colour?: string;
+  temple_colour?: string;
 }
 
 interface Lens {
@@ -160,6 +163,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Cart is still loading, cannot add item');
       return;
     }
+
+    // const error = supabase.from('user').update({ cart_items: cartItems }).eq('id', userProfile.id);
+    // if (error) {
+    //   console.error('Error updating cart in database:', error);
+    // }
     
     console.log('Adding item to cart:', item);
     setCartItems(prev => {
@@ -172,15 +180,25 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (existingIndex >= 0) {
         // Update quantity if item exists
+        const error = supabase.from('user').update({ cart_items: prev }).eq('id', userProfile.id);
+        if (error) {
+          console.error('Error updating cart in database:', error);
+        }
         const updatedCart = prev.map((cartItem, index) =>
           index === existingIndex 
             ? { ...cartItem, quantity: (cartItem.quantity || 1) + (item.quantity || 1) }
             : cartItem
         );
-        console.log('Updated existing item in cart:', updatedCart);
+        
+        // console.log('Updated existing item in cart:', updatedCart);
+        router.push('/cart');
         return updatedCart;
       } else {
         // Add new item if it doesn't exist
+        const error = supabase.from('user').update({ cart_items: cartItems }).eq('id', userProfile.id);
+        if (error) {
+          console.error('Error updating cart in database:', error);
+        }
         const newCart = [...prev, { ...item, quantity: item.quantity || 1 }];
         console.log('Added new item to cart:', newCart);
         return newCart;
@@ -200,6 +218,10 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     console.log('Removing item from cart at index:', index);
+    const error = supabase.from('user').delete().eq('id', userProfile.id);
+    if (error) {
+      console.error('Error deleting cart in database:', error);
+    }
     setCartItems(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -214,6 +236,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
+    const error = supabase.from('user').delete();
+    if (error) {
+      console.error('Error deleting cart in database:', error);
+    }
+
     console.log('Clearing cart');
     setCartItems([]);
   };

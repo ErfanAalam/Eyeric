@@ -7,7 +7,6 @@ import toast from "react-hot-toast";
 import {
   Heart,
   ShoppingBag,
-  Star,
   Eye,
   Share2,
   ArrowLeft,
@@ -15,7 +14,6 @@ import {
   Ruler,
   Monitor,
   Glasses,
-  Dot,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -43,15 +41,11 @@ interface Product {
   latest_trend?: boolean;
   banner_image_1?: string;
   banner_image_2?: string;
-  // Accept both old and new color formats
-  colors: (
-    | { color: string; images: string[] }
-    | { colors: string[]; images: string[] }
-  )[];
+  images: { url: string; display_order: number }[];
   sizes: string[];
   frame_material?: string;
   features: string[];
-  shape_category?: string;
+  shape_category: string;
   tags: string[];
   gender_category: string[];
   type_category: string[];
@@ -62,6 +56,9 @@ interface Product {
   temple_length?: number;
   is_lens_used?: boolean; // Added for new logic
   lens_category_id?: number; // Should be number for compatibility
+  product_serial_number?: string;
+  frame_colour?: string;
+  temple_colour?: string;
 }
 
 // Define Lens type for modal
@@ -101,17 +98,6 @@ export interface PowerEntry {
   created_at: string;
 }
 
-// Helper to normalize color data
-function normalizeColors(
-  colors: Product["colors"]
-): { colors: string[]; images: string[] }[] {
-  return colors.map((c) => {
-    if ("colors" in c) return c as { colors: string[]; images: string[] };
-    // old format: { color: string; images: string[] }
-    return { colors: [c.color], images: c.images };
-  });
-}
-
 // Utility to add a power entry to user table
 async function addPowerToUserTable(userId: string, newPower: PowerEntry) {
   const { data } = await supabase
@@ -138,16 +124,14 @@ const ProductDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(0);
+
   const [quantity, setQuantity] = useState(1);
-  const [hoveredRecommendation, setHoveredRecommendation] = useState<
-    number | null
-  >(null);
+
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
   const [showPreview, setShowPreview] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const imageContainerRef = React.useRef<HTMLDivElement>(null);
   const [showLensModal, setShowLensModal] = useState(false);
@@ -204,10 +188,8 @@ const ProductDetailPage = () => {
   const [showSavedPowersModal, setShowSavedPowersModal] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     description: false,
-    features: false,
-    details: false,
+    easyReturn: false,
   });
-
 
   // Toggle dropdown sections
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -229,7 +211,8 @@ const ProductDetailPage = () => {
     name: string,
     phone: string
   ) => {
-    if (!product || !selectedLensForPower || !userProfile || cartLoading) return;
+    if (!product || !selectedLensForPower || !userProfile || cartLoading)
+      return;
 
     // Validate required fields
     if (!name || !phone) {
@@ -264,7 +247,8 @@ const ProductDetailPage = () => {
     name: string,
     phone: string
   ) => {
-    if (!product || !selectedLensForPower || !userProfile || cartLoading) return;
+    if (!product || !selectedLensForPower || !userProfile || cartLoading)
+      return;
 
     // Validate required fields
     if (!imageUrl || !name || !phone) {
@@ -302,11 +286,14 @@ const ProductDetailPage = () => {
 
   // Handler for submit power later
   const handleSubmitPowerLater = async (name: string, phone: string) => {
-    if (!product || !selectedLensForPower || !userProfile || cartLoading) return;
+    if (!product || !selectedLensForPower || !userProfile || cartLoading)
+      return;
 
     // Validate required fields
     if (!name || !phone) {
-      toast.error("Please provide name and phone number to submit power later.");
+      toast.error(
+        "Please provide name and phone number to submit power later."
+      );
       return;
     }
 
@@ -328,7 +315,9 @@ const ProductDetailPage = () => {
     });
     setShowAddPowerModal(false);
     setSelectedLensForPower(null);
-    toast.success("Item added to cart! You can submit your power within 15 days.");
+    toast.success(
+      "Item added to cart! You can submit your power within 15 days."
+    );
   };
 
   // Handler for saved power
@@ -418,8 +407,12 @@ const ProductDetailPage = () => {
     const images = [];
     if (product.banner_image_1) images.push(product.banner_image_1);
     if (product.banner_image_2) images.push(product.banner_image_2);
-    if (product.colors && product.colors[selectedColor]) {
-      images.push(...product.colors[selectedColor].images);
+    if (product.images && product.images.length > 0) {
+      // Sort by display_order and add image URLs
+      const sortedImages = product.images.sort(
+        (a, b) => a.display_order - b.display_order
+      );
+      images.push(...sortedImages.map((img) => img.url));
     }
     return images;
   };
@@ -454,13 +447,7 @@ const ProductDetailPage = () => {
       if (isFavorite(product.id!)) {
         await removeFromFavorites(product.id!);
       } else {
-        await addToFavorites({
-          ...product,
-          colors: normalizeColors(product.colors).map((c) => ({
-            color: c.colors[0],
-            images: c.images,
-          })),
-        });
+        await addToFavorites(product);
       }
     } catch (error) {
       console.error("Error handling favorite:", error);
@@ -482,13 +469,7 @@ const ProductDetailPage = () => {
       if (isFavorite(recommendation.id!)) {
         await removeFromFavorites(recommendation.id!);
       } else {
-        await addToFavorites({
-          ...recommendation,
-          colors: normalizeColors(recommendation.colors).map((c) => ({
-            color: c.colors[0],
-            images: c.images,
-          })),
-        });
+        await addToFavorites(recommendation);
       }
     } catch (error) {
       console.error("Error handling favorite:", error);
@@ -533,32 +514,62 @@ const ProductDetailPage = () => {
   const handleImageClick = () => {
     setShowPreview(true);
     setPreviewIndex(selectedImage);
+    // Preload images when opening preview
+    setTimeout(() => {
+      productImages.forEach((src) => {
+        if (typeof window !== "undefined") {
+          const preloader = document.createElement("img");
+          preloader.src = src;
+        }
+      });
+    }, 100);
   };
 
   const handlePreviewLeft = () => {
-    setPreviewIndex((i) => Math.max(0, i - 1));
+    const newIndex = Math.max(0, previewIndex - 1);
+    if (newIndex !== previewIndex) {
+      setPreviewIndex(newIndex);
+      // Scroll to the new index smoothly
+      const container = document.querySelector('.overflow-x-auto') as HTMLDivElement;
+      if (container) {
+        container.scrollTo({ left: newIndex * container.clientWidth, behavior: "smooth" });
+      }
+    }
   };
   const handlePreviewRight = () => {
-    setPreviewIndex((i) => Math.min(productImages.length - 1, i + 1));
-  };
-  const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStartX(e.touches[0].clientX);
-  };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX === null) return;
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchEndX - touchStartX;
-    if (diff > 50 && previewIndex > 0) {
-      setTimeout(() => {
-        setPreviewIndex((prev) => prev - 1);
-      }, 300);
-    } else if (diff < -50 && previewIndex < productImages.length - 1) {
-      setTimeout(() => {
-        setPreviewIndex((prev) => prev + 1);
-      }, 300);
+    const newIndex = Math.min(productImages.length - 1, previewIndex + 1);
+    if (newIndex !== previewIndex) {
+      setPreviewIndex(newIndex);
+      // Scroll to the new index smoothly
+      const container = document.querySelector('.overflow-x-auto') as HTMLDivElement;
+      if (container) {
+        container.scrollTo({ left: newIndex * container.clientWidth, behavior: "smooth" });
+      }
     }
-    setTouchStartX(null);
   };
+
+  // Mobile touch handling for smooth scrolling
+  // const handleTouchStart = (e: React.TouchEvent) => {
+  //   const touch = e.touches[0];
+  //   const container = e.currentTarget as HTMLDivElement;
+  //   container.dataset.touchStartX = touch.clientX.toString();
+  //   container.dataset.touchStartScrollLeft = container.scrollLeft.toString();
+  // };
+
+  // const handleTouchMove = (e: React.TouchEvent) => {
+  //   const touch = e.touches[0];
+  //   const container = e.currentTarget as HTMLDivElement;
+  //   const startX = parseFloat(container.dataset.touchStartX || '0');
+  //   const startScrollLeft = parseFloat(container.dataset.touchStartScrollLeft || '0');
+  //   const diff = startX - touch.clientX;
+  //   container.scrollLeft = startScrollLeft + diff;
+  // };
+
+  // const handleTouchEnd = (e: React.TouchEvent) => {
+  //   const container = e.currentTarget as HTMLDivElement;
+  //   delete container.dataset.touchStartX;
+  //   delete container.dataset.touchStartScrollLeft;
+  // };
 
   // Focus modal for keyboard navigation
   useEffect(() => {
@@ -617,6 +628,8 @@ const ProductDetailPage = () => {
   const productImages = getProductImages();
   const BRAND_COLOR = "#2D6CDF";
 
+
+
   // Handler for selecting a lens type in Power modal
   const handlePowerLensTypeSelect = async (typeKey: string) => {
     setSelectedLensType(typeKey);
@@ -654,6 +667,7 @@ const ProductDetailPage = () => {
     if (!product || cartLoading) return;
     addToCart({ product, powerCategory: "frame only", quantity: 1 });
     toast.success("Frame added to cart successfully!");
+    router.push('/cart');
   };
   const handleRemoveFromCart = () => {
     if (!product || cartLoading) return;
@@ -664,6 +678,7 @@ const ProductDetailPage = () => {
   const handleAddLensToCart = (lens: Lens) => {
     if (!product || cartLoading) return;
     addToCart({ product, lens, quantity: 1 });
+    router.push('/cart');
     toast.success(`Added to cart with ${lens.title}!`);
   };
   const handleRemoveLensFromCart = (lens: Lens) => {
@@ -676,14 +691,15 @@ const ProductDetailPage = () => {
     if (!product || cartLoading) return;
     addToCart({ product, lens, powerCategory, quantity: 1 });
     toast.success(`Added to cart with ${lens.title} and ${powerCategory}!`);
+    router.push('/cart');
   };
 
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
 
-      <div className="px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 relative">
+      <div className=" px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 relative">
           {/* Product Images */}
           <div className="space-y-6 relative">
             {/* Desktop Layout: Thumbnails on left, main image on right */}
@@ -695,10 +711,10 @@ const ProductDetailPage = () => {
                     <button
                       key={index}
                       onClick={() => handleImageChange(index)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                      className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${
                         selectedImage === index
-                          ? "border-primary shadow-md"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-primary shadow-lg ring-2 ring-primary/20"
+                          : "border-gray-200 hover:border-gray-300 shadow-sm"
                       }`}
                     >
                       <Image
@@ -717,38 +733,42 @@ const ProductDetailPage = () => {
               <div className="flex-1">
                 <div
                   ref={imageContainerRef}
-                  className="aspect-square bg-gray-50 rounded-lg overflow-hidden relative shadow-sm border border-gray-100"
+                  className="aspect-square bg-gray-50 rounded-lg overflow-hidden relative border border-gray-200 hover:border-gray-300 transition-all duration-200"
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                   onMouseMove={handleMouseMove}
                 >
                   {productImages.length > 0 ? (
                     <>
-                      <Image
-                        src={productImages[selectedImage]}
-                        alt={product.title}
-                        width={600}
-                        height={600}
-                        className="w-full h-full object-cover select-none"
-                        draggable={false}
-                        onClick={handleImageClick}
-                        style={{ cursor: "zoom-in" }}
-                      />
+                                          <Image
+                      src={productImages[selectedImage]}
+                      alt={product.title}
+                      width={600}
+                      height={600}
+                      sizes="100vw"
+                      className="w-full h-full object-cover select-none"
+                      draggable={false}
+                      onClick={handleImageClick}
+                      style={{ cursor: "zoom-in" }}
+                      priority={selectedImage === 0}
+                      loading={selectedImage === 0 ? "eager" : "lazy"}
+                      placeholder="blur"
+                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
+                      decoding="async"
+                    />
 
                       {/* Favorite Button */}
                       <button
                         onClick={handleFavoriteClick}
-                        className={`absolute top-4 right-20 z-10 w-10 h-10 border border-gray-200 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-200 bg-white/95 ${
-                          isFavorite(product.id!) 
-                            ? "border-red-300 bg-red-50" 
-                            : "hover:border-gray-300"
+                        className={`absolute top-3 right-15 z-10 w-10 h-10 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 bg-white shadow-md hover:shadow-lg ${
+                          isFavorite(product.id!)
+                            ? "text-red-500"
+                            : "text-gray-400 hover:text-red-500"
                         }`}
                       >
                         <Heart
-                          className={`w-4 h-4 transition-colors ${
-                            isFavorite(product.id!)
-                              ? "text-red-500 fill-current"
-                              : "text-gray-500 hover:text-red-500"
+                          className={`w-5 h-5 ${
+                            isFavorite(product.id!) ? "fill-current" : ""
                           }`}
                         />
                       </button>
@@ -758,10 +778,10 @@ const ProductDetailPage = () => {
                         onClick={() => {
                           /* TODO: add share logic */
                         }}
-                        className="absolute top-4 right-4 z-10 border border-gray-200 bg-white/95 w-10 h-10 flex items-center justify-center rounded-lg shadow-sm transition-all duration-200 hover:border-gray-300"
+                        className="absolute top-3 right-3 z-10 w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-md hover:shadow-lg text-gray-400 hover:text-gray-600 transition-all duration-200"
                         aria-label="Share"
                       >
-                        <Share2 className="w-4 h-4 text-gray-500 hover:text-primary" />
+                        <Share2 className="w-5 h-5" />
                       </button>
                     </>
                   ) : (
@@ -778,35 +798,41 @@ const ProductDetailPage = () => {
               {/* Main Image */}
               <div
                 ref={imageContainerRef}
-                className="aspect-square bg-gray-50 rounded-lg overflow-hidden relative shadow-sm border border-gray-100"
+                className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden relative shadow-xl border border-gray-200"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 onMouseMove={handleMouseMove}
               >
                 {productImages.length > 0 ? (
                   <>
-                    <Image
-                      src={productImages[selectedImage]}
-                      alt={product.title}
-                      width={600}
-                      height={600}
-                      className="w-full h-full object-cover select-none"
-                      draggable={false}
-                      onClick={handleImageClick}
-                      style={{ cursor: "zoom-in" }}
-                    />
+                                          <Image
+                        src={productImages[selectedImage]}
+                        alt={product.title}
+                        width={600}
+                        height={600}
+                        sizes="(min-width: 1024px) 600px, 100vw"
+                        className="w-full h-full object-cover select-none"
+                        draggable={false}
+                        onClick={handleImageClick}
+                        style={{ cursor: "zoom-in" }}
+                        priority={selectedImage === 0}
+                        loading={selectedImage === 0 ? "eager" : "lazy"}
+                        placeholder="blur"
+                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
+                        decoding="async"
+                      />
 
                     {/* Favorite Button */}
                     <button
                       onClick={handleFavoriteClick}
-                      className={`absolute top-3 right-16 z-10 w-10 h-10 border border-gray-200 rounded-lg flex items-center justify-center cursor-pointer transition-all duration-200 bg-white/95 ${
-                        isFavorite(product.id!) 
-                          ? "border-red-300 bg-red-50" 
-                          : "hover:border-gray-300"
+                      className={`absolute top-3 right-16 z-10 w-12 h-12 border-2 border-gray-200 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 bg-white/95 backdrop-blur-sm hover:scale-110 ${
+                        isFavorite(product.id!)
+                          ? "border-red-400 bg-red-50 shadow-lg"
+                          : "hover:border-gray-300 hover:shadow-lg"
                       }`}
                     >
                       <Heart
-                        className={`w-4 h-4 transition-colors ${
+                        className={`w-5 h-5 transition-all duration-300 ${
                           isFavorite(product.id!)
                             ? "text-red-500 fill-current"
                             : "text-gray-500 hover:text-red-500"
@@ -819,10 +845,10 @@ const ProductDetailPage = () => {
                       onClick={() => {
                         /* TODO: add share logic */
                       }}
-                      className="absolute top-3 right-3 z-10 border border-gray-200 bg-white/95 w-10 h-10 flex items-center justify-center rounded-lg shadow-sm transition-all duration-200 hover:border-gray-300"
+                      className="absolute top-3 right-3 z-10 border-2 border-gray-200 bg-white/95 backdrop-blur-sm w-12 h-12 flex items-center justify-center rounded-xl shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:scale-110"
                       aria-label="Share"
                     >
-                      <Share2 className="w-4 h-4 text-gray-500 hover:text-primary" />
+                      <Share2 className="w-5 h-5 text-gray-500 hover:text-primary transition-colors" />
                     </button>
                   </>
                 ) : (
@@ -834,15 +860,15 @@ const ProductDetailPage = () => {
 
               {/* Thumbnail Images - Bottom */}
               {productImages.length > 1 && (
-                <div className="flex space-x-2 overflow-x-auto pb-2">
+                <div className="flex space-x-3 overflow-x-auto pb-2">
                   {productImages.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => handleImageChange(index)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                      className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${
                         selectedImage === index
-                          ? "border-primary"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? "border-primary shadow-lg ring-2 ring-primary/20"
+                          : "border-gray-200 hover:border-gray-300 shadow-sm"
                       }`}
                     >
                       <Image
@@ -885,168 +911,136 @@ const ProductDetailPage = () => {
           <div className="space-y-8">
             {/* Title and Badges */}
             <div className="space-y-4">
-              <h1 className="text-3xl font-bold text-gray-900 leading-tight">
-                {product.title}
-              </h1>
-              <div className="flex items-center gap-3 flex-wrap">
-                {product.bestseller && (
-                  <span className="bg-primary text-white px-3 py-1 rounded-md text-sm font-medium">
-                    Best Seller
-                  </span>
-                )}
-                {product.latest_trend && (
-                  <span className="bg-secondary text-white px-3 py-1 rounded-md text-sm font-medium">
-                    Latest Trend
-                  </span>
-                )}
-                {product.discounted_price && (
-                  <span className="bg-green-600 text-white px-3 py-1 rounded-md text-sm font-medium">
-                    {getDiscountPercentage()}% OFF
-                  </span>
-                )}
+              <div>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium text-gray-900 leading-tight tracking-tight">
+                  {product.title}
+                </h1>
+                <div className="flex items-center gap-2 mt-3">
+                  {product.bestseller && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Best Seller
+                    </span>
+                  )}
+                  {product.latest_trend && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      Trending
+                    </span>
+                  )}
+                  {product.discounted_price && (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      {getDiscountPercentage()}% OFF
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
             {/* Price */}
-            <div className="space-y-3 bg-gray-50 p-6 rounded-lg border border-gray-100">
-              <div className="flex items-center gap-4">
-                <span className="text-3xl font-bold text-gray-900">
+            <div className="border-b border-gray-200 pb-6">
+              <div className="flex items-baseline gap-4">
+                <span className="text-3xl font-light text-gray-900">
                   ₹{getCurrentPrice()}
                 </span>
                 {product.discounted_price && (
-                  <span className="text-xl text-gray-400 line-through">
-                    ₹{product.original_price}
-                  </span>
+                  <>
+                    <span className="text-xl text-gray-500 line-through font-light">
+                      ₹{product.original_price}
+                    </span>
+                    <span className="text-sm font-medium text-green-600">
+                      Save ₹{product.original_price - product.discounted_price}
+                    </span>
+                  </>
                 )}
               </div>
-              {product.discounted_price && (
-                <p className="text-green-600 font-medium text-base">
-                  Save ₹{product.original_price - product.discounted_price}
-                </p>
-              )}
             </div>
-
-            {/* Colors */}
-            {product.colors && product.colors.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Available Colors
-                </h3>
-                <div className="flex gap-3 flex-wrap">
-                  {normalizeColors(product.colors).map((colorObj, index) => {
-                    const colorArr = colorObj.colors || [];
-                    let background = "#eee";
-                    if (colorArr.length === 1) {
-                      background = colorArr[0];
-                    } else if (colorArr.length === 2) {
-                      background = `linear-gradient(90deg, ${colorArr[0]} 50%, ${colorArr[1]} 50%)`;
-                    } else if (colorArr.length > 2) {
-                      const stops = colorArr
-                        .map((col, i) => {
-                          const start = (i * 100) / colorArr.length;
-                          const end = ((i + 1) * 100) / colorArr.length;
-                          return `${col} ${start}%, ${col} ${end}%`;
-                        })
-                        .join(", ");
-                      background = `conic-gradient(${stops})`;
-                    }
-                    return (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedColor(index)}
-                        className={`w-12 h-12 rounded-lg border-2 transition-all duration-200 ${
-                          selectedColor === index
-                            ? "border-primary ring-2 ring-primary/20"
-                            : "border-gray-300 hover:border-gray-400"
-                        }`}
-                        style={{ background: background }}
-                        title={colorArr.join(", ")}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             {/* Frame Measurements */}
             {product.lens_width ||
             product.bridge_width ||
             product.temple_length ? (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 text-center">
-                  Frame Measurements
+                <h3 className="text-lg font-medium text-gray-900">
+                  Frame Details
                 </h3>
-                <div className="flex gap-3 items-center justify-center mb-4">
-                  {product.sizes.map((size, index) => (
-                    <span
-                      key={index}
-                      className="text-base font-medium text-gray-900 bg-white px-3 py-2 rounded-md border border-gray-200"
-                    >
-                      {size}
-                    </span>
-                  ))}
-                </div>
+                {product.sizes && product.sizes.length > 0 && (
+                  <div className="flex gap-2">
+                    {product.sizes.map((size, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-800"
+                      >
+                        {size}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="grid grid-cols-3 gap-4">
                   {/* Lens Width */}
                   {product.lens_width && (
-                    <div className="flex flex-col items-center bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
                       <Image
                         src="/image2.png"
-                        className="w-6 h-6 mb-2"
+                        className="w-6 h-6 mx-auto mb-2 opacity-60"
                         alt="Lens Width"
                         width={24}
                         height={24}
                       />
-                      <span className="text-xs text-gray-600 font-medium">LENS WIDTH</span>
-                      <span className="text-base font-semibold text-gray-900 mt-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">
+                        Lens Width
+                      </p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">
                         {product.lens_width}mm
-                      </span>
+                      </p>
                     </div>
                   )}
                   {/* Bridge Width */}
                   {product.bridge_width && (
-                    <div className="flex flex-col items-center bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
                       <Image
                         src="/image3.png"
-                        className="w-6 h-6 mb-2"
+                        className="w-6 h-6 mx-auto mb-2 opacity-60"
                         alt="Bridge Width"
                         width={24}
                         height={24}
                       />
-                      <span className="text-xs text-gray-600 font-medium">BRIDGE WIDTH</span>
-                      <span className="text-base font-semibold text-gray-900 mt-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">
+                        Bridge Width
+                      </p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">
                         {product.bridge_width}mm
-                      </span>
+                      </p>
                     </div>
                   )}
                   {/* Temple Length */}
                   {product.temple_length && (
-                    <div className="flex flex-col items-center bg-white rounded-lg p-4 border border-gray-200">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
                       <Image
                         src="/image.png"
-                        className="w-6 h-6 mb-2"
+                        className="w-6 h-6 mx-auto mb-2 opacity-60"
                         alt="Temple Length"
                         width={24}
                         height={24}
                       />
-                      <span className="text-xs text-gray-600 font-medium">TEMPLE LENGTH</span>
-                      <span className="text-base font-semibold text-gray-900 mt-1">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider">
+                        Temple Length
+                      </p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">
                         {product.temple_length}mm
-                      </span>
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
             ) : product.sizes && product.sizes.length > 0 ? (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-medium text-gray-900">
                   Available Sizes
                 </h3>
-                <div className="flex gap-3 flex-wrap">
+                <div className="flex gap-2">
                   {product.sizes.map((size, index) => (
                     <button
                       key={index}
-                      className="px-4 py-2 rounded-md border border-primary bg-primary text-white font-medium text-sm hover:bg-primary/90 transition-colors"
+                      className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:border-gray-400 transition-colors"
                     >
                       {size}
                     </button>
@@ -1057,22 +1051,20 @@ const ProductDetailPage = () => {
 
             {/* Quantity */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">
-                Quantity
-              </h3>
-              <div className="flex items-center gap-4">
+              <h3 className="text-lg font-medium text-gray-900">Quantity</h3>
+              <div className="flex items-center">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-10 h-10 rounded-md border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors font-semibold"
+                  className="w-10 h-10 rounded-l-md border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                 >
                   -
                 </button>
-                <span className="w-16 text-center font-semibold text-lg bg-gray-50 px-3 py-2 rounded-md">
+                <span className="w-16 h-10 border-t border-b border-gray-300 flex items-center justify-center text-sm font-medium bg-white">
                   {quantity}
                 </span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="w-10 h-10 rounded-md border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors font-semibold"
+                  className="w-10 h-10 rounded-r-md border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                 >
                   +
                 </button>
@@ -1080,13 +1072,13 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-4">
+            <div className="space-y-4">
               {/* Sunglasses & Powered Sunglasses logic */}
               {product.type_category &&
               (product.type_category.includes("sunglasses") ||
                 product.type_category.includes("powered sunglasses")) ? (
                 product.is_lens_used ? (
-                  <>
+                  <div className="space-y-3">
                     {product &&
                     isInCart({
                       product,
@@ -1094,35 +1086,35 @@ const ProductDetailPage = () => {
                       quantity: 1,
                     }) ? (
                       <button
-                        className="flex-1 bg-red-600 text-white py-3 rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-red-600 text-white py-3 px-6 rounded-md font-medium hover:bg-red-700 transition-colors duration-200 flex items-center justify-center gap-2"
                         onClick={handleRemoveFromCart}
                       >
-                        <ShoppingBag className="w-4 h-4" />
+                        <ShoppingBag className="w-5 h-5" />
                         Remove from Cart
                       </button>
                     ) : (
                       <button
-                        className="flex-1 bg-button text-white py-3 rounded-lg font-semibold hover:bg-button/90 transition-colors flex items-center justify-center gap-2"
+                        className="w-full bg-button text-white py-3 px-6 rounded-md font-medium hover:bg-gray-800 transition-colors duration-200 flex items-center justify-center gap-2"
                         onClick={handleAddToCart}
                       >
-                        <ShoppingBag className="w-4 h-4" />
+                        <ShoppingBag className="w-5 h-5" />
                         Add to Cart
                       </button>
                     )}
                     <button
-                      className="flex-1 bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                      className="w-full bg-white text-gray-900 py-3 px-6 rounded-md font-medium border border-gray-300 hover:border-gray-400 transition-colors duration-200 flex items-center justify-center gap-2"
                       onClick={handleAddLensClick}
                     >
-                      <Ruler className="w-4 h-4" />
+                      <Ruler className="w-5 h-5" />
                       Add Lens
                     </button>
-                  </>
+                  </div>
                 ) : (
                   <button
-                    className="flex-1 bg-button text-white py-3 rounded-lg font-semibold hover:bg-button/90 transition-colors flex items-center justify-center gap-2"
+                    className="w-full bg-gray-900 text-white py-3 px-6 rounded-md font-medium hover:bg-gray-800 transition-colors duration-200 flex items-center justify-center gap-2"
                     onClick={handleAddToCart}
                   >
-                    <ShoppingBag className="w-4 h-4" />
+                    <ShoppingBag className="w-5 h-5" />
                     Add to Cart
                   </button>
                 )
@@ -1132,34 +1124,35 @@ const ProductDetailPage = () => {
                   product.type_category.includes("computer glasses") ||
                   product.type_category.includes("computerglasses")) ? (
                 <button
-                  className="flex-1 bg-primary text-white py-3 rounded-lg font-semibold hover:bg-primary/90 transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-gray-900 text-white py-3 px-6 rounded-md font-medium hover:bg-gray-800 transition-colors duration-200 flex items-center justify-center gap-2"
                   onClick={handleAddPowerClick}
                 >
-                  <Ruler className="w-4 h-4" />
+                  <Ruler className="w-5 h-5" />
                   Add Power
                 </button>
               ) : (
                 // Default fallback (show Add to Cart)
                 <button
-                  className="flex-1 bg-button text-white py-3 rounded-lg font-semibold hover:bg-button/90 transition-colors flex items-center justify-center gap-2"
+                  className="w-full bg-gray-900 text-white py-3 px-6 rounded-md font-medium hover:bg-gray-800 transition-colors duration-200 flex items-center justify-center gap-2"
                   onClick={handleAddToCart}
                 >
-                  <ShoppingBag className="w-4 h-4" />
+                  <ShoppingBag className="w-5 h-5" />
                   Add to Cart
                 </button>
               )}
             </div>
           </div>
 
-          {/* Dropdown Sections - Description, Features, Product Details */}
-          <div className="mt-12 space-y-6">
-            {/* Description Dropdown */}
+          {/* Product Description Dropdown */}
+          <div className="col-span-full mt-12">
             <div className="border border-gray-200 rounded-lg overflow-hidden">
               <button
                 onClick={() => toggleSection("description")}
                 className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors bg-white"
               >
-                <span className="font-semibold text-gray-900">Description</span>
+                <span className="font-medium text-gray-900">
+                  Product Details
+                </span>
                 <span
                   className={`transform transition-transform duration-200 ${
                     expandedSections.description ? "rotate-180" : ""
@@ -1169,107 +1162,155 @@ const ProductDetailPage = () => {
                 </span>
               </button>
               {expandedSections.description && (
-                <div className="px-6 pb-6 bg-gray-50">
-                  <p className="text-gray-700 leading-relaxed">
-                    {product.description}
-                  </p>
+                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                  {/* Frame Features Section */}
+                  <div className="mb-6">
+                    <h4 className="font-medium text-gray-900 mb-3">
+                      Frame Features
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      {product.sizes && product.sizes.length > 0 && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Frame Size:</span>
+                          <span className="text-gray-900 font-medium">
+                            {product.sizes.join(", ")}
+                          </span>
+                        </div>
+                      )}
+                      {product.gender_category &&
+                        product.gender_category.length > 0 && (
+                          <div className="flex justify-between py-1">
+                            <span className="text-gray-600">Gender:</span>
+                            <span className="text-gray-900 font-medium capitalize">
+                              {product.gender_category.join(", ")}
+                            </span>
+                          </div>
+                        )}
+                      {product.frame_material && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Frame Material:</span>
+                          <span className="text-gray-900 font-medium">
+                            {product.frame_material}
+                          </span>
+                        </div>
+                      )}
+
+                      {product.bridge_width &&
+                        product.temple_length &&
+                        product.lens_width && (
+                          <div className="flex justify-between py-1">
+                            <span className="text-gray-600">
+                              Frame Dimensions:
+                            </span>
+                            <span className="text-gray-900 font-medium">
+                              {product.lens_width}-{product.bridge_width}-
+                              {product.temple_length}(Lens – Bridge – Temple)
+                            </span>
+                          </div>
+                        )}
+                      {/* {product.temple_length && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Temple Length:</span>
+                          <span className="text-gray-900 font-medium">
+                            {product.temple_length}
+                          </span>
+                        </div>
+                      )}
+                      {product.lens_width && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Lens Width:</span>
+                          <span className="text-gray-900 font-medium">
+                            {product.lens_width}
+                          </span>
+                        </div>
+                      )} */}
+                      <div className="flex justify-between py-1">
+                        <span className="text-gray-600">Age Group:</span>
+                        <span className="text-gray-900 font-medium">Adult</span>
+                      </div>
+                      {product.frame_colour && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Frame Colour:</span>
+                          <span className="text-gray-900 font-medium">
+                            {product.frame_colour}
+                          </span>
+                        </div>
+                      )}
+                      {product.temple_colour && (
+                        <div className="flex justify-between py-1">
+                          <span className="text-gray-600">Temple Colour:</span>
+                          <span className="text-gray-900 font-medium">
+                            {product.temple_colour}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Style Section */}
+                  <div className="mb-6">
+                    <h4 className="font-medium text-gray-900 mb-3">
+                      Description
+                    </h4>
+                    <p className="text-gray-700 leading-relaxed text-sm">
+                      {product.description}
+                    </p>
+                  </div>
+
+                  {/* SKU Section */}
+                  {/* {product.product_serial_number && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <span className="text-gray-600 text-sm">
+                        SKU: {product.product_serial_number}
+                      </span>
+                    </div>
+                  )} */}
                 </div>
               )}
             </div>
 
-            {/* Features Dropdown */}
-            {product.features && product.features.length > 0 && (
+            {/* Easy Return Dropdown */}
+            <div className="mt-4">
               <div className="border border-gray-200 rounded-lg overflow-hidden">
                 <button
-                  onClick={() => toggleSection("features")}
+                  onClick={() => toggleSection("easyReturn")}
                   className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors bg-white"
                 >
-                  <span className="font-semibold text-gray-900">Features</span>
+                  <span className="font-medium text-gray-900">
+                    Returns & Exchange
+                  </span>
                   <span
                     className={`transform transition-transform duration-200 ${
-                      expandedSections.features ? "rotate-180" : ""
+                      expandedSections.easyReturn ? "rotate-180" : ""
                     }`}
                   >
                     ▼
                   </span>
                 </button>
-                {expandedSections.features && (
-                  <div className="px-6 pb-6 bg-gray-50">
-                    <ul className="space-y-2 text-gray-700">
-                      {product.features.map((feature, index) =>
-                        feature.split(";").map((f, idx) => (
-                          <li
-                            key={`${index}-${idx}`}
-                            className="flex items-start gap-2"
-                          >
-                            <Dot className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                            <span>{f}</span>
-                          </li>
-                        ))
-                      )}
-                    </ul>
+                {expandedSections.easyReturn && (
+                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                    <p className="text-gray-700 leading-relaxed text-sm mb-4">
+                      YourSpex provides exchange or refunds only on products
+                      that preserve their original condition, tags, and
+                      packaging and no request for return or exchange will not
+                      be entertained if the original tag is found to be missing.
+                    </p>
+                    <button
+                      onClick={() => router.push("/privacy")}
+                      className="text-gray-900 underline hover:text-gray-700 transition-colors text-sm font-medium"
+                    >
+                      Read More
+                    </button>
+                    {/* {product.product_serial_number && (
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <span className="text-gray-600 text-sm">
+                          SKU: {product.product_serial_number}
+                        </span>
+                      </div>
+                    )} */}
                   </div>
                 )}
               </div>
-            )}
-
-            {/* Product Details Dropdown */}
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <button
-                onClick={() => toggleSection("details")}
-                className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors bg-white"
-              >
-                <span className="font-semibold text-gray-900">
-                  Product Details
-                </span>
-                <span
-                  className={`transform transition-transform duration-200 ${
-                    expandedSections.details ? "rotate-180" : ""
-                  }`}
-                >
-                  ▼
-                </span>
-              </button>
-              {expandedSections.details && (
-                <div className="px-6 pb-6 bg-gray-50">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    {product.shape_category && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-gray-600 font-medium">Shape:</span>
-                        <span className="text-gray-900 capitalize font-medium">
-                          {product.shape_category}
-                        </span>
-                      </div>
-                    )}
-                    {product.frame_material && (
-                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                        <span className="text-gray-600 font-medium">Material:</span>
-                        <span className="text-gray-900 font-medium">
-                          {product.frame_material}
-                        </span>
-                      </div>
-                    )}
-                    {product.gender_category &&
-                      product.gender_category.length > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                          <span className="text-gray-600 font-medium">Gender:</span>
-                          <span className="text-gray-900 capitalize font-medium">
-                            {product.gender_category.join(", ")}
-                          </span>
-                        </div>
-                      )}
-                    {product.type_category &&
-                      product.type_category.length > 0 && (
-                        <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                          <span className="text-gray-600 font-medium">Type:</span>
-                          <span className="text-gray-900 capitalize font-medium">
-                            {product.type_category.join(", ")}
-                          </span>
-                        </div>
-                      )}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -1277,94 +1318,72 @@ const ProductDetailPage = () => {
         {/* Recommendations Section */}
         {recommendations.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-gray-900">
-              More {product.shape_category} Styles
-            </h2>
-            <div className="relative">
-              <div className="overflow-x-auto pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                <div className="flex space-x-6 min-w-min">
-                  {recommendations.map((item, index) => (
-                    <div
-                      key={item.id || index}
-                      className="group relative overflow-hidden rounded-lg bg-white shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 flex-none w-[280px] md:w-[320px] flex flex-col cursor-pointer"
-                      onMouseEnter={() => setHoveredRecommendation(index)}
-                      onMouseLeave={() => setHoveredRecommendation(null)}
-                      onClick={() => handleRecommendationClick(item)}
+            <div className="mb-8">
+              <h2 className="text-2xl font-medium text-gray-900 mb-2">
+                You might also like
+              </h2>
+              <p className="text-gray-600">
+                Similar {product.shape_category} styles
+              </p>
+            </div>
+            <div className="flex gap-6 overflow-x-auto">
+              {recommendations.slice(0, 10).map((item, index) => (
+                <div
+                  key={item.id || index}
+                  className="group cursor-pointer min-w-72"
+                  onClick={() => handleRecommendationClick(item)}
+                >
+                  {/* Product Image */}
+                  <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-3 relative">
+                    {item.discounted_price && (
+                      <div className="absolute top-2 left-2 z-10">
+                        <span className="bg-primary text-white px-2 py-1 rounded text-xs font-medium">
+                          Sale
+                        </span>
+                      </div>
+                    )}
+                    <button
+                      onClick={(e) =>
+                        handleRecommendationFavoriteClick(e, item)
+                      }
+                      className="absolute top-2 right-2 z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-shadow"
                     >
-                      {/* Sale Badge */}
+                      <Heart
+                        className={`w-4 h-4 ${
+                          isFavorite(item.id!)
+                            ? "text-red-500 fill-current"
+                            : "text-gray-400 hover:text-red-500"
+                        }`}
+                      />
+                    </button>
+                    <Image
+                      width={300}
+                      height={300}
+                      loading="lazy"
+                      src={item.banner_image_1 || item.banner_image_2 || ""}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+
+                  {/* Product Info */}
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
+                      {item.title}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-medium text-gray-900">
+                        ₹{item.discounted_price || item.original_price}
+                      </span>
                       {item.discounted_price && (
-                        <div className="absolute top-3 left-3 z-10">
-                          <span className="bg-green-600 text-white px-2 py-1 rounded text-xs font-medium">
-                            Sale
-                          </span>
-                        </div>
+                        <span className="text-sm text-gray-500 line-through">
+                          ₹{item.original_price}
+                        </span>
                       )}
-                      {/* Wishlist Icon */}
-                      <button
-                        onClick={(e) =>
-                          handleRecommendationFavoriteClick(e, item)
-                        }
-                        className="absolute top-3 right-3 z-10 bg-white rounded p-1.5 shadow-sm hover:shadow-md transition-all duration-200"
-                      >
-                        <Heart
-                          className={`w-4 h-4 transition-colors ${
-                            isFavorite(item.id!)
-                              ? "text-red-500 fill-current"
-                              : "text-gray-400 group-hover:text-red-500"
-                          }`}
-                        />
-                      </button>
-                      {/* Product Image */}
-                      <div className="aspect-square overflow-hidden">
-                        <Image
-                          width={400}
-                          height={300}
-                          loading="lazy"
-                          src={
-                            hoveredRecommendation === index &&
-                            item.banner_image_2
-                              ? item.banner_image_2
-                              : item.banner_image_1 || item.banner_image_2 || ""
-                          }
-                          alt={item.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      </div>
-                      {/* Product Info */}
-                      <div className="p-4 flex flex-col flex-grow">
-                        <h3 className="text-base md:text-lg font-semibold mb-2 text-gray-800 line-clamp-2 min-h-[3rem]">
-                          {item.title}
-                        </h3>
-                        <div className="flex items-center mb-3">
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-4 h-4 ${
-                                  i < 4
-                                    ? "text-yellow-400 fill-current"
-                                    : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                            <span className="ml-2 text-sm text-gray-600">
-                              (4.5)
-                            </span>
-                          </div>
-                        </div>
-                        <div className="mt-auto flex items-center justify-between">
-                          <span className="text-lg md:text-xl font-bold text-gray-900">
-                            ₹{item.discounted_price || item.original_price}
-                          </span>
-                          <button className="bg-button text-white px-3 py-1.5 text-sm rounded hover:bg-button/90 transition-colors">
-                            View Details
-                          </button>
-                        </div>
-                      </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         )}
@@ -1375,8 +1394,6 @@ const ProductDetailPage = () => {
       {showPreview && productImages.length > 0 && (
         <div
           className="fixed inset-0 z-50 bg-white flex items-center justify-center"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
           tabIndex={0}
           onKeyDown={(e) => {
             if (e.key === "ArrowLeft" && previewIndex > 0) {
@@ -1412,17 +1429,37 @@ const ProductDetailPage = () => {
           )}
 
           {/* Image Container */}
-          <div className="relative w-full h-full flex items-center justify-center p-8">
-            <div className="relative max-w-4xl max-h-full">
-              <Image
-                src={productImages[previewIndex]}
-                alt={product.title}
-                width={800}
-                height={800}
-                className="object-contain max-w-full max-h-full transition-all duration-300"
-                draggable={false}
-                priority
-              />
+          <div className="relative w-full h-full">
+            <div
+              className="w-full h-full flex overflow-x-auto"
+              style={{ scrollBehavior: "smooth" }}
+              onScroll={(e) => {
+                const container = e.currentTarget as HTMLDivElement;
+                const scrollLeft = container.scrollLeft;
+                const containerWidth = container.clientWidth;
+                const newIndex = Math.round(scrollLeft / containerWidth);
+                
+                // Only update if the index is valid and different
+                if (newIndex >= 0 && newIndex < productImages.length && newIndex !== previewIndex) {
+                  setPreviewIndex(newIndex);
+                }
+              }}
+            >
+              {productImages.map((src, idx) => (
+                <div key={idx} className="relative min-w-full h-full flex items-center justify-center p-4 md:p-8">
+                  <Image
+                    src={src}
+                    alt={`${product.title} ${idx + 1}`}
+                    fill
+                    sizes="100vw"
+                    className="object-contain max-h-full max-w-full transition-transform duration-300"
+                    draggable={false}
+                    priority={idx === previewIndex || idx === previewIndex - 1 || idx === previewIndex + 1}
+                    placeholder="blur"
+                    blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
+                  />
+                </div>
+              ))}
             </div>
           </div>
 

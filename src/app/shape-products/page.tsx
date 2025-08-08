@@ -23,16 +23,19 @@ interface Product {
   latest_trend?: boolean;
   banner_image_1?: string;
   banner_image_2?: string;
-  colors: { color: string; images: string[] }[];
+  images: { url: string; display_order: number }[];
   sizes: string[];
   frame_material?: string;
   features: string[];
-  shape_category?: string;
+  shape_category: string;
   tags: string[];
   gender_category: string[];
   type_category: string[];
   created_at?: string;
   updated_at?: string;
+  product_serial_number?: string;
+  frame_colour?: string;
+  temple_colour?: string;
 }
 
 // Client component that uses useSearchParams
@@ -257,7 +260,7 @@ const ShapeProductsContent = () => {
                 {filteredProducts.map((product) => (
                   <div 
                     key={product.id} 
-                    className="relative bg-white rounded-2xl shadow-lg group overflow-hidden flex flex-col cursor-pointer"
+                    className="relative rounded-2xl shadow-lg group overflow-hidden flex flex-col cursor-pointer"
                     onClick={() => handleProductClick(product)}
                   >
                     {/* Wishlist Icon */}

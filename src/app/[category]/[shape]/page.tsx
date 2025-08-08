@@ -19,6 +19,9 @@ interface Product {
   type: string;
   shape: string;
   image: string;
+  product_serial_number?: string;
+  frame_colour?: string;
+  temple_colour?: string;
 }
 
 const CategoryShapePage = () => {
