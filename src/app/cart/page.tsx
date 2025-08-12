@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useCart } from "../../contexts/CartContext";
+import { useOrders } from "../../contexts/OrderContext";
 import type { CartItem } from "../../contexts/CartContext";
 import Image from "next/image";
 import {
@@ -8,22 +9,26 @@ import {
   Plus,
   Trash2,
   Heart,
-  Truck,
-  Shield,
+  // Truck,
+  // Shield,
   ArrowLeft,
   X,
   CheckCircle,
   Star,
   Eye,
   ShoppingBag,
-  CreditCard,
-  Lock,
-  Package,
+  // CreditCard,
+  // Lock,
+  // Package,
   RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
+import AddressSelectionModal from "../../components/AddressSelectionModal";
+import { Address } from "../../types/address";
+import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 
 const CartPage = () => {
   const {
@@ -35,6 +40,8 @@ const CartPage = () => {
     getCartTotal,
     getCartCount,
   } = useCart();
+  const { createOrder } = useOrders();
+  const router = useRouter();
   const [savedItems, setSavedItems] = useState<CartItem[]>([]);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<{
@@ -42,6 +49,10 @@ const CartPage = () => {
     discount: number;
   } | null>(null);
   const [showCouponError, setShowCouponError] = useState(false);
+  
+  // Address selection state
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
   const subtotal = getCartTotal();
   const shipping = subtotal > 1000 ? 0 : 100;
@@ -81,6 +92,66 @@ const CartPage = () => {
     setAppliedCoupon(null);
   };
 
+  // Address selection handlers
+  const handleProceedToCheckout = () => {
+    if (cartItems.length === 0) {
+      return;
+    }
+    setShowAddressModal(true);
+  };
+
+  const handleAddressSelected = (address: Address) => {
+    // setSelectedAddress(address);
+    console.log('Selected address:', address);
+  };
+
+  const handleContinueToCheckout = async (address: Address) => {
+    if (cartItems.length === 0) return;
+    
+    try {
+      setIsCreatingOrder(true);
+      setShowAddressModal(false);
+      
+      // Create order data
+      const orderData = {
+        items: cartItems,
+        shipping_address: address,
+        subtotal,
+        shipping_cost: shipping,
+        tax_amount: tax,
+        discount_amount: discount,
+        total_amount: total,
+        applied_coupon: appliedCoupon?.code,
+        coupon_discount_percentage: appliedCoupon?.discount,
+        payment_method: 'cod' as const,
+        notes: 'Order placed from cart'
+      };
+      
+      // Create the order
+      const order = await createOrder(orderData);
+      
+      if (order) {
+        // Clear the cart after successful order creation
+        clearCart();
+        
+        // Redirect to orders page or show success message
+        router.push(`/orders/${order.id}`);
+      } else {
+        alert('Failed to create order. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Failed to create order. Please try again.');
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
+
+  const handleCloseAddressModal = () => {
+    setShowAddressModal(false);
+    // setSelectedAddress(null);
+  };
+
   // const getEstimatedDelivery = () => {
   //   const today = new Date();
   //   const deliveryDate = new Date(today);
@@ -98,7 +169,7 @@ const CartPage = () => {
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
         <Navbar />
         <div className="py-8 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="">
             {/* Skeleton Header */}
             <div className="mb-8">
               <div className="h-10 w-64 bg-white/70 rounded-2xl animate-pulse mb-4" />
@@ -195,7 +266,7 @@ const CartPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <Navbar />
       <div className="py-8 px-4 sm:px-6 lg:px-8 pb-32 lg:pb-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="">
           {/* Page Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
@@ -561,12 +632,17 @@ const CartPage = () => {
                 </div>
 
                 {/* Checkout Button */}
-                <button className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold text-lg hover:scale-105 hover:shadow-2xl transition-all duration-300 shadow-xl mb-6">
-                  Proceed to Checkout
+                <button 
+                  onClick={handleProceedToCheckout}
+                  disabled={cartItems.length === 0 || isCreatingOrder}
+                  className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold text-lg hover:scale-105 hover:shadow-2xl transition-all duration-300 shadow-xl mb-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                >
+                  {cartItems.length === 0 ? 'Cart is Empty' : 
+                   isCreatingOrder ? 'Creating Order...' : 'Proceed to Checkout'}
                 </button>
 
                 {/* Trust Indicators */}
-                <div className="space-y-4 text-sm">
+                {/* <div className="space-y-4 text-sm">
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
                     <Truck className="w-5 h-5 text-blue-600" />
                     <div>
@@ -596,10 +672,10 @@ const CartPage = () => {
                       <div className="text-gray-600">30-day return policy</div>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Payment Methods */}
-                <div className="mt-6 pt-6 border-t border-gray-200">
+                {/* <div className="mt-6 pt-6 border-t border-gray-200">
                   <p className="text-sm text-gray-600 mb-3">We accept:</p>
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1 text-xs text-gray-500">
@@ -615,7 +691,7 @@ const CartPage = () => {
                       <span>COD</span>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
@@ -679,11 +755,24 @@ const CartPage = () => {
               ₹{total.toFixed(2)}
             </div>
           </div>
-          <button className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-semibold hover:scale-105 transition-transform">
-            Checkout Now
+          <button 
+            onClick={handleProceedToCheckout}
+            disabled={cartItems.length === 0}
+            className="flex-1 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-semibold hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            {cartItems.length === 0 ? 'Cart Empty' : 'Checkout Now'}
           </button>
         </div>
       </div>
+
+      {/* Address Selection Modal */}
+      <AddressSelectionModal
+        isOpen={showAddressModal}
+        onClose={handleCloseAddressModal}
+        onAddressSelected={handleAddressSelected}
+        onContinueToCheckout={handleContinueToCheckout}
+      />
+
       <Footer />
     </div>
   );

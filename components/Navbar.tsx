@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, Heart, ShoppingCart, User, ChevronDown, LogOut, Menu, X } from 'lucide-react';
+import Image from 'next/image';
+import { Search, Heart, ShoppingCart, User, ChevronDown, LogOut, Menu, X, Star, TrendingUp } from 'lucide-react';
 import { useAuth } from '../src/contexts/AuthContext';
 import { useFavorites } from '../src/contexts/FavoritesContext';
 import { getCategories, Category } from '../src/services/categoryService';
+import { getProducts } from '../src/services/homeService';
 import colors from '@/constants/colors';
 import { useCart } from '../src/contexts/CartContext';
 
@@ -24,6 +26,32 @@ interface CategoryData {
   shape: Category[];
 }
 
+interface Product {
+  id?: string;
+  title: string;
+  description: string;
+  original_price: number;
+  discounted_price?: number;
+  display_order?: number;
+  bestseller?: boolean;
+  latest_trend?: boolean;
+  banner_image_1?: string;
+  banner_image_2?: string;
+  images: { url: string; display_order: number }[];
+  sizes: string[];
+  frame_material?: string;
+  features: string[];
+  shape_category: string;
+  tags: string[];
+  gender_category: string[];
+  type_category: string[];
+  created_at?: string;
+  updated_at?: string;
+  product_serial_number?: string;
+  frame_colour?: string;
+  temple_colour?: string;
+}
+
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
@@ -38,6 +66,8 @@ const Navbar: React.FC = () => {
     style: [],
     shape: []
   });
+  const [bestSellers, setBestSellers] = useState<Product[]>([]);
+  const [latestTrends, setLatestTrends] = useState<Product[]>([]);
   
   const { user, userProfile, signOut } = useAuth();
   const { favoritesCount, isLoggedIn } = useFavorites();
@@ -97,6 +127,36 @@ const Navbar: React.FC = () => {
     };
 
     fetchCategoriesAndGenerateNav();
+  }, []);
+
+  // Fetch products for best sellers and latest trends
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const productsData = await getProducts();
+        
+        // Filter best sellers and latest trends
+        const bestSellersData = productsData
+          .filter((p: Product) => p.bestseller)
+          .sort((a: Product, b: Product) => (a.display_order || 0) - (b.display_order || 0))
+          .slice(0, 5);
+        
+        const latestTrendsData = productsData
+          .filter((p: Product) => p.latest_trend)
+          .sort((a: Product, b: Product) => (a.display_order || 0) - (b.display_order || 0))
+          .slice(0, 5);
+        
+        setBestSellers(bestSellersData as Product[]);
+        setLatestTrends(latestTrendsData as Product[]);
+        
+        console.log('Navbar - Best Sellers:', bestSellersData);
+        console.log('Navbar - Latest Trends:', latestTrendsData);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
   useEffect(() => {
@@ -193,6 +253,15 @@ const Navbar: React.FC = () => {
     setMobileActiveDropdown(mobileActiveDropdown === key ? null : key);
   };
 
+  // Calculate discount percentage
+  const calculateDiscount = (original: number, discounted: number) => {
+    return Math.round(((original - discounted) / original) * 100);
+  };
+
+  const handleProductClick = (product: Product) => {
+    window.location.href = `/product/${product.id}`;
+  };
+
   return (
     <>
       <style jsx>{`
@@ -206,9 +275,10 @@ const Navbar: React.FC = () => {
         }
         
         .glass-effect {
-          backdrop-filter: blur(12px);
-          background: rgba(255, 255, 255, 0.95);
-          border: 1px solid rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(16px);
+          background: rgba(255, 255, 255, 0.98);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
         
         .gradient-text {
@@ -219,7 +289,8 @@ const Navbar: React.FC = () => {
         }
         
         .search-glow {
-          box-shadow: 0 0 20px rgba(0, 128, 128, 0.3);
+          box-shadow: 0 0 25px rgba(0, 128, 128, 0.4), 0 4px 20px rgba(0, 128, 128, 0.2);
+          transform: scale(1.02);
         }
         
         .hover-lift {
@@ -228,6 +299,19 @@ const Navbar: React.FC = () => {
         
         .hover-lift:hover {
           transform: translateY(-2px);
+        }
+        
+        .navbar-gradient {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+        }
+        
+        .nav-item-hover {
+          background: linear-gradient(135deg, rgba(0, 128, 128, 0.05) 0%, rgba(0, 128, 128, 0.1) 100%);
+          border: 1px solid rgba(0, 128, 128, 0.1);
+        }
+        
+        .dropdown-shadow {
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1);
         }
         
         /* Optimize mobile menu animations */
@@ -380,8 +464,8 @@ const Navbar: React.FC = () => {
 
       <nav className={`w-full sticky top-0 z-50 transition-all duration-300 ${
         isScrolled 
-          ? 'glass-effect shadow-lg' 
-          : 'bg-white/90 backdrop-blur-sm shadow-md'
+          ? 'glass-effect dropdown-shadow' 
+          : 'navbar-gradient backdrop-blur-sm shadow-lg'
       }`}>
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white/90 border-b border-gray-100/50">
@@ -446,7 +530,7 @@ const Navbar: React.FC = () => {
           </div>
           {/* Right: Top Links */}
           <div className="flex items-center space-x-6">
-            <Link href="#" className="text-sm font-medium text-gray-700 hover:text-primary">Track Order</Link>
+            <Link href="/orders" className="text-sm font-medium text-gray-700 hover:text-primary">Track Order</Link>
             {user ? (
               <div className="relative user-dropdown">
                 <button onClick={() => setUserDropdownOpen(!userDropdownOpen)} className="text-sm font-medium text-gray-700 hover:text-primary flex items-center space-x-1">
@@ -504,7 +588,7 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Main Navbar Row - Desktop Only */}
-        <div className="hidden md:flex w-full bg-white/90">
+        <div className="hidden md:flex w-full navbar-gradient border-b border-gray-100/50">
           <div className="max-w-7xl mx-auto w-full flex items-center justify-between px-4">
             {/* Left: Main Nav Links */}
             <div className="flex items-center space-x-2">
@@ -513,16 +597,16 @@ const Navbar: React.FC = () => {
                   key={key}
                   onMouseEnter={() => handleDropdownEnter(key)}
                   onMouseLeave={handleDropdownLeave}
-                  className={`relative flex items-center px-3 py-4 text-sm font-semibold uppercase tracking-wide hover:text-primary hover:bg-gray-50 rounded transition-all duration-200 ${activeDropdown === key ? 'text-primary' : ''}`}
+                  className={`relative flex items-center px-3 py-4 text-sm font-semibold uppercase tracking-wide hover:text-primary hover:nav-item-hover rounded-lg transition-all duration-300 ${activeDropdown === key ? 'text-primary nav-item-hover' : ''}`}
                   style={{ color: colors.text }}
                 >
                   {item.title}
                   <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${activeDropdown === key ? 'rotate-180' : ''}`} />
                   {/* Full Width Dropdown Menu */}
                   {activeDropdown === key && (
-                    <div className="absolute top-full w-[1000px] left-0 right-0 mt-2 glass-effect shadow-2xl border border-white/20 z-50 dropdown-enter">
-                      <div className="max-w-6xl p-8">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+                    <div className="absolute top-full w-[1200px] left-0 right-0 mt-2 glass-effect dropdown-shadow border border-white/20 z-50 dropdown-enter">
+                      <div className="max-w-7xl p-8">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                           {/* SELECT CATEGORY Column */}
                           <div className="space-y-4">
                             <h3 className="text-sm font-bold text-left text-gray-400 uppercase tracking-wider mb-6">SELECT CATEGORY</h3>
@@ -589,15 +673,6 @@ const Navbar: React.FC = () => {
                           <div className="space-y-4">
                             <h3 className="text-sm font-bold text-left text-gray-400 uppercase tracking-wider mb-6">Shapes</h3>
                             <div className="space-y-3">
-                              {/* {['Vincent Chase', 'Lenskart Air', 'Lenskart STUDIO'].map((item, idx) => (
-                                <button
-                                  key={idx}
-                                  onClick={() => handleNavItemClick(key, item)}
-                                  className="block w-full text-left px-4 py-3 text-sm font-medium rounded-lg hover:bg-primary hover:text-white transition-all duration-300"
-                                >
-                                  {item}
-                                </button>
-                              ))} */}
                               {categoryData.shape.map((shape) => (
                                 <button
                                   key={shape.id}
@@ -615,6 +690,162 @@ const Navbar: React.FC = () => {
                   )}
                 </button>
               ))}
+
+              {/* Best Sellers Navigation Item */}
+              <button
+                onMouseEnter={() => setActiveDropdown('bestsellers')}
+                onMouseLeave={handleDropdownLeave}
+                className={`relative flex items-center px-3 py-4 text-sm font-semibold uppercase tracking-wide hover:text-primary hover:nav-item-hover rounded-lg transition-all duration-300 ${activeDropdown === 'bestsellers' ? 'text-primary nav-item-hover' : ''}`}
+                style={{ color: colors.text }}
+              >
+                <Star size={16} className="mr-2 text-yellow-500 fill-current" />
+                Best Sellers
+                <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${activeDropdown === 'bestsellers' ? 'rotate-180' : ''}`} />
+                
+                {/* Best Sellers Dropdown */}
+                {activeDropdown === 'bestsellers' && (
+                  <div className="absolute top-full w-[900px] left-1/2 transform -translate-x-1/2 mt-2 glass-effect dropdown-shadow border border-white/20 z-50 dropdown-enter">
+                    <div className="p-6">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <Star size={20} className="text-yellow-500 fill-current" />
+                        <h3 className="text-lg font-bold text-gray-800">Best Sellers</h3>
+                        <span className="text-sm text-gray-500 ml-2">({bestSellers.length} products)</span>
+                      </div>
+                      
+                      {bestSellers.length > 0 ? (
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                          {bestSellers.slice(0, 5).map((product) => (
+                            <button
+                              key={product.id}
+                              onClick={() => handleProductClick(product)}
+                              className="group text-left p-3 rounded-xl hover:bg-gray-50/80 transition-all duration-300 border border-transparent hover:border-gray-200"
+                            >
+                              <div className="w-full h-28 rounded-lg overflow-hidden bg-gray-100 mb-3">
+                                {product.banner_image_1 ? (
+                                  <Image
+                                    src={product.banner_image_1}
+                                    alt={product.title}
+                                    width={180}
+                                    height={112}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                    <span className="text-gray-400 text-xl">📷</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                <h4 className="font-semibold text-gray-800 text-xs line-clamp-2 group-hover:text-primary transition-colors">
+                                  {product.title}
+                                </h4>
+                                <div className="flex flex-col space-y-1">
+                                  <span className="text-sm font-bold text-primary">
+                                    ₹{product.discounted_price || product.original_price}
+                                  </span>
+                                  {product.discounted_price && (
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-xs text-gray-500 line-through">
+                                        ₹{product.original_price}
+                                      </span>
+                                      <span className="text-xs font-semibold text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                                        {calculateDiscount(product.original_price, product.discounted_price)}% OFF
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <Star size={32} className="mx-auto mb-2 text-gray-300" />
+                          <p>No best sellers available at the moment</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </button>
+
+              {/* Latest Trends Navigation Item */}
+              <button
+                onMouseEnter={() => setActiveDropdown('latesttrends')}
+                onMouseLeave={handleDropdownLeave}
+                className={`relative flex items-center px-3 py-4 text-sm font-semibold uppercase tracking-wide hover:text-primary hover:nav-item-hover rounded-lg transition-all duration-300 ${activeDropdown === 'latesttrends' ? 'text-primary nav-item-hover' : ''}`}
+                style={{ color: colors.text }}
+              >
+                <TrendingUp size={16} className="mr-2 text-blue-500" />
+                Latest Trends
+                <ChevronDown size={14} className={`ml-1 transition-transform duration-300 ${activeDropdown === 'latesttrends' ? 'rotate-180' : ''}`} />
+                
+                {/* Latest Trends Dropdown */}
+                {activeDropdown === 'latesttrends' && (
+                  <div className="absolute top-full w-[900px] left-1/2 transform -translate-x-1/2 mt-2 glass-effect dropdown-shadow border border-white/20 z-50 dropdown-enter">
+                    <div className="p-6">
+                      <div className="flex items-center space-x-2 mb-4">
+                        <TrendingUp size={20} className="text-blue-500" />
+                        <h3 className="text-lg font-bold text-gray-800">Latest Trends</h3>
+                        <span className="text-sm text-gray-500 ml-2">({latestTrends.length} products)</span>
+                      </div>
+                      
+                      {latestTrends.length > 0 ? (
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                          {latestTrends.slice(0, 5).map((product) => (
+                            <button
+                              key={product.id}
+                              onClick={() => handleProductClick(product)}
+                              className="group text-left p-3 rounded-xl hover:bg-gray-50/80 transition-all duration-300 border border-transparent hover:border-gray-200"
+                            >
+                              <div className="w-full h-28 rounded-lg overflow-hidden bg-gray-100 mb-3">
+                                {product.banner_image_1 ? (
+                                  <Image
+                                    src={product.banner_image_1}
+                                    alt={product.title}
+                                    width={180}
+                                    height={112}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                                    <span className="text-gray-400 text-xl">📷</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                <h4 className="font-semibold text-gray-800 text-xs line-clamp-2 group-hover:text-primary transition-colors">
+                                  {product.title}
+                                </h4>
+                                <div className="flex flex-col space-y-1">
+                                  <span className="text-sm font-bold text-primary">
+                                    ₹{product.discounted_price || product.original_price}
+                                  </span>
+                                  {product.discounted_price && (
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-xs text-gray-500 line-through">
+                                        ₹{product.original_price}
+                                      </span>
+                                      <span className="text-xs font-semibold text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                                        {calculateDiscount(product.original_price, product.discounted_price)}% OFF
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-gray-500">
+                          <TrendingUp size={32} className="mx-auto mb-2 text-gray-300" />
+                          <p>No latest trends available at the moment</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -626,7 +857,7 @@ const Navbar: React.FC = () => {
         />
 
         {/* Mobile Menu */}
-        <div className={`md:hidden glass-effect mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
+        <div className={`md:hidden glass-effect dropdown-shadow mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
           <div className="mobile-menu-content">
             {/* Close Button */}
             <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200/50">
@@ -753,6 +984,116 @@ const Navbar: React.FC = () => {
                   </div>
                 ))}
               </div>
+
+              {/* Best Sellers Section */}
+              {bestSellers.length > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="mobile-section-title">Best Sellers</div>
+                  <div className="space-y-3">
+                    {bestSellers.slice(0, 3).map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => {
+                          handleProductClick(product);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50/80 transition-all duration-300 group"
+                      >
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          {product.banner_image_1 ? (
+                            <Image
+                              src={product.banner_image_1}
+                              alt={product.title}
+                              width={64}
+                              height={64}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <span className="text-gray-400 text-lg">📷</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="font-semibold text-gray-800 text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                            {product.title}
+                          </div>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="text-sm font-bold text-primary">
+                              ₹{product.discounted_price || product.original_price}
+                            </span>
+                            {product.discounted_price && (
+                              <>
+                                <span className="text-xs text-gray-500 line-through">
+                                  ₹{product.original_price}
+                                </span>
+                                <span className="text-xs font-semibold text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                                  {calculateDiscount(product.original_price, product.discounted_price)}% OFF
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Latest Trends Section */}
+              {latestTrends.length > 0 && (
+                <div className="pt-4 border-t border-gray-200">
+                  <div className="mobile-section-title">Latest Trends</div>
+                  <div className="space-y-3">
+                    {latestTrends.slice(0, 3).map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => {
+                          handleProductClick(product);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50/80 transition-all duration-300 group"
+                      >
+                        <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                          {product.banner_image_1 ? (
+                            <Image
+                              src={product.banner_image_1}
+                              alt={product.title}
+                              width={64}
+                              height={64}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                              <span className="text-gray-400 text-lg">📷</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="font-semibold text-gray-800 text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                            {product.title}
+                          </div>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="text-sm font-bold text-primary">
+                              ₹{product.discounted_price || product.original_price}
+                            </span>
+                            {product.discounted_price && (
+                              <>
+                                <span className="text-xs text-gray-500 line-through">
+                                  ₹{product.original_price}
+                                </span>
+                                <span className="text-xs font-semibold text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
+                                  {calculateDiscount(product.original_price, product.discounted_price)}% OFF
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Quick Actions */}
               <div className="pt-4 border-t border-gray-200">

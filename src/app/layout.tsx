@@ -5,6 +5,7 @@ import { AuthProvider } from "../contexts/AuthContext";
 import { AdminAuthProvider } from "../contexts/AdminAuthContext";
 import { FavoritesProvider } from "../contexts/FavoritesContext";
 import { CartProvider } from '../contexts/CartContext';
+import { OrderProvider } from '../contexts/OrderContext';
 import { Toaster } from 'react-hot-toast';
 // import Script from "next/script";
 
@@ -57,33 +58,35 @@ export default function RootLayout({
         <AuthProvider>
           <AdminAuthProvider>
             <CartProvider>
-              <FavoritesProvider>
-                {children}
-                <Toaster 
-                  position="top-right"
-                  toastOptions={{
-                    duration: 4000,
-                    style: {
-                      background: '#363636',
-                      color: '#fff',
-                    },
-                    success: {
-                      duration: 3000,
-                      iconTheme: {
-                        primary: '#4ade80',
-                        secondary: '#fff',
-                      },
-                    },
-                    error: {
+              <OrderProvider>
+                <FavoritesProvider>
+                  {children}
+                  <Toaster 
+                    position="top-right"
+                    toastOptions={{
                       duration: 4000,
-                      iconTheme: {
-                        primary: '#ef4444',
-                        secondary: '#fff',
+                      style: {
+                        background: '#363636',
+                        color: '#fff',
                       },
-                    },
-                  }}
-                />
-              </FavoritesProvider>
+                      success: {
+                        duration: 3000,
+                        iconTheme: {
+                          primary: '#4ade80',
+                          secondary: '#fff',
+                        },
+                      },
+                      error: {
+                        duration: 4000,
+                        iconTheme: {
+                          primary: '#ef4444',
+                          secondary: '#fff',
+                        },
+                      },
+                    }}
+                  />
+                </FavoritesProvider>
+              </OrderProvider>
             </CartProvider>
           </AdminAuthProvider>
         </AuthProvider>

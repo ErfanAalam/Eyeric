@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { supabase } from '../../../../lib/supabaseClient';
+import Image from 'next/image';
 
 interface UploadPrescriptionModalProps {
   open: boolean;
@@ -152,9 +153,9 @@ const UploadPrescriptionModal: React.FC<UploadPrescriptionModalProps> = ({ open,
             onDragOver={handleDragOver}
           >
             <div className="flex gap-4 mb-2">
-              <img src="/jpg-icon.png" alt="JPG" className="w-10 h-10" />
-              <img src="/png-icon.png" alt="PNG" className="w-10 h-10" />
-              <img src="/gif-icon.png" alt="GIF" className="w-10 h-10" />
+              <Image height={40} width={40} src="/jpg-icon.png" alt="JPG" className="w-10 h-10" />
+              <Image height={40} width={40} src="/png-icon.png" alt="PNG" className="w-10 h-10" />
+              <Image height={40} width={40} src="/gif-icon.png" alt="GIF" className="w-10 h-10" />
             </div>
             <div className="text-gray-600 text-sm mb-1">Tap here to upload prescription image</div>
             <div className="text-xs text-gray-400">(Max. size: 5MB)</div>
