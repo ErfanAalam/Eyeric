@@ -124,6 +124,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
   const [bannerImage2, setBannerImage2] = useState<File | null>(null);
   const [images, setImages] = useState<{ url: string; display_order: number }[]>([]);
   const [newImages, setNewImages] = useState<File[]>([]);
+  const [newImageDisplayOrders, setNewImageDisplayOrders] = useState<number[]>([]);
   const [sizes, setSizes] = useState([]);
   const [frameMaterial, setFrameMaterial] = useState("");
   const [features, setFeatures] = useState("");
@@ -258,6 +259,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setBannerImage2Preview(editProduct.banner_image_2 || null);
       setImagePreviews((editProduct.images || []).map(img => img.url));
       setRemoveImages((editProduct.images || []).map(() => false));
+      // Set display orders for existing images
+      setNewImageDisplayOrders((editProduct.images || []).map(img => img.display_order || 0));
     }
   }, [editProduct]);
 
@@ -330,7 +333,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
           return null;
         }
         const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
-        return { url: urlData.publicUrl, display_order: existingImages.length + idx + 1 };
+        // Use custom display order or fallback to sequential
+        return { url: urlData.publicUrl, display_order: newImageDisplayOrders[idx] > 0 ? newImageDisplayOrders[idx] : existingImages.length + idx + 1 };
       }));
       
       if (uploadedImages.some(img => img === null)) return; // error already set
@@ -493,24 +497,25 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       bannerImage2Url = urlData2.publicUrl;
     }
 
-    // Upload product images
-    const imageUploads = await Promise.all(
-      newImages.map(async (file, idx) => {
-        const filePath = `products/${Date.now()}_${idx}_${file.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from("product-images")
-          .upload(filePath, file);
-        if (uploadError) {
-          setMessage(`Image upload failed for image ${idx + 1}`);
-          setLoading(false);
-          return null;
-        }
-        const { data: urlData } = supabase.storage
-          .from("product-images")
-          .getPublicUrl(filePath);
-        return { url: urlData.publicUrl, display_order: idx + 1 };
-      })
-    );
+          // Upload product images
+      const imageUploads = await Promise.all(
+        newImages.map(async (file, idx) => {
+          const filePath = `products/${Date.now()}_${idx}_${file.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from("product-images")
+            .upload(filePath, file);
+          if (uploadError) {
+            setMessage(`Image upload failed for image ${idx + 1}`);
+            setLoading(false);
+            return null;
+          }
+          const { data: urlData } = supabase.storage
+            .from("product-images")
+            .getPublicUrl(filePath);
+          // Use the custom display order instead of automatic
+          return { url: urlData.publicUrl, display_order: newImageDisplayOrders[idx] > 0 ? newImageDisplayOrders[idx] : idx + 1 };
+        })
+      );
     if (imageUploads.some((img) => img === null)) return; // error already set
 
     // Prepare features array
@@ -586,6 +591,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     setBannerImage2(null);
     setImages([]);
     setNewImages([]);
+    setNewImageDisplayOrders([]);
     setSizes([]);
     setFrameMaterial("");
     setFeatures("");
@@ -688,9 +694,14 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       if (replaceExisting) {
         // Replace existing images
         setNewImages(compressedFiles);
+        // Set display orders starting from 1
+        setNewImageDisplayOrders(compressedFiles.map((_, idx) => idx + 1));
       } else {
         // Add to existing images
         setNewImages(prev => [...prev, ...compressedFiles]);
+        // Add display orders for new images
+        const startOrder = newImageDisplayOrders.length + 1;
+        setNewImageDisplayOrders(prev => [...prev, ...compressedFiles.map((_, idx) => startOrder + idx)]);
       }
       
       // Update previews
@@ -719,6 +730,18 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
 
 
 
+  // Add function to handle display order changes
+  const handleDisplayOrderChange = (index: number, newOrder: number | string) => {
+    const updatedOrders = [...newImageDisplayOrders];
+    if (newOrder === '' || newOrder === 0) {
+      // Allow empty or 0 values for proper clearing
+      updatedOrders[index] = 0;
+    } else {
+      updatedOrders[index] = Number(newOrder);
+    }
+    setNewImageDisplayOrders(updatedOrders);
+  };
+
   // Remove image handler
   const handleRemoveImage = (imgIdx: number) => {
     const previewsCopy = [...imagePreviews];
@@ -733,6 +756,10 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       updatedImages.splice(imgIdx, 1);
       setImages(updatedImages);
     }
+    // Also remove from display orders
+    const updatedOrders = [...newImageDisplayOrders];
+    updatedOrders.splice(imgIdx, 1);
+    setNewImageDisplayOrders(updatedOrders);
   };
 
   return (
@@ -830,8 +857,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   {imagePreviews.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-2">
                       {imagePreviews.map((img, imgIdx) => (
-                        <div key={imgIdx} className="relative w-16 h-16 group">
-                          <Image height={64} width={64} src={img} alt={`Preview ${imgIdx}`} className="w-16 h-16 object-cover rounded border shadow" />
+                        <div key={imgIdx} className="relative w-20 h-20 group">
+                          <Image height={80} width={80} src={img} alt={`Preview ${imgIdx}`} className="w-20 h-20 object-cover rounded border shadow" />
                           <button 
                             type="button" 
                             onClick={() => handleRemoveImage(imgIdx)} 
@@ -841,6 +868,23 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                           </button>
                           <div className="absolute bottom-0 left-0 bg-white/80 rounded-full px-1 text-xs text-gray-600">
                             {imgIdx + 1}
+                          </div>
+                          {/* Display Order Input */}
+                          <div className="absolute -bottom-8 left-0 right-0">
+                            <input
+                              type="number"
+                              min="1"
+                              value={newImageDisplayOrders[imgIdx] || ''}
+                              onChange={(e) => handleDisplayOrderChange(imgIdx, e.target.value)}
+                              onBlur={(e) => {
+                                // Set default value if empty on blur
+                                if (e.target.value === '' || parseInt(e.target.value) < 1) {
+                                  handleDisplayOrderChange(imgIdx, imgIdx + 1);
+                                }
+                              }}
+                              className="w-full text-xs text-center border border-gray-300 rounded px-1 py-1"
+                              placeholder={`${imgIdx + 1}`}
+                            />
                           </div>
                         </div>
                       ))}

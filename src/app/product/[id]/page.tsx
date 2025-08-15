@@ -530,9 +530,14 @@ const ProductDetailPage = () => {
     if (newIndex !== previewIndex) {
       setPreviewIndex(newIndex);
       // Scroll to the new index smoothly
-      const container = document.querySelector('.overflow-x-auto') as HTMLDivElement;
+      const container = document.querySelector(
+        ".overflow-x-auto"
+      ) as HTMLDivElement;
       if (container) {
-        container.scrollTo({ left: newIndex * container.clientWidth, behavior: "smooth" });
+        container.scrollTo({
+          left: newIndex * container.clientWidth,
+          behavior: "smooth",
+        });
       }
     }
   };
@@ -541,9 +546,14 @@ const ProductDetailPage = () => {
     if (newIndex !== previewIndex) {
       setPreviewIndex(newIndex);
       // Scroll to the new index smoothly
-      const container = document.querySelector('.overflow-x-auto') as HTMLDivElement;
+      const container = document.querySelector(
+        ".overflow-x-auto"
+      ) as HTMLDivElement;
       if (container) {
-        container.scrollTo({ left: newIndex * container.clientWidth, behavior: "smooth" });
+        container.scrollTo({
+          left: newIndex * container.clientWidth,
+          behavior: "smooth",
+        });
       }
     }
   };
@@ -628,8 +638,6 @@ const ProductDetailPage = () => {
   const productImages = getProductImages();
   const BRAND_COLOR = "#2D6CDF";
 
-
-
   // Handler for selecting a lens type in Power modal
   const handlePowerLensTypeSelect = async (typeKey: string) => {
     setSelectedLensType(typeKey);
@@ -667,7 +675,7 @@ const ProductDetailPage = () => {
     if (!product || cartLoading) return;
     addToCart({ product, powerCategory: "frame only", quantity: 1 });
     toast.success("Frame added to cart successfully!");
-    router.push('/cart');
+    router.push("/cart");
   };
   const handleRemoveFromCart = () => {
     if (!product || cartLoading) return;
@@ -678,7 +686,7 @@ const ProductDetailPage = () => {
   const handleAddLensToCart = (lens: Lens) => {
     if (!product || cartLoading) return;
     addToCart({ product, lens, quantity: 1 });
-    router.push('/cart');
+    router.push("/cart");
     toast.success(`Added to cart with ${lens.title}!`);
   };
   const handleRemoveLensFromCart = (lens: Lens) => {
@@ -691,7 +699,7 @@ const ProductDetailPage = () => {
     if (!product || cartLoading) return;
     addToCart({ product, lens, powerCategory, quantity: 1 });
     toast.success(`Added to cart with ${lens.title} and ${powerCategory}!`);
-    router.push('/cart');
+    router.push("/cart");
   };
 
   return (
@@ -740,22 +748,22 @@ const ProductDetailPage = () => {
                 >
                   {productImages.length > 0 ? (
                     <>
-                                          <Image
-                      src={productImages[selectedImage]}
-                      alt={product.title}
-                      width={600}
-                      height={600}
-                      sizes="100vw"
-                      className="w-full h-full object-cover select-none"
-                      draggable={false}
-                      onClick={handleImageClick}
-                      style={{ cursor: "zoom-in" }}
-                      priority={selectedImage === 0}
-                      loading={selectedImage === 0 ? "eager" : "lazy"}
-                      placeholder="blur"
-                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
-                      decoding="async"
-                    />
+                      <Image
+                        src={productImages[selectedImage]}
+                        alt={product.title}
+                        width={600}
+                        height={600}
+                        sizes="100vw"
+                        className="w-full h-full object-cover select-none"
+                        draggable={false}
+                        onClick={handleImageClick}
+                        style={{ cursor: "zoom-in" }}
+                        priority={selectedImage === 0}
+                        loading={selectedImage === 0 ? "eager" : "lazy"}
+                        placeholder="blur"
+                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
+                        decoding="async"
+                      />
 
                       {/* Favorite Button */}
                       <button
@@ -805,22 +813,22 @@ const ProductDetailPage = () => {
               >
                 {productImages.length > 0 ? (
                   <>
-                                          <Image
-                        src={productImages[selectedImage]}
-                        alt={product.title}
-                        width={600}
-                        height={600}
-                        sizes="(min-width: 1024px) 600px, 100vw"
-                        className="w-full h-full object-cover select-none"
-                        draggable={false}
-                        onClick={handleImageClick}
-                        style={{ cursor: "zoom-in" }}
-                        priority={selectedImage === 0}
-                        loading={selectedImage === 0 ? "eager" : "lazy"}
-                        placeholder="blur"
-                        blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
-                        decoding="async"
-                      />
+                    <Image
+                      src={productImages[selectedImage]}
+                      alt={product.title}
+                      width={600}
+                      height={600}
+                      sizes="(min-width: 1024px) 600px, 100vw"
+                      className="w-full h-full object-cover select-none"
+                      draggable={false}
+                      onClick={handleImageClick}
+                      style={{ cursor: "zoom-in" }}
+                      priority={selectedImage === 0}
+                      loading={selectedImage === 0 ? "eager" : "lazy"}
+                      placeholder="blur"
+                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
+                      decoding="async"
+                    />
 
                     {/* Favorite Button */}
                     <button
@@ -912,10 +920,10 @@ const ProductDetailPage = () => {
             {/* Title and Badges */}
             <div className="space-y-4">
               <div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-medium text-gray-900 leading-tight tracking-tight">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl capitalize font-medium text-gray-900 leading-tight tracking-tight">
                   {product.title}
                 </h1>
-                <div className="flex items-center gap-2 mt-3">
+                {/* <div className="flex items-center gap-2 mt-3">
                   {product.bestseller && (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       Best Seller
@@ -931,14 +939,14 @@ const ProductDetailPage = () => {
                       {getDiscountPercentage()}% OFF
                     </span>
                   )}
-                </div>
+                </div> */}
               </div>
             </div>
 
             {/* Price */}
             <div className="border-b border-gray-200 pb-6">
-              <div className="flex items-baseline gap-4">
-                <span className="text-3xl font-light text-gray-900">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-semibold text-gray-900">
                   ₹{getCurrentPrice()}
                 </span>
                 {product.discounted_price && (
@@ -946,9 +954,12 @@ const ProductDetailPage = () => {
                     <span className="text-xl text-gray-500 line-through font-light">
                       ₹{product.original_price}
                     </span>
-                    <span className="text-sm font-medium text-green-600">
-                      Save ₹{product.original_price - product.discounted_price}
-                    </span>
+
+                    {product.discounted_price && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        (9{getDiscountPercentage()}% OFF)
+                      </span>
+                    )}
                   </>
                 )}
               </div>
@@ -958,19 +969,19 @@ const ProductDetailPage = () => {
             {product.lens_width ||
             product.bridge_width ||
             product.temple_length ? (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-gray-900">
+              <div className="space-y-4 items-center">
+                {/* <h3 className="text-lg font-medium text-gray-900">
                   Frame Details
-                </h3>
+                </h3> */}
                 {product.sizes && product.sizes.length > 0 && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 items-center justify-center">
                     {product.sizes.map((size, index) => (
-                      <span
+                      <h3
                         key={index}
-                        className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-gray-100 text-gray-800"
+                        className="text-lg font-medium text-gray-900 text-center"
                       >
-                        {size}
-                      </span>
+                        SIZE : {size}
+                      </h3>
                     ))}
                   </div>
                 )}
@@ -1144,13 +1155,13 @@ const ProductDetailPage = () => {
           </div>
 
           {/* Product Description Dropdown */}
-          <div className="col-span-full mt-12">
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className=" mt-12">
+            <div className="border-0 border-gray-200 overflow-hidden">
               <button
                 onClick={() => toggleSection("description")}
                 className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors bg-white"
               >
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-2xl text-gray-900 ">
                   Product Details
                 </span>
                 <span
@@ -1162,34 +1173,40 @@ const ProductDetailPage = () => {
                 </span>
               </button>
               {expandedSections.description && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <div className="px-6 py-4 bg-white border-t border-gray-200">
                   {/* Frame Features Section */}
                   <div className="mb-6">
-                    <h4 className="font-medium text-gray-900 mb-3">
-                      Frame Features
+                    <h4 className="font-bold text-xl text-gray-900 mb-3">
+                      Frame Features :
                     </h4>
-                    <div className="space-y-2 text-sm">
+                    <div className=" text-sm">
                       {product.sizes && product.sizes.length > 0 && (
-                        <div className="flex justify-between py-1">
-                          <span className="text-gray-600">Frame Size:</span>
-                          <span className="text-gray-900 font-medium">
+                        <div className="flex gap-2 py-1">
+                          <span className="text-gray-900 font-medium text-lg">
+                            Frame Size:
+                          </span>
+                          <span className="text-gray-900 font-medium text-lg">
                             {product.sizes.join(", ")}
                           </span>
                         </div>
                       )}
                       {product.gender_category &&
                         product.gender_category.length > 0 && (
-                          <div className="flex justify-between py-1">
-                            <span className="text-gray-600">Gender:</span>
-                            <span className="text-gray-900 font-medium capitalize">
+                          <div className="flex gap-2 py-1">
+                            <span className="text-gray-900 font-medium text-lg">
+                              Gender:
+                            </span>
+                            <span className="text-gray-900 font-medium capitalize text-lg">
                               {product.gender_category.join(", ")}
                             </span>
                           </div>
                         )}
                       {product.frame_material && (
-                        <div className="flex justify-between py-1">
-                          <span className="text-gray-600">Frame Material:</span>
-                          <span className="text-gray-900 font-medium">
+                        <div className="flex gap-2 py-1">
+                          <span className="text-gray-900 font-medium text-lg">
+                            Frame Material:
+                          </span>
+                          <span className="text-gray-900 font-medium text-lg">
                             {product.frame_material}
                           </span>
                         </div>
@@ -1198,48 +1215,56 @@ const ProductDetailPage = () => {
                       {product.bridge_width &&
                         product.temple_length &&
                         product.lens_width && (
-                          <div className="flex justify-between py-1">
-                            <span className="text-gray-600">
+                          <div className="flex gap-2 py-1">
+                            <span className="text-gray-900 font-medium text-lg">
                               Frame Dimensions:
                             </span>
-                            <span className="text-gray-900 font-medium">
+                            <span className="text-gray-900 font-medium text-lg">
                               {product.lens_width}-{product.bridge_width}-
-                              {product.temple_length}(Lens – Bridge – Temple)
+                              {product.temple_length}
                             </span>
                           </div>
                         )}
                       {/* {product.temple_length && (
-                        <div className="flex justify-between py-1">
-                          <span className="text-gray-600">Temple Length:</span>
+                        <div className="flex gap-2 py-1">
+                          <span className="text-gray-900 font-medium">Temple Length:</span>
                           <span className="text-gray-900 font-medium">
                             {product.temple_length}
                           </span>
                         </div>
                       )}
                       {product.lens_width && (
-                        <div className="flex justify-between py-1">
-                          <span className="text-gray-600">Lens Width:</span>
+                        <div className="flex gap-2 py-1">
+                          <span className="text-gray-900 font-medium">Lens Width:</span>
                           <span className="text-gray-900 font-medium">
                             {product.lens_width}
                           </span>
                         </div>
                       )} */}
-                      <div className="flex justify-between py-1">
-                        <span className="text-gray-600">Age Group:</span>
-                        <span className="text-gray-900 font-medium">Adult</span>
+                      <div className="flex gap-2 py-1">
+                        <span className="text-gray-900 font-medium text-lg">
+                          Age Group:
+                        </span>
+                        <span className="text-gray-900 font-medium text-lg">
+                          Adult
+                        </span>
                       </div>
                       {product.frame_colour && (
-                        <div className="flex justify-between py-1">
-                          <span className="text-gray-600">Frame Colour:</span>
-                          <span className="text-gray-900 font-medium">
+                        <div className="flex gap-2 py-1">
+                          <span className="text-gray-900 font-medium text-lg">
+                            Frame Colour:
+                          </span>
+                          <span className="text-gray-900 font-medium text-lg">
                             {product.frame_colour}
                           </span>
                         </div>
                       )}
                       {product.temple_colour && (
-                        <div className="flex justify-between py-1">
-                          <span className="text-gray-600">Temple Colour:</span>
-                          <span className="text-gray-900 font-medium">
+                        <div className="flex gap-2 py-1">
+                          <span className="text-gray-900 font-medium text-lg">
+                            Temple Colour:
+                          </span>
+                          <span className="text-gray-900 font-medium text-lg">
                             {product.temple_colour}
                           </span>
                         </div>
@@ -1249,22 +1274,37 @@ const ProductDetailPage = () => {
 
                   {/* Style Section */}
                   <div className="mb-6">
-                    <h4 className="font-medium text-gray-900 mb-3">
+                    <h4 className="font-bold text-xl text-gray-900 mb-3">
+                      Lens Featues
+                    </h4>
+                    {product.type_category.includes("sunglasses") ||
+                    product.type_category.includes("powered sunglasses") ? (
+                      <ul className="list-disc list-inside text-gray-900 font-medium space-y-2 text-lg capitalize leading-relaxed text-medium">
+                      {product.features.map((feature, index) => (
+                        <li key={index}>{feature}</li>
+                      ))}
+                      <li>UV 400 Protection</li>
+                      <li>Scratch Resistance</li>
+                      <li>High Quality finish</li>
+                      <li>7 days replacement Warranty against manufacturing defects</li>
+                      <li>6 months warranty</li>
+                      <li>What’s Included with Your Purchase</li>
+                      <li>✓ 1 Premium Eyeric Eyewear Case – For safe & stylish storage</li>
+                      <li>✓ 1 Eyeric Microfiber Cleaning Cloth – To keep your lenses spotless</li>
+                      <li>✓ 1 Eyeric Lens Cleaning Spray – For crystal-clear vision</li>
+                      <li>All accessories are provided absolutely free with every frame.</li>
+                    </ul>
+                    ) : null}
+                    <br />
+
+                    <h4 className="font-bold text-xl text-gray-900 mb-3">
                       Description
                     </h4>
-                    <p className="text-gray-700 leading-relaxed text-sm">
+
+                    <p className="text-gray-900 font-medium leading-relaxed text-medium">
                       {product.description}
                     </p>
                   </div>
-
-                  {/* SKU Section */}
-                  {/* {product.product_serial_number && (
-                    <div className="pt-4 border-t border-gray-200">
-                      <span className="text-gray-600 text-sm">
-                        SKU: {product.product_serial_number}
-                      </span>
-                    </div>
-                  )} */}
                 </div>
               )}
             </div>
@@ -1288,19 +1328,19 @@ const ProductDetailPage = () => {
                   </span>
                 </button>
                 {expandedSections.easyReturn && (
-                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                    <p className="text-gray-700 leading-relaxed text-sm mb-4">
-                      YourSpex provides exchange or refunds only on products
-                      that preserve their original condition, tags, and
-                      packaging and no request for return or exchange will not
-                      be entertained if the original tag is found to be missing.
+                  <div className="px-4 py-4 bg-gray-50 border-t border-gray-200">
+                    <p className="text-gray-700 leading-relaxed text-medium text-lg mb-4">
+                      Eyeric provides exchange or refunds only on products that
+                      are returned in their original condition, with all tags
+                      and packaging intact. No request for return or exchange
+                      will be accepted if the original tag is missing. &nbsp;
+                      <button
+                        onClick={() => router.push("/privacy")}
+                        className="text-gray-900 underline hover:text-gray-700 transition-colors text-sm font-medium"
+                      >
+                        Read More
+                      </button>
                     </p>
-                    <button
-                      onClick={() => router.push("/privacy")}
-                      className="text-gray-900 underline hover:text-gray-700 transition-colors text-sm font-medium"
-                    >
-                      Read More
-                    </button>
                     {/* {product.product_serial_number && (
                       <div className="mt-4 pt-4 border-t border-gray-200">
                         <span className="text-gray-600 text-sm">
@@ -1438,15 +1478,22 @@ const ProductDetailPage = () => {
                 const scrollLeft = container.scrollLeft;
                 const containerWidth = container.clientWidth;
                 const newIndex = Math.round(scrollLeft / containerWidth);
-                
+
                 // Only update if the index is valid and different
-                if (newIndex >= 0 && newIndex < productImages.length && newIndex !== previewIndex) {
+                if (
+                  newIndex >= 0 &&
+                  newIndex < productImages.length &&
+                  newIndex !== previewIndex
+                ) {
                   setPreviewIndex(newIndex);
                 }
               }}
             >
               {productImages.map((src, idx) => (
-                <div key={idx} className="relative min-w-full h-full flex items-center justify-center p-4 md:p-8">
+                <div
+                  key={idx}
+                  className="relative min-w-full h-full flex items-center justify-center p-4 md:p-8"
+                >
                   <Image
                     src={src}
                     alt={`${product.title} ${idx + 1}`}
@@ -1454,7 +1501,11 @@ const ProductDetailPage = () => {
                     sizes="100vw"
                     className="object-contain max-h-full max-w-full transition-transform duration-300"
                     draggable={false}
-                    priority={idx === previewIndex || idx === previewIndex - 1 || idx === previewIndex + 1}
+                    priority={
+                      idx === previewIndex ||
+                      idx === previewIndex - 1 ||
+                      idx === previewIndex + 1
+                    }
                     placeholder="blur"
                     blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
                   />
