@@ -337,6 +337,7 @@ const Navbar: React.FC = () => {
           overscroll-behavior: contain;
           scroll-behavior: smooth;
           height: 100vh;
+          padding-bottom: 80px; /* Add padding at bottom for better scrolling */
           padding-top: 0rem; /* Account for mobile header */
         }
         
@@ -860,7 +861,7 @@ const Navbar: React.FC = () => {
         <div className={`md:hidden glass-effect dropdown-shadow mobile-menu ${isMobileMenuOpen ? 'open' : ''}`}>
           <div className="mobile-menu-content">
             {/* Close Button */}
-            <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200/50">
+            <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200/50 sticky top-0 bg-white z-10">
               <div className="text-xl font-bold text-primary">Eyeric</div>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -870,7 +871,7 @@ const Navbar: React.FC = () => {
               </button>
             </div>
             
-            <div className="px-4 py-4 space-y-6">
+            <div className="px-4 py-4 space-y-6 pb-24">
               {/* Mobile Search */}
               <form onSubmit={handleSearchSubmit} className="relative">
                 <input

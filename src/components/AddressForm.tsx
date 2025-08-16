@@ -57,28 +57,29 @@ const AddressForm: React.FC<AddressFormProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-white bg-opacity-50 flex justify-center z-50 ">
-      <div className="bg-white rounded-lg shadow-xl w-full  overflow-y-auto">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <MapPin className="w-6 h-6 text-primary" />
-            <h2 className="text-xl font-semibold text-gray-900">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
               {address ? 'Edit Address' : 'Add New Address'}
             </h2>
           </div>
           <button
             onClick={onCancel}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Address Type Selection */}
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
             {[
               { value: 'home', icon: Home, label: 'Home' },
               { value: 'office', icon: Building2, label: 'Office' },
@@ -86,14 +87,14 @@ const AddressForm: React.FC<AddressFormProps> = ({
             ].map(({ value, icon: Icon, label }) => (
               <label
                 key={value}
-                className={`flex items-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                className={`flex items-center gap-2 p-2 sm:p-3 border-2 rounded-lg cursor-pointer transition-all flex-1 min-w-[100px] ${
                   formData.type === value
                     ? 'border-primary bg-primary/5 text-primary'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <Icon className="w-5 h-5" />
-                <span className="font-medium">{label}</span>
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="font-medium text-sm sm:text-base">{label}</span>
                 <input
                   type="radio"
                   name="type"
@@ -109,7 +110,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
           {/* Name and Phone */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                 Full Name *
               </label>
               <input
@@ -118,12 +119,12 @@ const AddressForm: React.FC<AddressFormProps> = ({
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter your full name"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                 Phone Number *
               </label>
               <input
@@ -132,7 +133,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter your phone number"
               />
             </div>
@@ -140,7 +141,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
           {/* Address Lines */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
               Address Line 1 *
             </label>
             <input
@@ -149,13 +150,13 @@ const AddressForm: React.FC<AddressFormProps> = ({
               value={formData.addressLine1}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="House/Flat number, Street name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
               Address Line 2 (Optional)
             </label>
             <input
@@ -163,15 +164,15 @@ const AddressForm: React.FC<AddressFormProps> = ({
               name="addressLine2"
               value={formData.addressLine2}
               onChange={handleChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
               placeholder="Apartment, suite, etc."
             />
           </div>
 
           {/* City, State, Pincode */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                 City *
               </label>
               <input
@@ -180,12 +181,12 @@ const AddressForm: React.FC<AddressFormProps> = ({
                 value={formData.city}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter city"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                 State *
               </label>
               <input
@@ -194,12 +195,12 @@ const AddressForm: React.FC<AddressFormProps> = ({
                 value={formData.state}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter state"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="sm:col-span-2 md:col-span-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                 Pincode *
               </label>
               <input
@@ -208,7 +209,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
                 value={formData.pincode}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="Enter pincode"
               />
             </div>
@@ -216,7 +217,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
 
           {/* Country */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1 sm:mb-2">
               Country *
             </label>
             <select
@@ -224,7 +225,7 @@ const AddressForm: React.FC<AddressFormProps> = ({
               value={formData.country}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
             >
               <option value="India">India</option>
               <option value="United States">United States</option>
@@ -235,18 +236,18 @@ const AddressForm: React.FC<AddressFormProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2 sm:pt-4">
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              className="px-4 sm:px-6 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors order-2 sm:order-1 sm:flex-1"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-6 py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 sm:px-6 py-2 sm:py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed order-1 sm:order-2 sm:flex-1"
             >
               {isLoading ? 'Saving...' : address ? 'Update Address' : 'Save Address'}
             </button>

@@ -15,9 +15,13 @@ import {
 //   Calendar,
 //   Users
 } from 'lucide-react';
+import Navbar from '../../../components/Navbar';
+import Footer from '../../../components/Footer';
 
 const ContactPage = () => {
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
@@ -183,6 +187,8 @@ const ContactPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
+    </div>
     </div>
   );
 };

@@ -15,9 +15,13 @@ import {
 //   Phone,
   Building2
 } from 'lucide-react';
+import Navbar from '../../../components/Navbar';
+import Footer from '../../../components/Footer';
 
 const ShippingPage = () => {
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-orange-600 to-red-600 text-white">
@@ -40,7 +44,7 @@ const ShippingPage = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
+        <div className="">
           {/* Introduction */}
           <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 mb-8">
             <p className="text-gray-700 leading-relaxed">
@@ -191,8 +195,10 @@ const ShippingPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
+    </div>
     </div>
   );
 };
 
-export default ShippingPage; 
+  export default ShippingPage; 

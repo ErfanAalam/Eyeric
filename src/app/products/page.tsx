@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { ChevronDown, Heart, ShoppingBag, SlidersHorizontal, Filter } from "lucide-react";
+import { ChevronDown, Heart, SlidersHorizontal, Filter } from "lucide-react";
 import { Search } from "lucide-react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
@@ -347,9 +347,9 @@ const ProductsContent = () => {
                         )}
                         <span className="text-text font-bold text-lg">₹{product.discounted_price || product.original_price}</span>
                       </div>
-                      <button className="mt-auto flex items-center justify-center gap-2 bg-button hover:bg-button/80 text-white rounded-full py-2 px-4 md:py-4 md:px-6 font-semibold shadow transition-all text-sm md:text-base" onClick={() => handleProductClick(product)}>
+                      {/* <button className="mt-auto flex items-center justify-center gap-2 bg-button hover:bg-button/80 text-white rounded-full py-2 px-4 md:py-4 md:px-6 font-semibold shadow transition-all text-sm md:text-base" onClick={() => handleProductClick(product)}>
                         <ShoppingBag className="w-4 h-4" /> Buy Now
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 ))}

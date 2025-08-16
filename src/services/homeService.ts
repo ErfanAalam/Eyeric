@@ -120,3 +120,17 @@ export const getLensesByCategory = async (lens_category_id: number) => {
   }
   return data;
 }; 
+
+// Fetch special product categories
+export const getSpecialProductCategories = async () => {
+  const { data, error } = await supabase
+    .from('special_product_categories')
+    .select('*')
+    .order('display_order', { ascending: true })
+    .order('id', { ascending: true });
+  if (error) {
+    console.error('Error fetching special product categories:', error);
+    return [];
+  }
+  return data;
+}; 

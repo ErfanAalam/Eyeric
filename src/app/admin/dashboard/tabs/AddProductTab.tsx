@@ -24,6 +24,21 @@ import imageCompression from 'browser-image-compression';
 
 
 
+// Helper function to ensure precise number conversion
+const toPreciseNumber = (value: string | number | null | undefined): number | null => {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'string' && value.trim() === '') return null;
+  
+  const num = Number(value);
+  if (isNaN(num)) return null;
+  
+  // For prices, round to 2 decimal places
+  if (num % 1 !== 0) {
+    return Math.round(num * 100) / 100;
+  }
+  return num;
+};
+
 // Helper function to shift display orders for a specific category
 const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
   const { data, error: fetchError } = await supabase
@@ -254,13 +269,28 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setTempleLength(editProduct.temple_length?.toString() || "");
       setLensCategoryId(editProduct.lens_category_id?.toString() || "");
       setIsActive(editProduct.is_active !== false); // Default to true if not set
-      // TODO: handle special categories and coupons if needed
       setBannerImage1Preview(editProduct.banner_image_1 || null);
       setBannerImage2Preview(editProduct.banner_image_2 || null);
       setImagePreviews((editProduct.images || []).map(img => img.url));
       setRemoveImages((editProduct.images || []).map(() => false));
       // Set display orders for existing images
       setNewImageDisplayOrders((editProduct.images || []).map(img => img.display_order || 0));
+      
+      // Fetch coupons for this product
+      if (editProduct.id) {
+        const fetchProductCoupons = async () => {
+          const { data: productCoupons } = await supabase
+            .from("product_coupons")
+            .select("coupon_id")
+            .eq("product_id", editProduct.id);
+          
+          if (productCoupons && productCoupons.length > 0) {
+            const couponIds = productCoupons.map(pc => pc.coupon_id);
+            setSelectedCoupons(couponIds);
+          }
+        };
+        fetchProductCoupons();
+      }
     }
   }, [editProduct]);
 
@@ -268,6 +298,17 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+    // Validate discounted price
+    if (discountedPrice && originalPrice) {
+      const original = toPreciseNumber(originalPrice);
+      const discounted = toPreciseNumber(discountedPrice);
+      if (original && discounted && discounted >= original) {
+        setMessage("Discounted price must be less than original price");
+        setLoading(false);
+        return;
+      }
+    }
 
     if (editProduct && editProduct.id) {
       // --- UPDATE LOGIC ---
@@ -347,8 +388,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       const updateObj: Partial<Product> = {
         title,
         description,
-        original_price: parseFloat(originalPrice),
-        discounted_price: discountedPrice ? parseFloat(discountedPrice) : null,
+        original_price: toPreciseNumber(originalPrice),
+        discounted_price: toPreciseNumber(discountedPrice),
         bestseller,
         latest_trend: latestTrend,
         banner_image_1: bannerImage1Url,
@@ -363,21 +404,45 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         is_lens_used: isLensUsed,
         quantity: quantity ? parseInt(quantity, 10) : 0,
         style_category: styleCategory,
-        lens_width: lensWidth ? parseFloat(lensWidth) : null,
-        bridge_width: bridgeWidth ? parseFloat(bridgeWidth) : null,
-        temple_length: templeLength ? parseFloat(templeLength) : null,
+        lens_width: toPreciseNumber(lensWidth),
+        bridge_width: toPreciseNumber(bridgeWidth),
+        temple_length: toPreciseNumber(templeLength),
         lens_category_id: lensCategoryId,
         is_active: isActive,
         product_serial_number: productSerialNumber,
         frame_colour: frameColour,
         temple_colour: templeColour,
       };
+      
+      // Debug logging
+      console.log('Update values:', {
+        originalPrice: toPreciseNumber(originalPrice),
+        discountedPrice: toPreciseNumber(discountedPrice),
+        lensWidth: toPreciseNumber(lensWidth),
+        bridgeWidth: toPreciseNumber(bridgeWidth),
+        templeLength: toPreciseNumber(templeLength)
+      });
       const { error } = await supabase.from("products").update(updateObj).eq("id", editProduct.id);
       if (error) {
         setMessage("Failed to update product");
         setLoading(false);
         return;
       }
+
+      // Update product coupons
+      // First, delete existing coupon associations
+      await supabase.from("product_coupons").delete().eq("product_id", editProduct.id);
+      
+      // Then add new coupon associations
+      if (selectedCoupons.length > 0) {
+        const couponInserts = selectedCoupons.map(couponId => ({
+          product_id: editProduct.id,
+          coupon_id: couponId
+        }));
+        
+        await supabase.from("product_coupons").insert(couponInserts);
+      }
+      
       setMessage("Product updated successfully!");
       if (onFinishEdit) onFinishEdit();
       setLoading(false);
@@ -531,8 +596,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     const { data: inserted, error } = await supabase.from("products").insert({
       title,
       description,
-      original_price: parseFloat(originalPrice),
-      discounted_price: discountedPrice ? parseFloat(discountedPrice) : null,
+      original_price: toPreciseNumber(originalPrice),
+      discounted_price: toPreciseNumber(discountedPrice),
       bestseller,
       latest_trend: latestTrend,
       banner_image_1: bannerImage1Url,
@@ -548,9 +613,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       type_category: selectedTypes,
       is_lens_used: isLensUsed,
       quantity: quantity ? parseInt(quantity, 10) : 0,
-      lens_width: lensWidth ? parseFloat(lensWidth) : null,
-      bridge_width: bridgeWidth ? parseFloat(bridgeWidth) : null,
-      temple_length: templeLength ? parseFloat(templeLength) : null,
+      lens_width: toPreciseNumber(lensWidth),
+      bridge_width: toPreciseNumber(bridgeWidth),
+      temple_length: toPreciseNumber(templeLength),
       lens_category_id: lensCategoryId,
       is_active: isActive,
       product_serial_number: productSerialNumber,
@@ -558,6 +623,15 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       temple_colour: templeColour,
       ...categoryDisplayOrders, // Spread all category display orders
     }).select();
+    
+    // Debug logging
+    console.log('Insert values:', {
+      originalPrice: toPreciseNumber(originalPrice),
+      discountedPrice: toPreciseNumber(discountedPrice),
+      lensWidth: toPreciseNumber(lensWidth),
+      bridgeWidth: toPreciseNumber(bridgeWidth),
+      templeLength: toPreciseNumber(templeLength)
+    });
 
     if (error) {
       setMessage("Failed to add product");
@@ -737,9 +811,32 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       // Allow empty or 0 values for proper clearing
       updatedOrders[index] = 0;
     } else {
-      updatedOrders[index] = Number(newOrder);
+      const cleanValue = newOrder.toString().replace(/[^0-9]/g, '');
+      updatedOrders[index] = cleanValue ? parseInt(cleanValue, 10) : 0;
     }
     setNewImageDisplayOrders(updatedOrders);
+  };
+
+  // Helper function to format price inputs
+  const handlePriceChange = (value: string, setter: (value: string) => void) => {
+    // Remove any non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^0-9.]/g, '');
+    // Ensure only one decimal point
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) return; // More than one decimal point
+    if (parts[1] && parts[1].length > 2) return; // More than 2 decimal places
+    setter(cleanValue);
+  };
+
+  // Helper function to format dimension inputs
+  const handleDimensionChange = (value: string, setter: (value: string) => void) => {
+    // Remove any non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^0-9.]/g, '');
+    // Ensure only one decimal point
+    const parts = cleanValue.split('.');
+    if (parts.length > 2) return; // More than one decimal point
+    if (parts[1] && parts[1].length > 1) return; // More than 1 decimal place for dimensions
+    setter(cleanValue);
   };
 
   // Remove image handler
@@ -872,8 +969,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                           {/* Display Order Input */}
                           <div className="absolute -bottom-8 left-0 right-0">
                             <input
-                              type="number"
-                              min="1"
+                              type="text"
                               value={newImageDisplayOrders[imgIdx] || ''}
                               onChange={(e) => handleDisplayOrderChange(imgIdx, e.target.value)}
                               onBlur={(e) => {
@@ -973,12 +1069,10 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   <DollarSign className="w-4 h-4" /> Original Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={originalPrice}
-                  onChange={(e) => setOriginalPrice(e.target.value)}
+                  onChange={(e) => handlePriceChange(e.target.value, setOriginalPrice)}
                   required
-                  min="0"
-                  step="0.01"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-300"
                   placeholder="0.00"
                 />
@@ -989,12 +1083,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   <DollarSign className="w-4 h-4" /> Discounted Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={discountedPrice}
-                  onChange={(e) => setDiscountedPrice(e.target.value)}
-                  required
-                  min="0"
-                  step="0.01"
+                  onChange={(e) => handlePriceChange(e.target.value, setDiscountedPrice)}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
                   placeholder="0.00"
                 />
@@ -1124,7 +1215,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                         />
                       </div>
                     )}
-                    {selectedTypes.includes("computerglasses") && (
+                    {selectedTypes.includes("computer glasses") && (
                       <div>
                         <label className="text-sm font-medium text-indigo-700 mb-2 block">Computer Glasses Display Order</label>
                         <input
@@ -1354,12 +1445,13 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   Quantity
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
+                  onChange={(e) => {
+                    const cleanValue = e.target.value.replace(/[^0-9]/g, '');
+                    setQuantity(cleanValue);
+                  }}
                   required
-                  min="0"
-                  step="1"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
                   placeholder="Enter quantity..."
                 />
@@ -1469,11 +1561,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   Lens Width (mm)
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={lensWidth}
-                  onChange={(e) => setLensWidth(e.target.value)}
-                  min="0"
-                  step="0.1"
+                  onChange={(e) => handleDimensionChange(e.target.value, setLensWidth)}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
                   placeholder="Lens width in mm"
                 />
@@ -1484,11 +1574,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   Bridge Width (mm)
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={bridgeWidth}
-                  onChange={(e) => setBridgeWidth(e.target.value)}
-                  min="0"
-                  step="0.1"
+                  onChange={(e) => handleDimensionChange(e.target.value, setBridgeWidth)}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
                   placeholder="Bridge width in mm"
                 />
@@ -1499,11 +1587,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   Temple Length (mm)
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={templeLength}
-                  onChange={(e) => setTempleLength(e.target.value)}
-                  min="0"
-                  step="0.1"
+                  onChange={(e) => handleDimensionChange(e.target.value, setTempleLength)}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
                   placeholder="Temple length in mm"
                 />

@@ -22,6 +22,7 @@ import {
   getSlides,
   getCategoryBanners,
   getShapeBanners,
+  getSpecialProductCategories,
 } from "../services/homeService";
 import { useHasMounted } from "../hooks/useHasMounted";
 import colors from "../constants/colors";
@@ -191,6 +192,160 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+// Special Product Categories Component
+interface SpecialProductCategory {
+  id: number;
+  name: string;
+  description?: string;
+  display_order?: number;
+  banner_image?: string;
+}
+
+const SpecialProductCategories = ({ categories }: { categories: SpecialProductCategory[] }) => {
+  const router = useRouter();
+
+  const handleCategoryClick = (category: SpecialProductCategory) => {
+    router.push(`/special-category/${category.id}?name=${encodeURIComponent(category.name)}`);
+  };
+
+  const scrollLeft = () => {
+    const container = document.getElementById('categories-scroll');
+    if (container) {
+      container.scrollBy({ left: -300, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    const container = document.getElementById('categories-scroll');
+    if (container) {
+      container.scrollBy({ left: 300, behavior: 'smooth' });
+    }
+  };
+
+  if (!categories || categories.length === 0) return null;
+
+  return (
+    <div className="py-20 px-4 bg-gradient-to-br from-slate-50 via-blue-50/30 to-white relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-teal-200/20 to-blue-300/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-300/20 rounded-full blur-3xl"></div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto relative z-10">
+        {/* Header Section */}
+        <div className="text-center mb-16">
+          {/* <div className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+            Trending Now
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+          </div> */}
+          
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-clip-text text-transparent mb-6">
+            <span className="block">WEAR THE TREND</span>
+          </h2>
+          
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            Discover our curated collection of trending eyewear styles that define modern fashion
+          </p>
+        </div>
+
+        {/* Categories Carousel Section */}
+        <div className="relative">
+          {/* Navigation Arrows */}
+          <button 
+            onClick={scrollLeft}
+            className="absolute left-4 hidden md:block top-1/2 transform -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm rounded-full p-4 hover:bg-white transition-all duration-300 shadow-xl hover:shadow-2xl border border-gray-200 hover:scale-110 group"
+          >
+            <svg className="w-6 h-6 text-gray-600 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <button 
+            onClick={scrollRight}
+            className="absolute right-4 hidden md:block top-1/2 transform -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm rounded-full p-4 hover:bg-white transition-all duration-300 shadow-xl hover:shadow-2xl border border-gray-200 hover:scale-110 group"
+          >
+            <svg className="w-6 h-6 text-gray-600 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+
+          {/* Container for perfect card visibility */}
+          <div className="w-full lg:w-[1080px] xl:w-[1130px] mx-auto">
+            {/* Horizontal Scrollable Categories */}
+            <div 
+              id="categories-scroll"
+              className="overflow-x-auto pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            >
+              <div className="flex space-x-6 min-w-min px-2">
+                {categories.map((category, index) => (
+                  <div
+                    key={category.id}
+                    onClick={() => handleCategoryClick(category)}
+                    className="group cursor-pointer transition-all duration-500 transform hover:-translate-y-3 flex-none w-[200px] sm:w-[220px] lg:w-[240px] xl:w-[260px]"
+                    style={{
+                      animationDelay: `${index * 100}ms`
+                    }}
+                  >
+                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl overflow-hidden border border-white/50 relative group-hover:bg-white transition-all duration-500">
+                      {/* Category Image */}
+                      <div className="aspect-square w-full bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
+                        {category.banner_image ? (
+                          <Image
+                            width={260}
+                            height={260}
+                            src={category.banner_image}
+                            alt={category.name}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            quality={90}
+                            sizes="(max-width: 640px) 200px, (max-width: 1024px) 240px, 260px"
+                            placeholder="blur"
+                            blurDataURL="/placeholder.png"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            <span className="text-4xl sm:text-5xl">👓</span>
+                          </div>
+                        )}
+                        
+                        {/* Overlay gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      </div>
+                      
+                      {/* Category Info */}
+                      <div className="p-3 sm:p-4 lg:p-5 text-center bg-white/90 backdrop-blur-sm">
+                        <h3 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 mb-2 sm:mb-3 lg:mb-4 capitalize group-hover:text-teal-600 transition-colors duration-300">
+                          {category.name}
+                        </h3>
+                        <button className="w-full bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-xs sm:text-sm font-semibold py-2 sm:py-2.5 lg:py-3 px-4 sm:px-5 lg:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group-hover:shadow-teal-200/50">
+                          Explore
+                        </button>
+                      </div>
+                      
+                      {/* Hover effect border */}
+                      <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-teal-300/30 transition-all duration-500"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Bottom decorative element */}
+        <div className="text-center mt-12">
+          <div className="inline-flex items-center gap-2 text-gray-500 text-sm">
+            <div className="w-1 h-1 bg-teal-400 rounded-full"></div>
+            <span>Scroll to explore more styles</span>
+            <div className="w-1 h-1 bg-teal-400 rounded-full"></div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -437,7 +592,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-2 min-h-[3.5rem]">
+                    <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-3 min-h-[3.5rem]">
                       {item.title}
                     </h3>
                     {item.discounted_price && (
@@ -468,12 +623,12 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                           </>
                         )}
                       </div>
-                      <button
+                      {/* <button
                         className="bg-button text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
                         onClick={() => handleProductClick(item)}
                       >
                         Buy Now
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 </div>
@@ -578,7 +733,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-2 min-h-[3.5rem]">
+                    <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-3 min-h-[3.5rem]">
                       {item.title}
                     </h3>
                     {item.discounted_price && (
@@ -605,12 +760,12 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                           </>
                         )}
                       </div>
-                      <button
+                      {/* <button
                         className="bg-button text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
                         onClick={() => handleProductClick(item)}
                       >
                         Buy Now
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 </div>
@@ -909,20 +1064,23 @@ export default function Home() {
     CategoryBanner[]
   >([]);
   const [shapeBanners, setShapeBanners] = React.useState<ShapeBanner[]>([]);
+  const [specialProductCategories, setSpecialProductCategories] = React.useState<SpecialProductCategory[]>([]);
 
   React.useEffect(() => {
     const fetchAll = async () => {
-      const [productsData, slidesData, categoryBannersData, shapeBannersData] =
+      const [productsData, slidesData, categoryBannersData, shapeBannersData, specialCategoriesData] =
         await Promise.all([
           getProducts(),
           getSlides(),
           getCategoryBanners(),
           getShapeBanners(),
+          getSpecialProductCategories(),
         ]);
       setProducts(productsData as unknown as Product[]);
       setSlides(slidesData);
       setCategoryBanners(categoryBannersData);
       setShapeBanners(shapeBannersData);
+      setSpecialProductCategories(specialCategoriesData);
     };
     fetchAll();
   }, []);
@@ -934,6 +1092,7 @@ export default function Home() {
       <Navbar />
       {/* <WelcomeSection /> */}
       <HeroSlider slides={slides} />
+      <SpecialProductCategories categories={specialProductCategories} />
       <CategoryTabs products={products} categoryBanners={categoryBanners} />
       <VisionCareSection />
       <BestSellers products={products} />

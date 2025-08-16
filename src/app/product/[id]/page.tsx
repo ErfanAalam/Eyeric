@@ -59,6 +59,20 @@ interface Product {
   product_serial_number?: string;
   frame_colour?: string;
   temple_colour?: string;
+  coupons?: Coupon[]; // Added for coupon functionality
+}
+
+// Define Coupon interface
+interface Coupon {
+  id: string;
+  code: string;
+  discount_type: string;
+  discount_value: number;
+  min_cart_value?: number;
+  start_date?: string;
+  end_date?: string;
+  is_active: boolean;
+  description?: string;
 }
 
 // Define Lens type for modal
@@ -128,12 +142,15 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
 
   const [showMagnifier, setShowMagnifier] = useState(false);
-  const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0 });
+  const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0, relativeX: 0, relativeY: 0 });
   const [showPreview, setShowPreview] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
 
   const [showSwipeHint, setShowSwipeHint] = useState(false);
+  const [showMobileSwipeHint, setShowMobileSwipeHint] = useState(false);
   const imageContainerRef = React.useRef<HTMLDivElement>(null);
+  const previewScrollContainerRef = React.useRef<HTMLDivElement>(null);
+  const previewModalRef = React.useRef<HTMLDivElement>(null);
   const [showLensModal, setShowLensModal] = useState(false);
   const [lenses, setLenses] = useState<Lens[]>([]);
   const [lensesLoading, setLensesLoading] = useState(false);
@@ -357,7 +374,26 @@ const ProductDetailPage = () => {
           return;
         }
 
-        setProduct(data as Product);
+        // Fetch coupons associated with this product
+        const { data: productCoupons } = await supabase
+          .from("product_coupons")
+          .select("coupon_id")
+          .eq("product_id", params.id);
+        
+        let coupons = [];
+        if (productCoupons && productCoupons.length > 0) {
+          const couponIds = productCoupons.map(pc => pc.coupon_id);
+          const { data: couponsData } = await supabase
+            .from("coupons")
+            .select("id, code, discount_type, discount_value, min_cart_value, start_date, end_date, is_active, description")
+            .in("id", couponIds)
+            .eq("is_active", true);
+          
+          coupons = couponsData || [];
+        }
+
+        // Add coupons to the product object
+        setProduct({...data, coupons} as Product);
       } catch (error) {
         console.error("Error fetching product:", error);
         setError("Failed to load product");
@@ -500,14 +536,31 @@ const ProductDetailPage = () => {
     setShowPowerModal(true);
   };
 
-  // Magnifier event handlers
+  // Enhanced Magnifier event handlers
   const handleMouseEnter = () => setShowMagnifier(true);
-  const handleMouseLeave = () => setShowMagnifier(false);
+  const handleMouseLeave = () => {
+    // Add a small delay to prevent flickering when moving between elements
+    setTimeout(() => setShowMagnifier(false), 100);
+  };
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    const { left, top } = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - left;
-    const y = e.clientY - top;
-    setMagnifierPosition({ x, y });
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+    
+    // Calculate position with bounds checking
+    const x = Math.max(0, Math.min(e.clientX - left, width));
+    const y = Math.max(0, Math.min(e.clientY - top, height));
+    
+    // Calculate relative position (0 to 1)
+    const relativeX = x / width;
+    const relativeY = y / height;
+    
+    // Use relative position to ensure we're showing the correct part of the image
+    // This helps ensure the magnifier shows exactly what's under the cursor
+    setMagnifierPosition({ 
+      x: x, 
+      y: y,
+      relativeX: relativeX,
+      relativeY: relativeY
+    });
   };
 
   // Preview modal handlers
@@ -529,15 +582,15 @@ const ProductDetailPage = () => {
     const newIndex = Math.max(0, previewIndex - 1);
     if (newIndex !== previewIndex) {
       setPreviewIndex(newIndex);
-      // Scroll to the new index smoothly
-      const container = document.querySelector(
-        ".overflow-x-auto"
-      ) as HTMLDivElement;
-      if (container) {
-        container.scrollTo({
-          left: newIndex * container.clientWidth,
+      // Scroll to the new index smoothly using ref
+      if (previewScrollContainerRef.current) {
+        console.log('Scrolling left to index:', newIndex);
+        previewScrollContainerRef.current.scrollTo({
+          left: newIndex * previewScrollContainerRef.current.clientWidth,
           behavior: "smooth",
         });
+      } else {
+        console.log('previewScrollContainerRef.current is null');
       }
     }
   };
@@ -545,15 +598,15 @@ const ProductDetailPage = () => {
     const newIndex = Math.min(productImages.length - 1, previewIndex + 1);
     if (newIndex !== previewIndex) {
       setPreviewIndex(newIndex);
-      // Scroll to the new index smoothly
-      const container = document.querySelector(
-        ".overflow-x-auto"
-      ) as HTMLDivElement;
-      if (container) {
-        container.scrollTo({
-          left: newIndex * container.clientWidth,
+      // Scroll to the new index smoothly using ref
+      if (previewScrollContainerRef.current) {
+        console.log('Scrolling right to index:', newIndex);
+        previewScrollContainerRef.current.scrollTo({
+          left: newIndex * previewScrollContainerRef.current.clientWidth,
           behavior: "smooth",
         });
+      } else {
+        console.log('previewScrollContainerRef.current is null');
       }
     }
   };
@@ -581,16 +634,29 @@ const ProductDetailPage = () => {
   //   delete container.dataset.touchStartScrollLeft;
   // };
 
+  const productImages = getProductImages();
+  const BRAND_COLOR = "#2D6CDF";
+
   // Focus modal for keyboard navigation
   useEffect(() => {
     if (showPreview) {
-      const modal = document.querySelector('.z-50[tabindex="0"]');
-      if (modal) (modal as HTMLElement).focus();
+      if (previewModalRef.current) {
+        previewModalRef.current.focus();
+      }
       setShowSwipeHint(true);
       const timer = setTimeout(() => setShowSwipeHint(false), 2000);
       return () => clearTimeout(timer);
     }
   }, [showPreview]);
+
+  // Show mobile swipe hint when component mounts
+  useEffect(() => {
+    if (productImages.length > 1) {
+      setShowMobileSwipeHint(true);
+      const timer = setTimeout(() => setShowMobileSwipeHint(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [productImages.length]);
 
   if (loading) {
     return (
@@ -635,8 +701,7 @@ const ProductDetailPage = () => {
     );
   }
 
-  const productImages = getProductImages();
-  const BRAND_COLOR = "#2D6CDF";
+
 
   // Handler for selecting a lens type in Power modal
   const handlePowerLensTypeSelect = async (typeKey: string) => {
@@ -721,7 +786,7 @@ const ProductDetailPage = () => {
                       onClick={() => handleImageChange(index)}
                       className={`flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${
                         selectedImage === index
-                          ? "border-primary shadow-lg ring-2 ring-primary/20"
+                          ? "border-black shadow-lg ring-2 ring-black/20"
                           : "border-gray-200 hover:border-gray-300 shadow-sm"
                       }`}
                     >
@@ -741,11 +806,21 @@ const ProductDetailPage = () => {
               <div className="flex-1">
                 <div
                   ref={imageContainerRef}
-                  className="aspect-square bg-gray-50 rounded-lg overflow-hidden relative border border-gray-200 hover:border-gray-300 transition-all duration-200"
+                  className="aspect-square bg-white rounded-lg overflow-hidden relative hover:border-gray-300 transition-all duration-200 group"
                   onMouseEnter={handleMouseEnter}
                   onMouseLeave={handleMouseLeave}
                   onMouseMove={handleMouseMove}
                 >
+                  {/* Magnifier Tooltip */}
+                  <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-3 py-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20 flex items-center gap-1.5 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      <line x1="11" y1="8" x2="11" y2="14"></line>
+                      <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                    <span>Hover to zoom (2x)</span>
+                  </div>
                   {productImages.length > 0 ? (
                     <>
                       <Image
@@ -764,6 +839,38 @@ const ProductDetailPage = () => {
                         blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
                         decoding="async"
                       />
+                      
+                      {/* Magnifier Cursor Indicator */}
+                      {showMagnifier && (
+                        <>
+                          {/* Outer ring */}
+                          <div
+                            className="absolute w-12 h-12 border border-white/50 rounded-full pointer-events-none z-10 animate-pulse"
+                            style={{
+                              left: magnifierPosition.x - 24,
+                              top: magnifierPosition.y - 24,
+                              boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1)",
+                            }}
+                          />
+                          {/* Inner circle */}
+                          <div
+                            className="absolute w-6 h-6 border-2 border-white rounded-full shadow-lg pointer-events-none z-10"
+                            style={{
+                              left: magnifierPosition.x - 12,
+                              top: magnifierPosition.y - 12,
+                              boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.3)",
+                            }}
+                          />
+                          {/* Center dot */}
+                          <div
+                            className="absolute w-1.5 h-1.5 bg-white rounded-full shadow-sm pointer-events-none z-10"
+                            style={{
+                              left: magnifierPosition.x - 3,
+                              top: magnifierPosition.y - 3,
+                            }}
+                          />
+                        </>
+                      )}
 
                       {/* Favorite Button */}
                       <button
@@ -806,62 +913,155 @@ const ProductDetailPage = () => {
               {/* Main Image */}
               <div
                 ref={imageContainerRef}
-                className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden relative shadow-xl border border-gray-200"
+                className="aspect-square bg-whiterounded-2xl overflow-hidden relative group"
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
                 onMouseMove={handleMouseMove}
               >
-                {productImages.length > 0 ? (
+                {/* Swipeable Image Container for Mobile */}
+                <div 
+                  className="w-full h-full overflow-x-auto snap-x snap-mandatory flex"
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                    WebkitOverflowScrolling: 'touch'
+                  }}
+                  onScroll={(e) => {
+                    const container = e.currentTarget;
+                    const scrollLeft = container.scrollLeft;
+                    const itemWidth = container.clientWidth;
+                    const index = Math.round(scrollLeft / itemWidth);
+                    if (index !== selectedImage) {
+                      setSelectedImage(index);
+                    }
+                  }}
+                >
+                  {productImages.length > 0 ? (
+                    productImages.map((img, idx) => (
+                      <div 
+                        key={idx} 
+                        className="min-w-full h-full flex-shrink-0 snap-center"
+                      >
+                        <Image
+                          src={img}
+                          alt={`${product.title} ${idx + 1}`}
+                          width={600}
+                          height={600}
+                          sizes="(min-width: 1024px) 600px, 100vw"
+                          className="w-full h-full object-cover select-none"
+                          draggable={false}
+                          onClick={handleImageClick}
+                          style={{ cursor: "zoom-in" }}
+                          priority={idx === 0}
+                          loading={idx === 0 ? "eager" : "lazy"}
+                          placeholder="blur"
+                          blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
+                          decoding="async"
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                      <Eye className="w-16 h-16" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Magnifier Tooltip (Mobile) */}
+                <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-3 py-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20 flex items-center gap-1.5 shadow-lg">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                  </svg>
+                  <span>Hover to zoom (2x)</span>
+                </div>
+                
+                {/* Magnifier Cursor Indicator (Mobile) */}
+                {showMagnifier && (
                   <>
-                    <Image
-                      src={productImages[selectedImage]}
-                      alt={product.title}
-                      width={600}
-                      height={600}
-                      sizes="(min-width: 1024px) 600px, 100vw"
-                      className="w-full h-full object-cover select-none"
-                      draggable={false}
-                      onClick={handleImageClick}
-                      style={{ cursor: "zoom-in" }}
-                      priority={selectedImage === 0}
-                      loading={selectedImage === 0 ? "eager" : "lazy"}
-                      placeholder="blur"
-                      blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
-                      decoding="async"
-                    />
-
-                    {/* Favorite Button */}
-                    <button
-                      onClick={handleFavoriteClick}
-                      className={`absolute top-3 right-16 z-10 w-12 h-12 border-2 border-gray-200 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 bg-white/95 backdrop-blur-sm hover:scale-110 ${
-                        isFavorite(product.id!)
-                          ? "border-red-400 bg-red-50 shadow-lg"
-                          : "hover:border-gray-300 hover:shadow-lg"
-                      }`}
-                    >
-                      <Heart
-                        className={`w-5 h-5 transition-all duration-300 ${
-                          isFavorite(product.id!)
-                            ? "text-red-500 fill-current"
-                            : "text-gray-500 hover:text-red-500"
-                        }`}
-                      />
-                    </button>
-
-                    {/* Share Button */}
-                    <button
-                      onClick={() => {
-                        /* TODO: add share logic */
+                    {/* Outer ring */}
+                    <div
+                      className="absolute w-12 h-12 border border-white/50 rounded-full pointer-events-none z-10 animate-pulse"
+                      style={{
+                        left: magnifierPosition.x - 24,
+                        top: magnifierPosition.y - 24,
+                        boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1)",
                       }}
-                      className="absolute top-3 right-3 z-10 border-2 border-gray-200 bg-white/95 backdrop-blur-sm w-12 h-12 flex items-center justify-center rounded-xl shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:scale-110"
-                      aria-label="Share"
-                    >
-                      <Share2 className="w-5 h-5 text-gray-500 hover:text-primary transition-colors" />
-                    </button>
+                    />
+                    {/* Inner circle */}
+                    <div
+                      className="absolute w-6 h-6 border-2 border-white rounded-full shadow-lg pointer-events-none z-10"
+                      style={{
+                        left: magnifierPosition.x - 12,
+                        top: magnifierPosition.y - 12,
+                        boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.3)",
+                      }}
+                    />
+                    {/* Center dot */}
+                    <div
+                      className="absolute w-1.5 h-1.5 bg-white rounded-full shadow-sm pointer-events-none z-10"
+                      style={{
+                        left: magnifierPosition.x - 3,
+                        top: magnifierPosition.y - 3,
+                      }}
+                    />
                   </>
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-400">
-                    <Eye className="w-16 h-16" />
+                )}
+
+                {/* Favorite Button */}
+                <button
+                  onClick={handleFavoriteClick}
+                  className={`absolute top-3 right-16 z-10 w-12 h-12 border-2 border-gray-200 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-300 bg-white/95 backdrop-blur-sm hover:scale-110 ${
+                    isFavorite(product.id!)
+                      ? "border-red-400 bg-red-50 shadow-lg"
+                      : "hover:border-gray-300 hover:shadow-lg"
+                  }`}
+                >
+                  <Heart
+                    className={`w-5 h-5 transition-all duration-300 ${
+                      isFavorite(product.id!)
+                        ? "text-red-500 fill-current"
+                        : "text-gray-500 hover:text-red-500"
+                    }`}
+                  />
+                </button>
+
+                {/* Share Button */}
+                <button
+                  onClick={() => {
+                    /* TODO: add share logic */
+                  }}
+                  className="absolute top-3 right-3 z-10 border-2 border-gray-200 bg-white/95 backdrop-blur-sm w-12 h-12 flex items-center justify-center rounded-xl shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:scale-110"
+                  aria-label="Share"
+                >
+                  <Share2 className="w-5 h-5 text-gray-500 hover:text-primary transition-colors" />
+                </button>
+
+                {/* Pagination dots for mobile */}
+                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
+                  {productImages.map((_, idx) => (
+                    <button 
+                      key={idx}
+                      className={`w-2 h-2 rounded-full transition-all ${
+                        selectedImage === idx ? 'bg-white scale-125 shadow-md' : 'bg-white/50'
+                      }`}
+                      onClick={() => handleImageChange(idx)}
+                    />
+                  ))}
+                </div>
+
+                {/* Mobile swipe hint */}
+                {showMobileSwipeHint && productImages.length > 1 && (
+                  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/70 text-white px-4 py-2 rounded-full text-sm flex items-center gap-2 animate-pulse z-30">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 5l-5 5 5 5"></path>
+                    </svg>
+                    Swipe to view more
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10 19l5-5-5-5"></path>
+                    </svg>
                   </div>
                 )}
               </div>
@@ -875,7 +1075,7 @@ const ProductDetailPage = () => {
                       onClick={() => handleImageChange(index)}
                       className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${
                         selectedImage === index
-                          ? "border-primary shadow-lg ring-2 ring-primary/20"
+                          ? "border-black shadow-lg ring-2 ring-black/20"
                           : "border-gray-200 hover:border-gray-300 shadow-sm"
                       }`}
                     >
@@ -892,26 +1092,32 @@ const ProductDetailPage = () => {
               )}
             </div>
 
-            {/* Magnifier Square (desktop only) - Reduced size */}
+            {/* Enhanced Magnifier (desktop only) */}
             {showMagnifier && productImages.length > 0 && (
               <div
-                className="hidden lg:block rounded-lg border border-primary/30 shadow-lg"
+                className="hidden lg:block absolute top-0 left-[calc(100%+32px)] w-[420px] h-[420px] rounded-2xl border-2 border-white shadow-2xl overflow-hidden bg-white animate-in fade-in-0 zoom-in-95 duration-200"
                 style={{
-                  position: "absolute",
-                  top: 0,
-                  left: "calc(100% + 24px)",
-                  width: 300,
-                  height: 300,
+                  zIndex: 30,
                   background: `url(${productImages[selectedImage]}) no-repeat`,
-                  backgroundSize: "800px 800px",
-                  backgroundPosition: `-${magnifierPosition.x * 1.5 - 75}px -${
-                    magnifierPosition.y * 1.5 - 75
-                  }px`,
-                  zIndex: 20,
-                  backgroundColor: "#fff",
-                  boxShadow: "0 4px 20px 0 rgba(0, 102, 204, 0.15)",
+                  backgroundSize: `${productImages[selectedImage] ? '1000px 1000px' : '800px 800px'}`,
+                  backgroundPosition: `${-magnifierPosition.relativeX * 1000 + 210}px ${-magnifierPosition.relativeY * 1000 + 210}px`,
+                  boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1)",
                 }}
-              />
+              >
+                {/* Magnifier Border Glow Effect */}
+                <div className="absolute inset-0 rounded-2xl border border-white/20 pointer-events-none" />
+                
+                {/* Magnifier Corner Indicators */}
+                <div className="absolute top-2 left-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+                <div className="absolute top-2 right-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+                <div className="absolute bottom-2 left-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+                <div className="absolute bottom-2 right-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+                
+                {/* Zoom Level Indicator */}
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-black/60 text-white text-xs px-2 py-1 rounded-full font-medium">
+                  2x Zoom
+                </div>
+              </div>
             )}
           </div>
 
@@ -957,13 +1163,58 @@ const ProductDetailPage = () => {
 
                     {product.discounted_price && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        (9{getDiscountPercentage()}% OFF)
+                        ({getDiscountPercentage()}% OFF)
                       </span>
                     )}
                   </>
                 )}
               </div>
             </div>
+
+            {/* Available Coupons */}
+            {product.coupons && product.coupons.length > 0 && (
+              <div className="border-b border-gray-200 py-4">
+                <h3 className="text-md font-medium text-gray-900 mb-2 flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
+                    <path d="M22 12a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4z"></path>
+                    <path d="M16 2H8l-4 10 4 10h8l4-10-4-10z"></path>
+                    <path d="M9.45 12h5.1"></path>
+                  </svg>
+                  Available Coupons
+                </h3>
+                <div className="space-y-2 mt-3">
+                  {product.coupons.map((coupon) => (
+                    <div 
+                      key={coupon.id} 
+                      className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-lg p-2 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="bg-blue-100 text-blue-700 font-bold px-2 py-1 rounded text-sm">
+                          {coupon.code}
+                        </div>
+                        <div className="text-sm">
+                          {coupon.discount_type === 'flat' ? 
+                            `₹${coupon.discount_value} off` : 
+                            coupon.discount_type === 'percentage' ? 
+                            `${coupon.discount_value}% off` : 
+                            coupon.discount_type}
+                          {coupon.min_cart_value ? ` on min. purchase of ₹${coupon.min_cart_value}` : ''}
+                        </div>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(coupon.code);
+                          toast.success("Coupon code copied!");
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Frame Measurements */}
             {product.lens_width ||
@@ -1241,14 +1492,14 @@ const ProductDetailPage = () => {
                           </span>
                         </div>
                       )} */}
-                      <div className="flex gap-2 py-1">
+                      {/* <div className="flex gap-2 py-1">
                         <span className="text-gray-900 font-medium text-lg">
                           Age Group:
                         </span>
                         <span className="text-gray-900 font-medium text-lg">
                           Adult
                         </span>
-                      </div>
+                      </div> */}
                       {product.frame_colour && (
                         <div className="flex gap-2 py-1">
                           <span className="text-gray-900 font-medium text-lg">
@@ -1288,7 +1539,7 @@ const ProductDetailPage = () => {
                       <li>High Quality finish</li>
                       <li>7 days replacement Warranty against manufacturing defects</li>
                       <li>6 months warranty</li>
-                      <li>What’s Included with Your Purchase</li>
+                      <li>What&apos;s Included with Your Purchase</li>
                       <li>✓ 1 Premium Eyeric Eyewear Case – For safe & stylish storage</li>
                       <li>✓ 1 Eyeric Microfiber Cleaning Cloth – To keep your lenses spotless</li>
                       <li>✓ 1 Eyeric Lens Cleaning Spray – For crystal-clear vision</li>
@@ -1316,7 +1567,7 @@ const ProductDetailPage = () => {
                   onClick={() => toggleSection("easyReturn")}
                   className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors bg-white"
                 >
-                  <span className="font-medium text-gray-900">
+                  <span className="font-medium text-xl text-gray-900">
                     Returns & Exchange
                   </span>
                   <span
@@ -1335,7 +1586,7 @@ const ProductDetailPage = () => {
                       and packaging intact. No request for return or exchange
                       will be accepted if the original tag is missing. &nbsp;
                       <button
-                        onClick={() => router.push("/privacy")}
+                        onClick={() => router.push("/refund")}
                         className="text-gray-900 underline hover:text-gray-700 transition-colors text-sm font-medium"
                       >
                         Read More
@@ -1433,15 +1684,19 @@ const ProductDetailPage = () => {
       {/* Enhanced Fullscreen Preview Modal */}
       {showPreview && productImages.length > 0 && (
         <div
+          ref={previewModalRef}
           className="fixed inset-0 z-50 bg-white flex items-center justify-center"
           tabIndex={0}
           onKeyDown={(e) => {
+            console.log('Key pressed:', e.key, 'previewIndex:', previewIndex);
             if (e.key === "ArrowLeft" && previewIndex > 0) {
+              console.log('Handling left arrow');
               handlePreviewLeft();
             } else if (
               e.key === "ArrowRight" &&
               previewIndex < productImages.length - 1
             ) {
+              console.log('Handling right arrow');
               handlePreviewRight();
             } else if (e.key === "Escape") {
               setShowPreview(false);
@@ -1471,8 +1726,15 @@ const ProductDetailPage = () => {
           {/* Image Container */}
           <div className="relative w-full h-full">
             <div
-              className="w-full h-full flex overflow-x-auto"
-              style={{ scrollBehavior: "smooth" }}
+              ref={previewScrollContainerRef}
+              className="w-full h-full flex overflow-x-auto scrollbar-hide"
+              style={{ 
+                scrollBehavior: "smooth",
+                scrollSnapType: "x mandatory",
+                WebkitOverflowScrolling: "touch",
+                msOverflowStyle: "none",
+                scrollbarWidth: "none"
+              }}
               onScroll={(e) => {
                 const container = e.currentTarget as HTMLDivElement;
                 const scrollLeft = container.scrollLeft;
@@ -1493,6 +1755,7 @@ const ProductDetailPage = () => {
                 <div
                   key={idx}
                   className="relative min-w-full h-full flex items-center justify-center p-4 md:p-8"
+                  style={{ scrollSnapAlign: "start" }}
                 >
                   <Image
                     src={src}

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { Filter, ChevronDown, Heart, ShoppingBag, SlidersHorizontal } from "lucide-react";
+import { Filter, ChevronDown, Heart, SlidersHorizontal } from "lucide-react";
 import Navbar from "../../../components/Navbar";
 import Footer from "../../../components/Footer";
 import FilterSidebar from '../../../components/FilterSidebar';
@@ -300,9 +300,9 @@ const ShapeProductsContent = () => {
                       <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
                         <span className="cursor-pointer hover:underline">Compare</span>
                       </div>
-                      <button className="mt-auto flex items-center justify-center gap-2 bg-button hover:bg-button/80 text-white rounded-full py-2 px-4 md:py-4 md:px-6 font-semibold shadow transition-all text-sm md:text-base" onClick={() => handleProductClick(product)}>
+                      {/* <button className="mt-auto flex items-center justify-center gap-2 bg-button hover:bg-button/80 text-white rounded-full py-2 px-4 md:py-4 md:px-6 font-semibold shadow transition-all text-sm md:text-base" onClick={() => handleProductClick(product)}>
                         <ShoppingBag className="w-4 h-4" /> Buy Now
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 ))}

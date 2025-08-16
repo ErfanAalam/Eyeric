@@ -19,9 +19,13 @@ import {
 //   Users,
   ShoppingBag
 } from 'lucide-react';
+import Navbar from '../../../components/Navbar';
+import Footer from '../../../components/Footer';
 
 const TermsPage = () => {
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
@@ -44,7 +48,7 @@ const TermsPage = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
+        <div className="">
           {/* Introduction */}
           <div className="bg-white rounded-xl p-8 shadow-lg border border-gray-100 mb-8">
             <p className="text-gray-700 leading-relaxed mb-4">
@@ -297,8 +301,10 @@ const TermsPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
+    </div>
     </div>
   );
 };
 
-export default TermsPage; 
+  export default TermsPage; 

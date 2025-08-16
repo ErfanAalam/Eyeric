@@ -18,9 +18,13 @@ import {
   Calendar,
   Building2
 } from 'lucide-react';
+import Navbar from '../../../components/Navbar';
+import Footer from '../../../components/Footer';
 
 const PrivacyPolicyPage = () => {
   return (
+    <div>
+      <Navbar />
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white">
@@ -292,6 +296,8 @@ const PrivacyPolicyPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
+    </div>
     </div>
   );
 };

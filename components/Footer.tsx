@@ -62,24 +62,22 @@ const Footer: React.FC = () => {
     {
       title: 'Shop',
       links: [
-        { title: 'Sunglasses', href: '/sunglasses' },
-        { title: 'Eyeglasses', href: '/eyeglasses' },
-        { title: 'Blue Light Glasses', href: '/computer-glasses' },
-        { title: 'Reading Glasses', href: '/reading-glasses' },
-        { title: 'Designer Frames', href: '/designer' },
-        { title: 'Sale', href: '/sale' }
+        { title: 'Sunglasses', href: '/products?category=men&type=sunglasses' },
+        { title: 'Eyeglasses', href: '/products?category=men&type=eyeglasses' },
+        { title: 'Computer Glasses', href: '/products?category=men&type=computer glasses' },
+        {title: 'Eye Glasses', href: '/products?category=men&type=eye glasses'}
       ]
     },
     {
       title: 'Support',
       links: [
         { title: 'Contact Us', href: '/contact' },
-        { title: 'Help Center', href: '/help' },
         { title: 'Size Guide', href: '/size-guide' },
-        { title: 'Virtual Try-On', href: '/try-on' },
-        { title: 'Prescription Info', href: '/prescription' },
-        { title: 'Returns & Exchanges', href: '/returns' },
-        { title: 'Warranty', href: '/warranty' }
+        { title: 'Returns & Exchanges', href: '/refund' },
+        { title: 'Privacy Policy', href: '/privacy' },
+        { title: 'Terms of Service', href: '/terms' },
+        { title: 'Shipping Policy', href: '/shipping' },
+        { title: 'Refund Policy', href: '/refund' },
       ]
     },
     {
@@ -96,14 +94,13 @@ const Footer: React.FC = () => {
     {
       title: 'Legal',
       links: [
-        { title: 'Privacy Policy', href: '/privacy' },
-        { title: 'Terms of Service', href: '/terms' },
-        { title: 'Shipping Policy', href: '/shipping' },
+        { title: 'Size Guide', href: '/size-guide' },
         { title: 'Refund Policy', href: '/refund' },
-        { title: 'Cookie Policy', href: '/cookies' },
-        { title: 'Accessibility', href: '/accessibility' },
-        { title: 'California Privacy', href: '/ccpa' },
-        { title: 'Do Not Sell Info', href: '/do-not-sell' }
+        { title: 'Privacy Policy', href: '/privacy' },
+        { title: 'Contact Us', href: '/contact' },
+        { title: 'Terms of Service', href: '/terms' },
+        { title: 'Returns & Exchanges', href: '/refund' },
+        { title: 'Shipping Policy', href: '/shipping' },
       ]
     }
   ];

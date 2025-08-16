@@ -41,4 +41,9 @@
     --color-warning: #facc15;
     --color-info: #3b82f6; */
   }
+
+  /* Hide scrollbar for webkit browsers */
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
   
