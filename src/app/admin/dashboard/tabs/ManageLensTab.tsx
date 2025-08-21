@@ -125,7 +125,7 @@ const ManageLensTab = ({ onEditLens }: { onEditLens: (lens: Lens) => void }) => 
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="font-bold text-xl text-gray-800 group-hover:text-blue-600 transition-colors duration-300">{lens.title}</h3>
                   <div className="flex flex-col items-end gap-1">
-                    <span className="text-2xl font-bold text-green-600">${lens.original_price}</span>
+                    <span className="text-2xl font-bold text-green-600">₹{lens.original_price}</span>
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 border border-blue-200">
                       Order: {lens.display_order || 0}
                     </span>

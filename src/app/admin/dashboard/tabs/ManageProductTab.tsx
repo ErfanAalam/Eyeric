@@ -54,10 +54,17 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
   const [filterShape, setFilterShape] = useState("");
   const [filterStyle, setFilterStyle] = useState("");
   const [filterQuantity, setFilterQuantity] = useState("");
+  const [filterLatestTrend, setFilterLatestTrend] = useState("");
+  const [filterBestseller, setFilterBestseller] = useState("");
   const [specialCategories, setSpecialCategories] = useState([]);
   const [filterSpecialCategories, setFilterSpecialCategories] = useState([]);
   const [filterActive, setFilterActive] = useState("");
   const [productSpecialCategories, setProductSpecialCategories] = useState({}); // { productId: [catId, ...] }
+  
+  // Filter options state
+  const [typeOptions, setTypeOptions] = useState<string[]>([]);
+  const [shapeOptions, setShapeOptions] = useState<string[]>([]);
+  const [styleOptions, setStyleOptions] = useState<string[]>([]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -72,7 +79,32 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
 
   useEffect(() => {
     const fetchOptions = async () => {
-      // Removed unused variables genderRes, typeRes, shapeRes, styleRes
+      // Fetch type options from categories table
+      const { data: typeData } = await supabase
+        .from("categories")
+        .select("name")
+        .eq("category_type", "type");
+      if (typeData) {
+        setTypeOptions(typeData.map(cat => cat.name));
+      }
+
+      // Fetch shape options from categories table
+      const { data: shapeData } = await supabase
+        .from("categories")
+        .select("name")
+        .eq("category_type", "shape");
+      if (shapeData) {
+        setShapeOptions(shapeData.map(cat => cat.name));
+      }
+
+      // Fetch style options from categories table
+      const { data: styleData } = await supabase
+        .from("categories")
+        .select("name")
+        .eq("category_type", "style");
+      if (styleData) {
+        setStyleOptions(styleData.map(cat => cat.name));
+      }
     };
     fetchOptions();
   }, []);
@@ -242,72 +274,175 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
         </div>
         {/* 1. FILTER BAR UI */}
         {filterOpen && (
-          <div className="mb-8 flex flex-nowrap gap-4 overflow-x-auto justify-center items-center bg-white/90 p-4 rounded-2xl shadow-lg border border-blue-100">
-            <div className="min-w-[160px]">
-              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Type</label>
-              <select value={filterType} onChange={e => setFilterType(e.target.value)} className="px-4 py-2 rounded-full border border-blue-200 bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200">
-                <option value="">All</option>
-                {/* typeOptions.map(type => ( // Removed unused state */}
-                {/*   <option key={type} value={type}>{type}</option> */}
-                {/* ))} */}
-              </select>
+          <div className="mb-8 bg-white/90 p-6 rounded-2xl shadow-lg border border-blue-100">
+            {/* Filter Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
+              {/* Type Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Tag className="w-3 h-3 text-blue-600" />
+                  Type
+                </label>
+                <select 
+                  value={filterType} 
+                  onChange={e => setFilterType(e.target.value)} 
+                  className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm"
+                >
+                  <option value="">All Types</option>
+                  {typeOptions.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Shape Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Shapes className="w-3 h-3 text-green-600" />
+                  Shape
+                </label>
+                <select 
+                  value={filterShape} 
+                  onChange={e => setFilterShape(e.target.value)} 
+                  className="w-full px-3 py-2 rounded-lg border border-green-200 bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-200 text-sm"
+                >
+                  <option value="">All Shapes</option>
+                  {shapeOptions.map(shape => (
+                    <option key={shape} value={shape}>{shape}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Style Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Tag className="w-3 h-3 text-purple-600" />
+                  Style
+                </label>
+                <select 
+                  value={filterStyle} 
+                  onChange={e => setFilterStyle(e.target.value)} 
+                  className="w-full px-3 py-2 rounded-lg border border-purple-200 bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-200 text-sm"
+                >
+                  <option value="">All Styles</option>
+                  {styleOptions.map(style => (
+                    <option key={style} value={style}>{style}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Special Categories Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Tag className="w-3 h-3 text-yellow-600" />
+                  Special Categories
+                </label>
+                <select 
+                  value={filterSpecialCategories} 
+                  onChange={e => {
+                    const options = Array.from(e.target.selectedOptions, option => option.value);
+                    if(e.target.value === ""){
+                      setFilterSpecialCategories([])
+                    }else{
+                      setFilterSpecialCategories(options);
+                    }
+                  }} 
+                  className="w-full px-3 py-2 rounded-lg border border-yellow-200 bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-200 text-sm"
+                >
+                  <option value="">All Categories</option>
+                  {specialCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Quantity Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Tag className="w-3 h-3 text-gray-600" />
+                  Quantity
+                </label>
+                <input
+                  type="number"
+                  value={filterQuantity}
+                  onChange={e => setFilterQuantity(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200 text-sm"
+                  placeholder="Enter quantity..."
+                  min="0"
+                />
+              </div>
+
+              {/* Latest Trend Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Tag className="w-3 h-3 text-pink-600" />
+                  Latest Trend
+                </label>
+                <select 
+                  value={filterLatestTrend} 
+                  onChange={e => setFilterLatestTrend(e.target.value)} 
+                  className="w-full px-3 py-2 rounded-lg border border-pink-200 bg-pink-50 focus:outline-none focus:ring-2 focus:ring-pink-200 text-sm"
+                >
+                  <option value="">All Products</option>
+                  <option value="true">Trending Only</option>
+                  <option value="false">Not Trending</option>
+                </select>
+              </div>
+
+              {/* Bestseller Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Tag className="w-3 h-3 text-amber-600" />
+                  Bestseller
+                </label>
+                <select 
+                  value={filterBestseller} 
+                  onChange={e => setFilterBestseller(e.target.value)} 
+                  className="w-full px-3 py-2 rounded-lg border border-amber-200 bg-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-200 text-sm"
+                >
+                  <option value="">All Products</option>
+                  <option value="true">Bestsellers Only</option>
+                  <option value="false">Not Bestsellers</option>
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                  <Tag className="w-3 h-3 text-indigo-600" />
+                  Status
+                </label>
+                <select 
+                  value={filterActive} 
+                  onChange={e => setFilterActive(e.target.value)} 
+                  className="w-full px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-200 text-sm"
+                >
+                  <option value="">All Status</option>
+                  <option value="active">Active Only</option>
+                  <option value="inactive">Inactive Only</option>
+                </select>
+              </div>
             </div>
-            <div className="min-w-[160px]">
-              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Shapes className="w-3 h-3" />Shape</label>
-              <select value={filterShape} onChange={e => setFilterShape(e.target.value)} className="px-4 py-2 rounded-full border border-green-200 bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-200">
-                <option value="">All</option>
-                {/* shapeOptions.map(shape => ( // Removed unused state */}
-                {/*   <option key={shape} value={shape}>{shape}</option> */}
-                {/* ))} */}
-              </select>
+
+            {/* Clear All Button */}
+            <div className="flex justify-center">
+              <button 
+                className="px-6 py-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-semibold flex items-center gap-2 shadow transition-all duration-200 hover:shadow-md" 
+                onClick={() => { 
+                  setFilterType(""); 
+                  setFilterShape(""); 
+                  setFilterStyle(""); 
+                  setFilterSpecialCategories([]); 
+                  setFilterQuantity(""); 
+                  setFilterActive(""); 
+                  setFilterLatestTrend(""); 
+                  setFilterBestseller(""); 
+                }}
+              >
+                <X className="w-4 h-4" /> 
+                Clear All Filters
+              </button>
             </div>
-            <div className="min-w-[160px]">
-              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Style</label>
-              <select value={filterStyle} onChange={e => setFilterStyle(e.target.value)} className="px-4 py-2 rounded-full border border-purple-200 bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-200">
-                <option value="">All</option>
-                {/* styleOptions.map(style => ( // Removed unused state */}
-                {/*   <option key={style} value={style}>{style}</option> */}
-                {/* ))} */}
-              </select>
-            </div>
-            <div className="min-w-[180px]">
-              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Special</label>
-              <select  value={filterSpecialCategories} onChange={e => {
-                const options = Array.from(e.target.selectedOptions, option => option.value);
-                if(e.target.value == ""){
-                  setFilterSpecialCategories([])
-                }else{
-                  setFilterSpecialCategories(options);
-                }
-              }} className="px-4 py-2 rounded-full border border-yellow-200 bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-200 h-[38px]">
-                <option value="">All</option>
-                {specialCategories.map(cat => (
-                  <option key={cat.id} value={cat.id}>{cat.name}</option>
-                ))}
-              </select>
-            </div>
-            <div className="min-w-[160px]">
-              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Quantity</label>
-              <input
-                type="number"
-                value={filterQuantity}
-                onChange={e => setFilterQuantity(e.target.value)}
-                className="px-4 py-2 rounded-full border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                placeholder="Quantity..."
-                min="0"
-              />
-            </div>
-            <div className="min-w-[160px]">
-              <label className=" text-xs font-semibold mb-1 flex items-center gap-1"><Tag className="w-3 h-3" />Status</label>
-              <select value={filterActive} onChange={e => setFilterActive(e.target.value)} className="px-4 py-2 rounded-full border border-purple-200 bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-200">
-                <option value="">All</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            <button className="px-4 py-2 rounded-full bg-red-100 hover:bg-red-200 text-red-700 font-semibold flex items-center gap-2 shadow" onClick={() => { setFilterType(""); setFilterShape(""); setFilterStyle(""); setFilterSpecialCategories([]); setFilterQuantity(""); setFilterActive(""); }}>
-              <X className="w-4 h-4" /> Clear All
-            </button>
           </div>
         )}
         {/* Header */}
@@ -343,11 +478,13 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products
             .filter(product => product.gender_category && product.gender_category.includes(activeGender))
-            .filter(product => !filterType || product.type_category.includes(filterType))
+            .filter(product => !filterType || (product.type_category && product.type_category.includes(filterType)))
             .filter(product => !filterShape || product.shape_category === filterShape)
             .filter(product => !filterStyle || product.style_category === filterStyle)
             .filter(product => filterSpecialCategories.length === 0 || (productSpecialCategories[product.id] && productSpecialCategories[product.id].some(catId => filterSpecialCategories.includes(catId.toString()))))
             .filter(product => !filterQuantity || (product.quantity !== undefined && product.quantity !== null && product.quantity.toString() === filterQuantity))
+            .filter(product => !filterLatestTrend || (filterLatestTrend === 'true' && product.latest_trend === true) || (filterLatestTrend === 'false' && product.latest_trend === false))
+            .filter(product => !filterBestseller || (filterBestseller === 'true' && product.bestseller === true) || (filterBestseller === 'false' && product.bestseller === false))
             .filter(product => !filterActive || (filterActive === 'active' && product.is_active !== false) || (filterActive === 'inactive' && product.is_active === false))
             .map((product) => (
               <div key={product.id} className="group bg-white rounded-2xl border border-slate-200 hover:border-blue-400 p-5 flex flex-col items-center justify-between transition-all duration-300 hover:shadow-xl hover:-translate-y-1 min-h-[380px] max-h-[380px] min-w-[240px] max-w-[260px] mx-auto">
@@ -375,6 +512,7 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
                   </div>
                   {/* Quantity Display */}
                   <div className="mt-2 text-xs text-slate-600 font-medium">Quantity: {product.quantity ?? 0}</div>
+                  <div className="mt-2 text-xs text-slate-600 font-medium">Product Serial Number: {product.product_serial_number ?? 'N/A'}</div>
                 </div>
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-2 mt-4 pt-4 border-t border-slate-100 w-full">

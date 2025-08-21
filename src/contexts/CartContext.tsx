@@ -4,6 +4,20 @@ import { useAuth } from './AuthContext';
 import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabaseClient';
 
+// Import PowerDetails interface
+export interface PowerDetails {
+  samePower: boolean;
+  leftSPH: string;
+  rightSPH: string;
+  leftCYL: string;
+  rightCYL: string;
+  leftAxis: string;
+  rightAxis: string;
+  leftAddlPower: string;
+  rightAddlPower: string;
+  lensCategory?: string;
+}
+
 // Define Product and Lens types
 interface Product {
   id?: string;
@@ -52,6 +66,11 @@ export interface CartItem {
   lens?: Lens;
   powerCategory?: string;
   quantity?: number;
+  powerDetails?: PowerDetails | null;
+  prescriptionImageUrl?: string | null;
+  powerMethod?: string;
+  powerName?: string;
+  powerPhone?: string;
 }
 
 interface CartContextType {

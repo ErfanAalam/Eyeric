@@ -263,7 +263,11 @@ const OrderDetailPage = () => {
                         {item.powerCategory && (
                           <div className="inline-flex items-center gap-2 text-sm text-blue-700 font-medium bg-blue-50 px-3 py-1 rounded-xl">
                             <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                            Power: {item.powerCategory}
+                            Power: {item.powerCategory === "saved" ? "Saved Power" : 
+                                   item.powerCategory === "manual" ? "Manual Entry" :
+                                   item.powerCategory === "upload" ? "Prescription Upload" :
+                                   item.powerCategory === "submit-later" ? "Submit Later" :
+                                   item.powerCategory}
                           </div>
                         )}
                         {item.lens && (
@@ -274,6 +278,96 @@ const OrderDetailPage = () => {
                             <span className="text-sm text-gray-700 bg-gray-100 px-3 py-2 rounded-xl">
                               Type: {item.lens.category}
                             </span>
+                          </div>
+                        )}
+
+                        {/* Power Details */}
+                        {item.powerDetails && (
+                          <div className="bg-purple-50 rounded-xl p-4 mt-3">
+                            <h6 className="font-medium text-purple-900 mb-2 flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                              {item.powerMethod === "saved" ? "Saved Power Details" :
+                               item.powerMethod === "manual" ? "Manual Power Entry" :
+                               item.powerMethod === "upload" ? "Prescription Details" :
+                               "Power Details"}
+                            </h6>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <span className="text-purple-700 font-medium">Left Eye (OS):</span>
+                                <div className="ml-2 space-y-1">
+                                  {item.powerDetails.leftSPH && (
+                                    <div><span className="text-gray-600">SPH:</span> {item.powerDetails.leftSPH}</div>
+                                  )}
+                                  {item.powerDetails.leftCYL && (
+                                    <div><span className="text-gray-600">CYL:</span> {item.powerDetails.leftCYL}</div>
+                                  )}
+                                  {item.powerDetails.leftAxis && (
+                                    <div><span className="text-gray-600">Axis:</span> {item.powerDetails.leftAxis}</div>
+                                  )}
+                                  {item.powerDetails.leftAddlPower && (
+                                    <div><span className="text-gray-600">Add Power:</span> {item.powerDetails.leftAddlPower}</div>
+                                  )}
+                                </div>
+                              </div>
+                              {!item.powerDetails.samePower && (
+                                <div>
+                                  <span className="text-purple-700 font-medium">Right Eye (OD):</span>
+                                  <div className="ml-2 space-y-1">
+                                    {item.powerDetails.rightSPH && (
+                                      <div><span className="text-gray-600">SPH:</span> {item.powerDetails.rightSPH}</div>
+                                    )}
+                                    {item.powerDetails.rightCYL && (
+                                      <div><span className="text-gray-600">CYL:</span> {item.powerDetails.rightCYL}</div>
+                                    )}
+                                    {item.powerDetails.rightAxis && (
+                                      <div><span className="text-gray-600">Axis:</span> {item.powerDetails.rightAxis}</div>
+                                    )}
+                                    {item.powerDetails.rightAddlPower && (
+                                      <div><span className="text-gray-600">Add Power:</span> {item.powerDetails.rightAddlPower}</div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            {item.powerName && item.powerPhone && (
+                              <div className="mt-3 pt-3 border-t border-purple-200 text-xs text-purple-700">
+                                <div>Name: {item.powerName}</div>
+                                <div>Phone: {item.powerPhone}</div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Prescription Image */}
+                        {item.prescriptionImageUrl && (
+                          <div className="bg-orange-50 rounded-xl p-4 mt-3">
+                            <h6 className="font-medium text-orange-900 mb-2 flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+                              Prescription Uploaded
+                            </h6>
+                            <div className="text-sm text-orange-800">
+                              <p>Prescription image has been uploaded for this order.</p>
+                              {item.powerName && item.powerPhone && (
+                                <div className="mt-2 pt-2 border-t border-orange-200 text-xs">
+                                  <div>Name: {item.powerName}</div>
+                                  <div>Phone: {item.powerPhone}</div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Submit Power Later */}
+                        {item.powerCategory === "submit-later" && (
+                          <div className="bg-yellow-50 rounded-xl p-4 mt-3">
+                            <h6 className="font-medium text-yellow-900 mb-2 flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                              Power to be Submitted Later
+                            </h6>
+                            <div className="text-sm text-yellow-800">
+                              <p>You can submit your power details within 7 days of placing this order.</p>
+                              <p className="mt-1 font-medium">Please contact customer support to submit your power.</p>
+                            </div>
                           </div>
                         )}
                       </div>

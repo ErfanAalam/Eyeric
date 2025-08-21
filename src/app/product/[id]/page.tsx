@@ -252,6 +252,11 @@ const ProductDetailPage = () => {
       lens: selectedLensForPower,
       powerCategory: "manual",
       quantity: 1,
+      powerDetails: powerDetails,
+      prescriptionImageUrl: null,
+      powerMethod: "manual",
+      powerName: name,
+      powerPhone: phone,
     });
     setShowEnterPowerManuallyModal(false);
     setSelectedLensForPower(null);
@@ -290,6 +295,11 @@ const ProductDetailPage = () => {
       lens: selectedLensForPower,
       powerCategory: "prescription",
       quantity: 1,
+      powerDetails: null,
+      prescriptionImageUrl: imageUrl,
+      powerMethod: "upload",
+      powerName: name,
+      powerPhone: phone,
     });
     setShowUploadPrescriptionModal(false);
     setSelectedLensForPower(null);
@@ -301,39 +311,27 @@ const ProductDetailPage = () => {
     setShowEnterPowerManuallyModal(true);
   };
 
-  // Handler for submit power later
-  const handleSubmitPowerLater = async (name: string, phone: string) => {
-    if (!product || !selectedLensForPower || !userProfile || cartLoading)
-      return;
 
-    // Validate required fields
-    if (!name || !phone) {
-      toast.error(
-        "Please provide name and phone number to submit power later."
-      );
-      return;
-    }
 
-    const newPower: PowerEntry = {
-      id: crypto.randomUUID(),
-      name,
-      phone,
-      method: "submit-later",
-      power_details: null,
-      prescription_image_url: null,
-      created_at: new Date().toISOString(),
-    };
-    await addPowerToUserTable(userProfile.id, newPower);
+  // Handler for adding to cart with submit power later (no name/phone required)
+  const handleAddToCartWithSubmitPowerLater = () => {
+    if (!product || !selectedLensForPower || cartLoading) return;
+
     addToCart({
       product,
       lens: selectedLensForPower,
       powerCategory: "submit-later",
       quantity: 1,
+      powerDetails: null,
+      prescriptionImageUrl: null,
+      powerMethod: "submit-later",
+      powerName: "",
+      powerPhone: "",
     });
     setShowAddPowerModal(false);
     setSelectedLensForPower(null);
     toast.success(
-      "Item added to cart! You can submit your power within 15 days."
+      "Item added to cart! You can submit your power within 7 days."
     );
   };
 
@@ -351,6 +349,11 @@ const ProductDetailPage = () => {
       lens: selectedLensForPower,
       powerCategory: "saved",
       quantity: 1,
+      powerDetails: power.power_details,
+      prescriptionImageUrl: power.prescription_image_url,
+      powerMethod: power.method,
+      powerName: power.name,
+      powerPhone: power.phone,
     });
     setShowSavedPowersModal(false);
     setSelectedLensForPower(null);
@@ -524,7 +527,13 @@ const ProductDetailPage = () => {
       const singleVisionLenses = data.filter(
         (lens) => lens.category === "single vision"
       );
-      setLenses(singleVisionLenses);
+      // Sort lenses by display_order (lower numbers first)
+      const sortedLenses = singleVisionLenses.sort((a, b) => {
+        const orderA = a.display_order || 0;
+        const orderB = b.display_order || 0;
+        return orderA - orderB;
+      });
+      setLenses(sortedLenses);
     } catch {
       setLensesError("Failed to load lenses");
     } finally {
@@ -716,18 +725,24 @@ const ProductDetailPage = () => {
     setPowerLensLoading(true);
     setPowerLensError(null);
     setSelectedPowerLensId(null);
-    try {
-      if (!product?.lens_category_id) throw new Error("No lens category id");
-      const allLenses = await getLensesByCategory(product.lens_category_id);
-      // Map UI typeKey to DB category
-      let dbCategory = typeKey;
-      if (typeKey === "bifocal-progressive") dbCategory = "progressive";
-      if (typeKey === "single-vision") dbCategory = "single vision";
-      if (typeKey === "zero-power") dbCategory = "zero power";
-      if (typeKey === "frame-only") dbCategory = "frame only";
-      const filtered = allLenses.filter((lens) => lens.category === dbCategory);
-      setPowerLensList(filtered);
-    } catch {
+          try {
+        if (!product?.lens_category_id) throw new Error("No lens category id");
+        const allLenses = await getLensesByCategory(product.lens_category_id);
+        // Map UI typeKey to DB category
+        let dbCategory = typeKey;
+        if (typeKey === "bifocal-progressive") dbCategory = "progressive";
+        if (typeKey === "single-vision") dbCategory = "single vision";
+        if (typeKey === "zero-power") dbCategory = "zero power";
+        if (typeKey === "frame-only") dbCategory = "frame only";
+        const filtered = allLenses.filter((lens) => lens.category === dbCategory);
+        // Sort lenses by display_order (lower numbers first)
+        const sortedLenses = filtered.sort((a, b) => {
+          const orderA = a.display_order || 0;
+          const orderB = b.display_order || 0;
+          return orderA - orderB;
+        });
+        setPowerLensList(sortedLenses);
+      } catch {
       setPowerLensError("Failed to load lenses");
       setPowerLensList([]);
     } finally {
@@ -1102,6 +1117,7 @@ const ProductDetailPage = () => {
                   backgroundSize: `${productImages[selectedImage] ? '1000px 1000px' : '800px 800px'}`,
                   backgroundPosition: `${-magnifierPosition.relativeX * 1000 + 210}px ${-magnifierPosition.relativeY * 1000 + 210}px`,
                   boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "white",
                 }}
               >
                 {/* Magnifier Border Glow Effect */}
@@ -1292,6 +1308,17 @@ const ProductDetailPage = () => {
                     </div>
                   )}
                 </div>
+                
+                {/* Size Guide Button */}
+                <div className="text-center pt-2">
+                  <button
+                    onClick={() => router.push("/size-guide")}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all duration-200 font-medium text-sm"
+                  >
+                    <Ruler className="w-4 h-4" />
+                    Size Guide
+                  </button>
+                </div>
               </div>
             ) : product.sizes && product.sizes.length > 0 ? (
               <div className="space-y-4">
@@ -1307,6 +1334,17 @@ const ProductDetailPage = () => {
                       {size}
                     </button>
                   ))}
+                </div>
+                
+                {/* Size Guide Button */}
+                <div className="text-center pt-2">
+                  <button
+                    onClick={() => router.push("/size-guide")}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100 hover:border-blue-300 transition-all duration-200 font-medium text-sm"
+                  >
+                    <Ruler className="w-4 h-4" />
+                    Size Guide
+                  </button>
                 </div>
               </div>
             ) : null}
@@ -1883,13 +1921,13 @@ const ProductDetailPage = () => {
                           : setSelectedLensId(lens.id)
                       }
                     >
-                      <div className="w-16 h-16 md:w-60 md:h-40 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center mr-2 md:mr-6 border border-gray-200">
+                      <div className="w-30 h-30 md:w-60 md:h-40 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center mr-2 md:mr-6 ">
                         {lens.image_url ? (
                           <Image
                             src={lens.image_url}
                             alt={lens.title}
-                            width={96}
-                            height={96}
+                            width={326}
+                            height={326}
                             className="object-cover w-full h-full"
                           />
                         ) : (
@@ -1904,12 +1942,12 @@ const ProductDetailPage = () => {
                           {Array.isArray(lens.features) &&
                             lens.features.map((f, i) => <li key={i}>{f}</li>)}
                         </ul>
-                        <div className="text-gray-500 text-xs md:text-[18px] mb-1">
+                        {/* <div className="text-gray-500 text-xs md:text-[18px] mb-1">
                           Applicable Only for Single Vision Power
                         </div>
                         <div className="text-gray-500 text-xs md:text-[18px] mb-1">
                           UV-400 Protection
-                        </div>
+                        </div> */}
                         <div className="font-semibold text-base md:text-xl text-primary mt-1 md:mt-2">
                           Frame + Lens:{" "}
                           <span className="text-gray-900">
@@ -2013,8 +2051,8 @@ const ProductDetailPage = () => {
                     className={`group flex items-center bg-white rounded-2xl shadow-lg px-3 py-3 md:px-6 md:py-5 cursor-pointer border-2 transition-all duration-200 relative overflow-hidden
                       ${
                         selectedLensType === type.key
-                          ? "border-[2.5px] border-primary bg-gradient-to-br from-primary/60 to-yellow-50/40 scale-[1.02]"
-                          : "border-gray-100 hover:border-primary hover:shadow-xl hover:scale-[1.01]"
+                          ? "border-[2.5px]  to-yellow-50/40 scale-[1.02]"
+                          : "border-gray-100  hover:scale-[1.01]"
                       }
                     `}
                     style={{
@@ -2181,8 +2219,8 @@ const ProductDetailPage = () => {
                       className={`group flex items-center bg-white rounded-2xl shadow-lg px-3 py-3 md:px-6 md:py-5 cursor-pointer border-2 transition-all duration-200 relative overflow-hidden
                         ${
                           selectedPowerLensId === lens.id
-                            ? "border-[2.5px] border-primary bg-gradient-to-br from-primary/60 to-yellow-50/40 scale-[1.02]"
-                            : "border-gray-100 hover:border-primary hover:shadow-xl hover:scale-[1.01]"
+                            ? "border-[2.5px]  to-yellow-50/40 scale-[1.02]"
+                            : "border-gray-100  hover:scale-[1.01]"
                         }
                       `}
                       style={{
@@ -2193,13 +2231,13 @@ const ProductDetailPage = () => {
                       }}
                       onClick={() => setSelectedPowerLensId(lens.id)}
                     >
-                      <div className="w-16 h-16 md:w-60 md:h-40 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center mr-2 md:mr-6 border border-gray-200">
+                      <div className="w-30 h-30 md:w-60 md:h-40 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center mr-2 md:mr-6">
                         {lens.image_url ? (
                           <Image
                             src={lens.image_url}
                             alt={lens.title}
-                            width={96}
-                            height={96}
+                            width={326}
+                            height={326}
                             className="object-cover w-full h-full"
                           />
                         ) : (
@@ -2214,12 +2252,12 @@ const ProductDetailPage = () => {
                           {Array.isArray(lens.features) &&
                             lens.features.map((f, i) => <li key={i}>{f}</li>)}
                         </ul>
-                        <div className="text-gray-500 text-xs md:text-[18px] mb-1">
+                        {/* <div className="text-gray-500 text-xs md:text-[18px] mb-1">
                           Applicable Only for Single Vision Power
                         </div>
                         <div className="text-gray-500 text-xs md:text-[18px] mb-1">
                           UV-400 Protection
-                        </div>
+                        </div> */}
                         <div className="font-semibold text-base md:text-xl text-primary mt-1 md:mt-2">
                           Frame + Lens:{" "}
                           <span className="text-gray-900">
@@ -2372,7 +2410,7 @@ const ProductDetailPage = () => {
           setShowAddPowerModal(false);
           setSelectedLensForPower(null);
         }}
-        onSubmitPowerLater={() => handleSubmitPowerLater("", "")}
+        onSubmitPowerLater={handleAddToCartWithSubmitPowerLater}
         onEnterPowerManually={handleEnterPowerManually}
         onUploadPrescription={() => {
           setShowAddPowerModal(false);

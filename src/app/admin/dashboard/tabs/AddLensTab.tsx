@@ -44,6 +44,15 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
   const [lensCategoryId, setLensCategoryId] = useState(editLens?.lens_category_id?.toString() || "");
   const [displayOrder, setDisplayOrder] = useState(editLens?.display_order?.toString() || "");
 
+  // Helper function to ensure price precision
+  // This prevents floating-point precision errors like 199 becoming 198.98
+  const formatPrice = (price: string | number): number => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    if (isNaN(numPrice)) return 0;
+    // Round to 2 decimal places to avoid floating point precision issues
+    return Math.round(numPrice * 100) / 100;
+  };
+
   // When editLens changes, update state
   useEffect(() => {
     // console.log('useEffect triggered, editLens:', editLens); // Debug log
@@ -132,6 +141,7 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
     const displayOrderValue = displayOrder && displayOrder.trim() !== "" ? parseInt(displayOrder, 10) : 0;
     // console.log('Submitting display order:', { displayOrder, displayOrderValue }); // Debug log
 
+    
     if (editLens) {
       // Update existing lens
       const { error } = await supabase.from("lenses").update({
@@ -139,7 +149,7 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
         title,
         description,
         features: featuresArray,
-        original_price: parseFloat(originalPrice),
+        original_price: formatPrice(originalPrice),
         category,
         lens_category_id: lensCategoryId,
         display_order: displayOrderValue,
@@ -160,7 +170,7 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
       title,
       description,
       features: featuresArray,
-      original_price: parseFloat(originalPrice),
+      original_price: formatPrice(originalPrice),
       category,
       lens_category_id: lensCategoryId,
       display_order: displayOrderValue,
@@ -337,15 +347,30 @@ const AddLensTab = ({ editLens, onFinishEdit }: AddLensTabProps) => {
                   <DollarSign className="w-4 h-4" />
                   Original Price
                 </label>
-                <input 
-                  type="number" 
-                  step="0.01" 
-                  value={originalPrice} 
-                  onChange={e => setOriginalPrice(e.target.value)} 
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 bg-gray-50 focus:bg-white" 
-                  placeholder="0.00"
-                  required 
-                />
+                              <input 
+                type="number" 
+                step="0.01" 
+                min="0"
+                value={originalPrice} 
+                onChange={e => {
+                  const value = e.target.value;
+                  // Only allow valid price format (up to 2 decimal places)
+                  if (value === "" || /^\d+(\.\d{0,2})?$/.test(value)) {
+                    setOriginalPrice(value);
+                  }
+                }} 
+                onBlur={e => {
+                  // Format to 2 decimal places on blur
+                  const value = parseFloat(e.target.value);
+                  if (!isNaN(value)) {
+                    setOriginalPrice(value.toFixed(2));
+                  }
+                }}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 bg-gray-50 focus:bg-white" 
+                placeholder="0.00"
+                required 
+              />
+              <p className="text-xs text-gray-500 mt-2">Prices are automatically rounded to 2 decimal places for precision</p>
               </div>
             </div>
 

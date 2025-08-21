@@ -245,8 +245,97 @@ const OrderDetailsModal = ({ order, isOpen, onClose }: { order: Order | null; is
                         <div className="bg-green-50 rounded-lg p-3 mb-3">
                           <h6 className="font-medium text-green-900 mb-2">Power Selection</h6>
                           <p className="text-sm text-green-800">
-                            <span className="font-medium">Category:</span> {item.powerCategory}
+                            <span className="font-medium">Category:</span> {item.powerCategory === "saved" ? "Saved Power" : 
+                                                                       item.powerCategory === "manual" ? "Manual Entry" :
+                                                                       item.powerCategory === "upload" ? "Prescription Upload" :
+                                                                       item.powerCategory === "submit-later" ? "Submit Later" :
+                                                                       item.powerCategory}
                           </p>
+                          
+                          {/* Power Details */}
+                          {item.powerDetails && (
+                            <div className="mt-3 pt-3 border-t border-green-200">
+                              <h6 className="font-medium text-green-900 mb-2">
+                                {item.powerMethod === "saved" ? "Saved Power Details:" :
+                                 item.powerMethod === "manual" ? "Manual Power Entry:" :
+                                 item.powerMethod === "upload" ? "Prescription Details:" :
+                                 "Power Details:"}
+                              </h6>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="text-green-700 font-medium">Left Eye (OS):</span>
+                                  <div className="ml-2 space-y-1">
+                                    {item.powerDetails.leftSPH && (
+                                      <div><span className="text-gray-600">SPH:</span> {item.powerDetails.leftSPH}</div>
+                                    )}
+                                    {item.powerDetails.leftCYL && (
+                                      <div><span className="text-gray-600">CYL:</span> {item.powerDetails.leftCYL}</div>
+                                    )}
+                                    {item.powerDetails.leftAxis && (
+                                      <div><span className="text-gray-600">Axis:</span> {item.powerDetails.leftAxis}</div>
+                                    )}
+                                    {item.powerDetails.leftAddlPower && (
+                                      <div><span className="text-gray-600">Add Power:</span> {item.powerDetails.leftAddlPower}</div>
+                                    )}
+                                  </div>
+                                </div>
+                                {!item.powerDetails.samePower && (
+                                  <div>
+                                    <span className="text-green-700 font-medium">Right Eye (OD):</span>
+                                    <div className="ml-2 space-y-1">
+                                      {item.powerDetails.rightSPH && (
+                                        <div><span className="text-gray-600">SPH:</span> {item.powerDetails.rightSPH}</div>
+                                      )}
+                                      {item.powerDetails.rightCYL && (
+                                        <div><span className="text-gray-600">CYL:</span> {item.powerDetails.rightCYL}</div>
+                                      )}
+                                      {item.powerDetails.rightAxis && (
+                                        <div><span className="text-gray-600">Axis:</span> {item.powerDetails.rightAxis}</div>
+                                      )}
+                                      {item.powerDetails.rightAddlPower && (
+                                        <div><span className="text-gray-600">Add Power:</span> {item.powerDetails.rightAddlPower}</div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                              {item.powerName && item.powerPhone && (
+                                <div className="mt-3 pt-3 border-t border-green-200 text-xs text-green-700">
+                                  <div>Name: {item.powerName}</div>
+                                  <div>Phone: {item.powerPhone}</div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Prescription Image */}
+                          {item.prescriptionImageUrl && (
+                            <div className="mt-3 pt-3 border-t border-green-200">
+                              <h6 className="font-medium text-green-900 mb-2">Prescription:</h6>
+                              <div className="text-sm text-green-800">
+                                <p>Prescription image has been uploaded for this order.</p>
+                                <a
+                                  href={item.prescriptionImageUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 underline text-xs break-all"
+                                >
+                                  View Prescription
+                                </a>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Submit Power Later */}
+                          {item.powerCategory === "submit-later" && (
+                            <div className="mt-3 pt-3 border-t border-green-200">
+                              <h6 className="font-medium text-yellow-700 mb-2">Power Status:</h6>
+                              <div className="text-sm text-yellow-700">
+                                <p>Power details to be submitted later by customer.</p>
+                                <p className="mt-1 font-medium">Customer has 7 days to submit power details.</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 

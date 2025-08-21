@@ -240,7 +240,7 @@ export default function SpecialCategoryPage() {
       
       {/* Category Header */}
       <div className="relative py-16 md:py-24 overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-black/30 z-1" />
         {category?.banner_image && (
           <Image
             fill

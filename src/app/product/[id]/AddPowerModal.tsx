@@ -5,7 +5,7 @@ import type { PowerEntry } from './page';
 interface AddPowerModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmitPowerLater: (name: string, phone: string) => void;
+  onSubmitPowerLater: () => void;
   onEnterPowerManually: () => void;
   onUploadPrescription: (imageUrl?: string, name?: string, phone?: string) => void;
   onSelectSavedPower?: () => void;
@@ -65,14 +65,14 @@ const AddPowerModal: React.FC<AddPowerModalProps> = ({
             <div className="flex flex-col gap-3 mb-6">
               <button
                 className="flex items-center gap-3 bg-white rounded-xl shadow px-4 py-3 border border-gray-100 hover:shadow-lg transition-all"
-                onClick={() => onSubmitPowerLater('', '')}
+                onClick={onSubmitPowerLater}
               >
                 <span className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
                   <Clock className="w-8 h-8 text-blue-900" />
                 </span>
                 <div className="flex-1 text-left">
-                  <div className="font-semibold text-base text-gray-900">Submit Power Later in 7 days</div>
-                  <div className="text-xs text-gray-500">After placing the order</div>
+                  <div className="font-semibold text-base text-gray-900">Submit Power Later</div>
+                  <div className="text-xs text-gray-500">Add to cart now, submit power within 7 days.</div>
                 </div>
                 <CheckCircle className="text-green-500 w-7 h-7" />
               </button>

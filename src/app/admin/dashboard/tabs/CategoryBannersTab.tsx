@@ -23,14 +23,41 @@ const CategoryBannersTab = () => {
       const genderRes = await supabase.from("categories").select("name").eq("category_type", "gender").order("id");
       const typeRes = await supabase.from("categories").select("name").eq("category_type", "type").order("id");
       setGenders(genderRes.data ? genderRes.data.map((c: { name: string }) => c.name) : []);
-      setTypes(typeRes.data ? typeRes.data.map((c: { name: string }) => c.name) : []);
-      if (genderRes.data && genderRes.data.length > 0) setActiveGender(genderRes.data[0].name);
+      
+      // Set the first gender as active first
+      if (genderRes.data && genderRes.data.length > 0) {
+        const firstGender = genderRes.data[0].name;
+        setActiveGender(firstGender);
+        
+        // Now filter types based on the first gender
+        let filteredTypes = typeRes.data ? typeRes.data.map((c: { name: string }) => c.name) : [];
+        if (firstGender === "kids") {
+          filteredTypes = filteredTypes.filter(type => 
+            ["eyeglasses", "computer glasses"].includes(type.toLowerCase())
+          );
+        }
+        setTypes(filteredTypes);
+      }
     };
     fetchCategories();
   }, []);
 
   useEffect(() => {
-    if (activeGender) fetchBanners();
+    if (activeGender) {
+      // Refetch and filter types based on selected gender
+      const filterTypesByGender = async () => {
+        const typeRes = await supabase.from("categories").select("name").eq("category_type", "type").order("id");
+        let filteredTypes = typeRes.data ? typeRes.data.map((c: { name: string }) => c.name) : [];
+        if (activeGender === "kids") {
+          filteredTypes = filteredTypes.filter(type => 
+            ["eyeglasses", "sunglasses"].includes(type.toLowerCase())
+          );
+        }
+        setTypes(filteredTypes);
+      };
+      filterTypesByGender();
+      fetchBanners();
+    }
     // eslint-disable-next-line
   }, [activeGender]);
 
@@ -120,7 +147,7 @@ const CategoryBannersTab = () => {
             <div key={type} className="mb-6 p-4 bg-white rounded-xl shadow border border-gray-100 flex items-center justify-between">
               <div>
                 <div className="font-semibold text-lg capitalize">{activeGender} - {type}</div>
-                {banner && <Image height={500} width={500} src={banner.image_url} alt="banner" className="h-24 mt-2 rounded shadow" />}
+                {banner && <Image height={500} width={500} src={banner.image_url} alt="banner" className="size-48 mt-2 rounded shadow" />}
               </div>
               <div className="flex items-center gap-2">
                 {!banner && (

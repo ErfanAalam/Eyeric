@@ -377,7 +377,7 @@ const CategoryTabs = ({
   const categoryKeys = ["men", "women", "kids"];
 
   // For kids, only show eyeglasses and computer glasses
-  const kidsAllowedTypes = ["eyeglasses", "computer glasses"];
+  const kidsAllowedTypes = ["eyeglasses", "sunglasses"];
 
   // Build categories object dynamically from products
   const dynamicCategories: {
