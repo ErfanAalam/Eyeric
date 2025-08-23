@@ -35,6 +35,8 @@ const toPreciseNumber = (value: string | number | null | undefined): number | nu
   return num;
 };
 
+
+
 // Helper function to shift display orders for a specific category
 const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
   const { data, error: fetchError } = await supabase
@@ -100,7 +102,7 @@ export type Product = {
   lens_width?: number;
   bridge_width?: number;
   temple_length?: number;
-  lens_category_id?: string;
+  lens_category_id?: number;
   is_active?: boolean;
   product_serial_number?: string;
   frame_colour?: string;
@@ -174,7 +176,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
   const [bridgeWidth, setBridgeWidth] = useState("");
   const [templeLength, setTempleLength] = useState("");
   const [lensCategories, setLensCategories] = useState([]);
-  const [lensCategoryId, setLensCategoryId] = useState("");
+  const [lensCategoryId, setLensCategoryId] = useState<number | null>(null);
   const [specialCategories, setSpecialCategories] = useState([]);
   const [selectedSpecialCategories, setSelectedSpecialCategories] = useState([]);
   const [allCoupons, setAllCoupons] = useState([]);
@@ -301,7 +303,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setLensWidth(editProduct.lens_width?.toString() || "");
       setBridgeWidth(editProduct.bridge_width?.toString() || "");
       setTempleLength(editProduct.temple_length?.toString() || "");
-      setLensCategoryId(editProduct.lens_category_id?.toString() || "");
+      setLensCategoryId(editProduct.lens_category_id || null);
       setIsActive(editProduct.is_active !== false); // Default to true if not set
       setBannerImage1Preview(editProduct.banner_image_1 || null);
       setBannerImage2Preview(editProduct.banner_image_2 || null);
@@ -746,7 +748,7 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
     setLensWidth("");
     setBridgeWidth("");
     setTempleLength("");
-    setLensCategoryId("");
+    setLensCategoryId(null);
     setIsActive(true);
           setSelectedSpecialCategories([]);
       setSelectedCoupons([]);
@@ -1471,8 +1473,8 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
                 <Tag className="w-4 h-4" /> Lens Category
               </label>
               <select
-                value={lensCategoryId}
-                onChange={e => setLensCategoryId(e.target.value)}
+                value={lensCategoryId || ""}
+                onChange={e => setLensCategoryId(e.target.value ? parseInt(e.target.value, 10) : null)}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
               >
                 <option value="">Select Lens Category</option>
