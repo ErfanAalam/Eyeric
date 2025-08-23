@@ -68,3 +68,6 @@ If you encounter RLS policy errors:
 2. Check that the database trigger was created successfully
 3. Verify that the RLS policies are in place
 4. Ensure the user table exists and has the correct structure 
+
+
+THANK YOU
