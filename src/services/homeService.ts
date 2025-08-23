@@ -1,6 +1,6 @@
 import { Slide, CategoryData, Brand, BestSeller, Shape, ProductType, Feature, ProductCategory } from "../types/data";
 import { supabase } from '../../lib/supabaseClient';
-import { Product } from '../app/admin/dashboard/tabs/ManageProductTab';
+import type { Product } from '../types/product';
 
 // These functions would be replaced with actual database calls
 export const getHeroSlides = async (): Promise<Slide[]> => {

@@ -3,39 +3,7 @@ import { Edit3, Trash2, Package, X, Tag, Plus, Shapes } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
 import Image from "next/image";
 
-export type Product = {
-  id?: string;
-  title: string;
-  description: string;
-  original_price: number;
-  discounted_price?: number;
-  display_order?: number;
-  bestseller?: boolean;
-  latest_trend?: boolean;
-  banner_image_1?: string;
-  banner_image_2?: string;
-  images: { url: string; display_order: number }[];
-  sizes: string[];
-  frame_material?: string;
-  features: string[];
-  shape_category?: string;
-  tags: string[];
-  gender_category: string[];
-  type_category: string[];
-  created_at?: string;
-  updated_at?: string;
-  quantity?: number;
-  style_category?: string;
-  lens_category_id?: string;
-  is_lens_used?: boolean;
-  lens_width?: number;
-  bridge_width?: number;
-  temple_length?: number;
-  is_active?: boolean;
-  product_serial_number?: string;
-  frame_colour?: string;
-  temple_colour?: string;
-};
+import type { Product } from "../../../../types/product";
 
 const GENDER_TABS = [
   { label: "Men", value: "men" },

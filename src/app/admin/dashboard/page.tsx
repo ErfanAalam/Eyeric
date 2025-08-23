@@ -19,7 +19,7 @@ import ManageLensTab from "./tabs/ManageLensTab";
 import ManageLensCategoriesTab from "./tabs/ManageLensCategoriesTab";
 import ManageSpecialProductCategoriesTab from "./tabs/ManageSpecialProductCategoriesTab";
 import CouponPage from "../coupon/page";
-import type { Product } from "./tabs/ManageProductTab";
+import type { Product } from "../../../types/product";
 
 // Add Admin type
 interface AdminType {

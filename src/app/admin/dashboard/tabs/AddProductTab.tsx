@@ -75,56 +75,7 @@ const shiftDisplayOrders = async (columnName: string, newOrder: number) => {
   }
 };
 
-export type Product = {
-  id?: string;
-  title: string;
-  description: string;
-  original_price: number;
-  discounted_price?: number;
-  display_order?: number;
-  bestseller?: boolean;
-  latest_trend?: boolean;
-  banner_image_1?: string;
-  banner_image_2?: string;
-  images: { url: string; display_order: number }[];
-  sizes: string[];
-  frame_material?: string;
-  features: string[];
-  shape_category?: string;
-  tags: string[];
-  gender_category: string[];
-  type_category: string[];
-  created_at?: string;
-  updated_at?: string;
-  is_lens_used?: boolean;
-  quantity?: number;
-  style_category?: string;
-  lens_width?: number;
-  bridge_width?: number;
-  temple_length?: number;
-  lens_category_id?: number;
-  is_active?: boolean;
-  product_serial_number?: string;
-  frame_colour?: string;
-  temple_colour?: string;
-  special_product_categories?: string[];
-  mens_display_order?: number;
-  womens_display_order?: number;
-  kids_display_order?: number;
-  sunglasses_display_order?: number;
-  eyeglasses_display_order?: number;
-  computerglasses_display_order?: number;
-  powered_sunglasses_display_order?: number;
-  round_display_order?: number;
-  cat_eye_display_order?: number;
-  aviator_display_order?: number;
-  wayfarer_display_order?: number;
-  oval_display_order?: number;
-  rectangle_display_order?: number;
-  square_display_order?: number;
-  latest_trend_display_order?: number;
-  bestseller_display_order?: number;
-};
+import type { Product } from "../../../../types/product";
 
 const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | null, onFinishEdit?: () => void }) => {
   const [title, setTitle] = useState("");
