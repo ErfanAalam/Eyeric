@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Filter, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
+import { getCategoriesByType } from "../src/services/categoryService";
 import "./FilterSidebar.css";
-
-const GENDERS = ["Men", "Women", "Kids"];
 
 export default function FilterSidebar({
   currentGender,
@@ -11,7 +10,6 @@ export default function FilterSidebar({
   selectedShapes,
   currentPrice,
   onPriceChange,
-  styleOptions,
   show,
   onClose,
   isMobile,
@@ -25,7 +23,6 @@ export default function FilterSidebar({
   selectedShapes: string[];
   currentPrice: { min: number; max: number };
   onPriceChange: (price: { min: number; max: number }) => void;
-  styleOptions: string[];
   show: boolean;
   onClose: () => void;
   isMobile?: boolean;
@@ -36,160 +33,279 @@ export default function FilterSidebar({
   // Local state for multi-select
   const [localStyles, setLocalStyles] = useState<string[]>(selectedStyles);
   const [localShapes, setLocalShapes] = useState<string[]>(selectedShapes);
+  
+  // State for collapsible sections
+  const [collapsedSections, setCollapsedSections] = useState<{[key: string]: boolean}>({
+    gender: true,
+    style: true,
+    faceShape: true,
+    price: true
+  });
+
+  // State for categories from database
+  const [genderOptions, setGenderOptions] = useState<string[]>([]);
+  const [styleOptions, setStyleOptions] = useState<string[]>([]);
+  const [shapeOptions, setShapeOptions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLocalStyles(selectedStyles);
   }, [selectedStyles, show]);
+  
   useEffect(() => {
     setLocalShapes(selectedShapes);
   }, [selectedShapes, show]);
+
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch all category types in parallel
+        const [genderData, styleData, shapeData] = await Promise.all([
+          getCategoriesByType('gender'),
+          getCategoriesByType('style'),
+          getCategoriesByType('shape')
+        ]);
+
+        setGenderOptions(genderData.map(cat => cat.name));
+        setStyleOptions(styleData.map(cat => cat.name));
+        setShapeOptions(shapeData.map(cat => cat.name));
+        
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        // Fallback to default options if database fails
+        setGenderOptions(['Men', 'Women', 'Kids']);
+        setStyleOptions(['Classic', 'Modern', 'Vintage', 'Sporty']);
+        setShapeOptions(['Round', 'Square', 'Oval', 'Heart', 'Cat-Eye', 'Aviator', 'Wayfarer', 'Rectangle']);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleStyleToggle = (style: string) => {
     setLocalStyles((prev) =>
       prev.includes(style) ? prev.filter((s) => s !== style) : [...prev, style]
     );
   };
+  
   const handleShapeToggle = (shape: string) => {
     setLocalShapes((prev) =>
       prev.includes(shape) ? prev.filter((s) => s !== shape) : [...prev, shape]
     );
   };
+  
   const handleApply = () => {
     onApplyFilters(localStyles, localShapes);
     if (isMobile) onClose();
   };
+  
   const handleClear = () => {
     setLocalStyles([]);
     setLocalShapes([]);
     onClearFilters();
   };
 
+  const toggleSection = (sectionKey: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionKey]: !prev[sectionKey]
+    }));
+  };
+
   const sidebarContent = (
-    <div className="space-y-6">
+    <div className="filter-sidebar p-4 space-y-4">
+      {/* Header with icon */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+          <Filter className="w-6 h-6 text-white" />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-gray-800">Smart Filters</h2>
+          <p className="text-sm text-gray-500">Find your perfect match</p>
+        </div>
+      </div>
+
       {/* Gender Filter */}
-      <details className="group border-b pb-2">
-        <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
-          GENDER
-          <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
-            <span className="group-open:hidden">+</span>
-            <span className="hidden group-open:inline">−</span>
-          </span>
-        </summary>
-        <div className="mt-2 space-y-2 pl-2">
-          {GENDERS.map((gender) => (
-            <button
-              key={gender}
-              className={`block w-full text-left px-2 py-1 rounded-lg text-gray-600 text-sm cursor-pointer hover:bg-blue-50 ${
-                currentGender === gender.toLowerCase()
-                  ? "bg-blue-100 font-bold text-blue-700"
-                  : ""
-              }`}
-              onClick={() => onGenderChange(gender)}
-            >
-              {gender}
-            </button>
-          ))}
-        </div>
-      </details>
-      {/* Style Filter */}
-      <details className="group border-b pb-2">
-        <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
-          STYLE
-          <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
-            <span className="group-open:hidden">+</span>
-            <span className="hidden group-open:inline">−</span>
-          </span>
-        </summary>
-        <div className="mt-2 space-y-2 pl-2">
-          {styleOptions.map((style) => (
-            <label
-              key={style}
-              className="flex items-center gap-2 text-gray-600 text-sm cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={localStyles.includes(style)}
-                onChange={() => handleStyleToggle(style)}
-                className="accent-blue-600"
-              />
-              {style}
-            </label>
-          ))}
-        </div>
-      </details>
-      {/* Face Shape Filter */}
-      <details className="group border-b pb-2">
-        <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
-          FACE SHAPE
-          <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
-            <span className="group-open:hidden">+</span>
-            <span className="hidden group-open:inline">−</span>
-          </span>
-        </summary>
-        <div className="mt-2 space-y-2 pl-2">
-          {[
-            "Round",
-            "Square",
-            "Oval",
-            "Heart",
-            "Cat-Eye",
-            "Aviator",
-            "Wayfarer",
-            "Rectangle",
-          ].map((shape) => (
-            <label
-              key={shape}
-              className="flex items-center gap-2 text-gray-600 text-sm cursor-pointer"
-            >
-              <input
-                type="checkbox"
-                checked={localShapes.includes(shape.toLowerCase())}
-                onChange={() => handleShapeToggle(shape.toLowerCase())}
-                className="accent-blue-60"
-              />
-              {shape}
-            </label>
-          ))}
-        </div>
-      </details>
-      {/* Price Filter */}
-      <details className="group border-b pb-2">
-        <summary className="flex items-center justify-between cursor-pointer font-semibold text-gray-800 text-base select-none">
-          PRICE
-          <span className="ml-2 text-2xl transition-transform group-open:rotate-0">
-            <span className="group-open:hidden">+</span>
-            <span className="hidden group-open:inline">−</span>
-          </span>
-        </summary>
-        <div className="mt-2 pl-2">
-          <input
-            type="range"
-            min={0}
-            max={maxPrice}
-            value={currentPrice.max}
-            onChange={(e) =>
-              onPriceChange({ ...currentPrice, max: Number(e.target.value) })
-            }
-            className="w-full price-slider"
-          />
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>₹{currentPrice.min}</span>
-            <span>₹{currentPrice.max}</span>
+      <div className="filter-section">
+        <div 
+          className="filter-header cursor-pointer"
+          onClick={() => toggleSection('gender')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              GENDER
+            </div>
+            {collapsedSections.gender ? (
+              <ChevronRight className="w-5 h-5 transition-transform duration-300" />
+            ) : (
+              <ChevronDown className="w-5 h-5 transition-transform duration-300" />
+            )}
           </div>
         </div>
-      </details>
-      <div className="flex flex-col gap-2 pt-2">
+        <div className={`filter-content ${collapsedSections.gender ? 'collapsed' : ''}`}>
+          <div className="space-y-2">
+            {loading ? (
+              <div className="text-gray-500 text-sm">Loading...</div>
+            ) : (
+              genderOptions.map((gender) => (
+                <button
+                  key={gender}
+                  className={`gender-button w-full text-left ${
+                    currentGender === gender.toLowerCase() ? "active" : ""
+                  }`}
+                  onClick={() => onGenderChange(gender)}
+                >
+                  {gender.charAt(0).toUpperCase() + gender.slice(1).toLowerCase()}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Style Filter */}
+      <div className="filter-section">
+        <div 
+          className="filter-header cursor-pointer"
+          onClick={() => toggleSection('style')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              STYLE
+            </div>
+            {collapsedSections.style ? (
+              <ChevronRight className="w-5 h-5 transition-transform duration-300" />
+            ) : (
+              <ChevronDown className="w-5 h-5 transition-transform duration-300" />
+            )}
+          </div>
+        </div>
+        <div className={`filter-content ${collapsedSections.style ? 'collapsed' : ''}`}>
+          <div className="space-y-2">
+            {loading ? (
+              <div className="text-gray-500 text-sm">Loading...</div>
+            ) : (
+              styleOptions.map((style) => (
+                <div
+                  key={style}
+                  className="checkbox-container"
+                  onClick={() => handleStyleToggle(style)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={localStyles.includes(style)}
+                    onChange={() => handleStyleToggle(style)}
+                    className="mr-3"
+                  />
+                  <label>{style.charAt(0).toUpperCase() + style.slice(1).toLowerCase()}</label>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Face Shape Filter */}
+      <div className="filter-section">
+        <div 
+          className="filter-header cursor-pointer"
+          onClick={() => toggleSection('faceShape')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              FACE SHAPE
+            </div>
+            {collapsedSections.faceShape ? (
+              <ChevronRight className="w-5 h-5 transition-transform duration-300" />
+            ) : (
+              <ChevronDown className="w-5 h-5 transition-transform duration-300" />
+            )}
+          </div>
+        </div>
+        <div className={`filter-content ${collapsedSections.faceShape ? 'collapsed' : ''}`}>
+          <div className="space-y-2">
+            {loading ? (
+              <div className="text-gray-500 text-sm">Loading...</div>
+            ) : (
+              shapeOptions.map((shape) => (
+                <div
+                  key={shape}
+                  className="checkbox-container"
+                  onClick={() => handleShapeToggle(shape)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={localShapes.includes(shape)}
+                    onChange={() => handleShapeToggle(shape)}
+                    className="mr-3"
+                  />
+                  <label>{shape.charAt(0).toUpperCase() + shape.slice(1).toLowerCase()}</label>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Price Filter */}
+      <div className="filter-section">
+        <div 
+          className="filter-header cursor-pointer"
+          onClick={() => toggleSection('price')}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              PRICE RANGE
+            </div>
+            {collapsedSections.price ? (
+              <ChevronRight className="w-5 h-5 transition-transform duration-300" />
+            ) : (
+              <ChevronDown className="w-5 h-5 transition-transform duration-300" />
+            )}
+          </div>
+        </div>
+        <div className={`filter-content ${collapsedSections.price ? 'collapsed' : ''}`}>
+          <div className="price-container">
+            <input
+              type="range"
+              min={0}
+              max={maxPrice}
+              value={currentPrice.max}
+              onChange={(e) =>
+                onPriceChange({ ...currentPrice, max: Number(e.target.value) })
+              }
+              className="w-full price-slider"
+            />
+            <div className="price-labels">
+              <span className="price-label">₹{currentPrice.min}</span>
+              <span className="price-label">₹{currentPrice.max}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="space-y-3 pt-4">
         <button
-          className="w-full bg-button text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+          className="action-button w-full"
           onClick={handleApply}
         >
           Apply Filters
         </button>
         <button
-          className="w-full bg-button text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
+          className="action-button clear w-full"
           onClick={handleClear}
         >
-          Clear Filters
+          Clear All
         </button>
       </div>
     </div>
@@ -197,20 +313,19 @@ export default function FilterSidebar({
 
   if (isMobile) {
     return show ? (
-      <div className="fixed inset-0 z-50 bg-black/40 flex justify-end lg:hidden">
-        <div className="bg-white w-80 max-w-full h-full p-6 shadow-xl overflow-y-auto relative animate-slideInRight">
+      <div className="mobile-filter-overlay fixed inset-0 z-50 flex justify-end lg:hidden">
+        <div className="mobile-filter-panel w-80 max-w-full h-full overflow-y-auto relative animate-slideInRight">
           <button
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100"
+            className="close-button absolute top-4 right-4"
             onClick={onClose}
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 text-gray-600" />
           </button>
-          <h2 className="text-xl font-bold mb-6">Filters</h2>
           {sidebarContent}
         </div>
       </div>
     ) : null;
   }
 
-  return <aside className="w-64 hidden lg:block">{sidebarContent}</aside>;
+  return <aside className="w-72 hidden lg:block">{sidebarContent}</aside>;
 }

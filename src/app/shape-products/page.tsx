@@ -52,7 +52,7 @@ const ShapeProductsContent = () => {
   const router = useRouter();
   const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
 
-  const styleOptions = ["Full Rim", "Half Rim", "Rimless"];
+
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedShapes, setSelectedShapes] = useState<string[]>([]);
 
@@ -215,7 +215,6 @@ const ShapeProductsContent = () => {
             selectedShapes={selectedShapes}
             currentPrice={priceRange}
             onPriceChange={handlePriceChange}
-            styleOptions={styleOptions}
             show={false}
             onClose={() => setShowFilters(false)}
             isMobile={false}
@@ -231,7 +230,6 @@ const ShapeProductsContent = () => {
             selectedShapes={selectedShapes}
             currentPrice={priceRange}
             onPriceChange={handlePriceChange}
-            styleOptions={styleOptions}
             show={showFilters}
             onClose={() => setShowFilters(false)}
             isMobile={true}

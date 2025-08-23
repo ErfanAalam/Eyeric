@@ -20,10 +20,6 @@ import Image from "next/image";
 import Select from 'react-select';
 import imageCompression from 'browser-image-compression';
 
-
-
-
-
 // Helper function to ensure precise number conversion
 const toPreciseNumber = (value: string | number | null | undefined): number | null => {
   if (value === null || value === undefined || value === '') return null;
@@ -109,6 +105,23 @@ export type Product = {
   product_serial_number?: string;
   frame_colour?: string;
   temple_colour?: string;
+  special_product_categories?: string[];
+  mens_display_order?: number;
+  womens_display_order?: number;
+  kids_display_order?: number;
+  sunglasses_display_order?: number;
+  eyeglasses_display_order?: number;
+  computerglasses_display_order?: number;
+  powered_sunglasses_display_order?: number;
+  round_display_order?: number;
+  cat_eye_display_order?: number;
+  aviator_display_order?: number;
+  wayfarer_display_order?: number;
+  oval_display_order?: number;
+  rectangle_display_order?: number;
+  square_display_order?: number;
+  latest_trend_display_order?: number;
+  bestseller_display_order?: number;
 };
 
 const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | null, onFinishEdit?: () => void }) => {
@@ -135,6 +148,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
   const [ovalDisplayOrder, setOvalDisplayOrder] = useState("");
   const [rectangleDisplayOrder, setRectangleDisplayOrder] = useState("");
   const [squareDisplayOrder, setSquareDisplayOrder] = useState("");
+  const [latestTrendDisplayOrder, setLatestTrendDisplayOrder] = useState("");
+  const [bestsellerDisplayOrder, setBestsellerDisplayOrder] = useState("");
   const [bannerImage1, setBannerImage1] = useState<File | null>(null);
   const [bannerImage2, setBannerImage2] = useState<File | null>(null);
   const [images, setImages] = useState<{ url: string; display_order: number }[]>([]);
@@ -255,6 +270,25 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setImagePreviews(dbImages.map(img => img.url));
       setSizes(editProduct.sizes || []);
       setFrameMaterial(editProduct.frame_material || "");
+      setFrameColour(editProduct.frame_colour || "");
+      setTempleColour(editProduct.temple_colour || "");
+      setProductSerialNumber(editProduct.product_serial_number || "");
+      setMensDisplayOrder(editProduct.mens_display_order?.toString() || "");
+      setWomensDisplayOrder(editProduct.womens_display_order?.toString() || "");
+      setKidsDisplayOrder(editProduct.kids_display_order?.toString() || "");
+      setSunglassesDisplayOrder(editProduct.sunglasses_display_order?.toString() || "");
+      setEyeglassesDisplayOrder(editProduct.eyeglasses_display_order?.toString() || "");
+      setComputerglassesDisplayOrder(editProduct.computerglasses_display_order?.toString() || "");
+      setPoweredSunglassesDisplayOrder(editProduct.powered_sunglasses_display_order?.toString() || "");
+      setRoundDisplayOrder(editProduct.round_display_order?.toString() || "");
+      setCatEyeDisplayOrder(editProduct.cat_eye_display_order?.toString() || "");
+      setAviatorDisplayOrder(editProduct.aviator_display_order?.toString() || "");
+      setWayfarerDisplayOrder(editProduct.wayfarer_display_order?.toString() || "");
+      setOvalDisplayOrder(editProduct.oval_display_order?.toString() || "");
+      setRectangleDisplayOrder(editProduct.rectangle_display_order?.toString() || "");
+      setSquareDisplayOrder(editProduct.square_display_order?.toString() || "");
+      setLatestTrendDisplayOrder(editProduct.latest_trend_display_order?.toString() || "");
+      setBestsellerDisplayOrder(editProduct.bestseller_display_order?.toString() || "");
       setFeatures((editProduct.features || []).join('; '));
       setSelectedGenders(editProduct.gender_category || []);
       setSelectedTypes(editProduct.type_category || []);
@@ -276,8 +310,22 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       // Set display orders for existing images
       setNewImageDisplayOrders((editProduct.images || []).map(img => img.display_order || 0));
       
-      // Fetch coupons for this product
+      // Fetch special product categories for this product
       if (editProduct.id) {
+        const fetchProductSpecialCategories = async () => {
+          const { data: productSpecialCategories } = await supabase
+            .from("product_special_categories")
+            .select("special_category_id")
+            .eq("product_id", editProduct.id);
+          
+          if (productSpecialCategories && productSpecialCategories.length > 0) {
+            const specialCategoryIds = productSpecialCategories.map(psc => psc.special_category_id.toString());
+            setSelectedSpecialCategories(specialCategoryIds);
+          }
+        };
+        fetchProductSpecialCategories();
+        
+        // Fetch coupons for this product
         const fetchProductCoupons = async () => {
           const { data: productCoupons } = await supabase
             .from("product_coupons")
@@ -294,10 +342,17 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     }
   }, [editProduct]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+if(!title || !description || !originalPrice || !discountedPrice || !frameMaterial || !quantity || !styleCategory || !frameColour || !templeColour || !shapeCategory || !selectedGenders ||  !lensWidth || !bridgeWidth || !templeLength || !productSerialNumber ){
+  setMessage("Please fill all the required fields");
+  setLoading(false);
+  return;
+}
+
 
     // Validate discounted price
     if (discountedPrice && originalPrice) {
@@ -527,6 +582,18 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       categoryDisplayOrders.square_display_order = order;
       await shiftDisplayOrders("square_display_order", order);
     }
+    
+    // Latest Trend and Bestseller display orders
+    if (latestTrend && latestTrendDisplayOrder) {
+      const order = parseInt(latestTrendDisplayOrder, 10);
+      categoryDisplayOrders.latest_trend_display_order = order;
+      await shiftDisplayOrders("latest_trend_display_order", order);
+    }
+    if (bestseller && bestsellerDisplayOrder) {
+      const order = parseInt(bestsellerDisplayOrder, 10);
+      categoryDisplayOrders.bestseller_display_order = order;
+      await shiftDisplayOrders("bestseller_display_order", order);
+    }
 
     // Upload banner images
     let bannerImage1Url = "";
@@ -703,6 +770,8 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     setOvalDisplayOrder("");
     setRectangleDisplayOrder("");
     setSquareDisplayOrder("");
+    setLatestTrendDisplayOrder("");
+    setBestsellerDisplayOrder("");
     
     setLoading(false);
   };
@@ -1355,6 +1424,45 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                   </div>
                 </div>
               )}
+              
+              {/* Latest Trend & Bestseller Display Orders */}
+              {(latestTrend || bestseller) && (
+                <div className="bg-purple-50 border border-purple-200 rounded-2xl p-6">
+                  <h4 className="text-md font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" /> Latest Trend & Bestseller Display Orders
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {latestTrend && (
+                      <div>
+                        <label className="text-sm font-medium text-purple-700 mb-2 block">Latest Trend Display Order</label>
+                        <input
+                          type="number"
+                          value={latestTrendDisplayOrder}
+                          onChange={(e) => setLatestTrendDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                          placeholder="Enter position for latest trend..."
+                        />
+                      </div>
+                    )}
+                    {bestseller && (
+                      <div>
+                        <label className="text-sm font-medium text-purple-700 mb-2 block">Bestseller Display Order</label>
+                        <input
+                          type="number"
+                          value={bestsellerDisplayOrder}
+                          onChange={(e) => setBestsellerDisplayOrder(e.target.value)}
+                          min="1"
+                          step="1"
+                          className="w-full px-3 py-2 border border-purple-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                          placeholder="Enter position for bestseller..."
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Lens Category Dropdown */}
@@ -1365,7 +1473,6 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
               <select
                 value={lensCategoryId}
                 onChange={e => setLensCategoryId(e.target.value)}
-                required
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
               >
                 <option value="">Select Lens Category</option>

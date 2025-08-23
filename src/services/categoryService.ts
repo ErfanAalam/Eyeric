@@ -12,7 +12,7 @@ export const getCategories = async (): Promise<Category[]> => {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
-      .order('name');
+      // .order('name');
 
     if (error) {
       console.error('Error fetching categories:', error);
@@ -32,7 +32,7 @@ export const getCategoriesByType = async (categoryType: string): Promise<Categor
       .from('categories')
       .select('*')
       .eq('category_type', categoryType)
-      .order('name');
+      // .order('name');
 
     if (error) {
       console.error(`Error fetching ${categoryType} categories:`, error);
