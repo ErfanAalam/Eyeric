@@ -311,11 +311,10 @@ export default function SpecialCategoryPage() {
             <FilterSidebar
               currentGender={selectedGender}
               onGenderChange={handleGenderChange}
-              selectedStyles={[]}
-              selectedShapes={[]}
+              selectedStyles={[] as string[]}
+              selectedShapes={[] as string[]}
               currentPrice={{ min: priceRange[0], max: priceRange[1] }}
               onPriceChange={(price) => setPriceRange([price.min, price.max])}
-              styleOptions={["Full Rim", "Half Rim", "Rimless"]}
               show={false}
               onClose={() => setShowFilters(false)}
               isMobile={false}
@@ -328,11 +327,10 @@ export default function SpecialCategoryPage() {
             <FilterSidebar
               currentGender={selectedGender}
               onGenderChange={handleGenderChange}
-              selectedStyles={[]}
-              selectedShapes={[]}
+              selectedStyles={[] as string[]}
+              selectedShapes={[] as string[]}
               currentPrice={{ min: priceRange[0], max: priceRange[1] }}
               onPriceChange={(price) => setPriceRange([price.min, price.max])}
-              styleOptions={["Full Rim", "Half Rim", "Rimless"]}
               show={showFilters}
               onClose={() => setShowFilters(false)}
               isMobile={true}

@@ -33,7 +33,6 @@ const CategoryShapePage = () => {
   const [sortBy, setSortBy] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
-  const styleOptions = ["Full Rim", "Half Rim", "Rimless"];
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedShapes, setSelectedShapes] = useState<string[]>([]);
 
@@ -112,7 +111,6 @@ const CategoryShapePage = () => {
             selectedShapes={selectedShapes}
             currentPrice={priceRange}
             onPriceChange={handlePriceChange}
-            styleOptions={styleOptions}
             show={false}
             onClose={() => setShowFilters(false)}
             isMobile={false}
@@ -127,7 +125,6 @@ const CategoryShapePage = () => {
             selectedShapes={selectedShapes}
             currentPrice={priceRange}
             onPriceChange={handlePriceChange}
-            styleOptions={styleOptions}
             show={showFilters}
             onClose={() => setShowFilters(false)}
             isMobile={true}
