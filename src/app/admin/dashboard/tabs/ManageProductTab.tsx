@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Edit3, Trash2, Package, X, Tag, Plus, Shapes } from "lucide-react";
+import { Edit3, Trash2, Package, X, Tag, Plus, Shapes, Search } from "lucide-react";
 import { supabase } from "../../../../../lib/supabaseClient";
 import Image from "next/image";
 
@@ -18,14 +18,15 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
   const [messageType, setMessageType] = useState<"success" | "error" | "info">("info");
   const [activeGender, setActiveGender] = useState<string>("men");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterType, setFilterType] = useState("");
-  const [filterShape, setFilterShape] = useState("");
-  const [filterStyle, setFilterStyle] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<string[]>([]);
+  const [filterShape, setFilterShape] = useState<string[]>([]);
+  const [filterStyle, setFilterStyle] = useState<string[]>([]);
   const [filterQuantity, setFilterQuantity] = useState("");
   const [filterLatestTrend, setFilterLatestTrend] = useState("");
   const [filterBestseller, setFilterBestseller] = useState("");
   const [specialCategories, setSpecialCategories] = useState([]);
-  const [filterSpecialCategories, setFilterSpecialCategories] = useState([]);
+  const [filterSpecialCategories, setFilterSpecialCategories] = useState<string[]>([]);
   const [filterActive, setFilterActive] = useState("");
   const [productSpecialCategories, setProductSpecialCategories] = useState({}); // { productId: [catId, ...] }
   
@@ -33,6 +34,12 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
   const [typeOptions, setTypeOptions] = useState<string[]>([]);
   const [shapeOptions, setShapeOptions] = useState<string[]>([]);
   const [styleOptions, setStyleOptions] = useState<string[]>([]);
+
+  // Dropdown open/close states
+  const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
+  const [shapeDropdownOpen, setShapeDropdownOpen] = useState(false);
+  const [styleDropdownOpen, setStyleDropdownOpen] = useState(false);
+  const [specialCategoriesDropdownOpen, setSpecialCategoriesDropdownOpen] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -43,6 +50,24 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
 
   useEffect(() => {
     fetchProducts();
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.filter-dropdown')) {
+        setTypeDropdownOpen(false);
+        setShapeDropdownOpen(false);
+        setStyleDropdownOpen(false);
+        setSpecialCategoriesDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -168,6 +193,12 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
     onEditProduct(product);
   };
 
+  // Helper function to check if arrays have any intersection
+  const hasIntersection = (arr1: string[], arr2: string[]) => {
+    if (arr1.length === 0) return true;
+    return arr1.some(item => arr2.includes(item));
+  };
+
   // const toggleActiveStatus = async (productId: string, currentStatus: boolean) => {
   //   setLoading(true);
   //   try {
@@ -243,85 +274,291 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
         {/* 1. FILTER BAR UI */}
         {filterOpen && (
           <div className="mb-8 bg-white/90 p-6 rounded-2xl shadow-lg border border-blue-100">
+            {/* Search Bar */}
+            <div className="mb-6">
+              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1 mb-2">
+                <Search className="w-3 h-3 text-blue-600" />
+                Search Products
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Search by product name..."
+                  className="w-full pl-10 pr-4 py-3 rounded-lg border border-blue-200 bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm"
+                />
+              </div>
+            </div>
+
             {/* Filter Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
               {/* Type Filter */}
-              <div className="space-y-2">
+              <div className="space-y-2 filter-dropdown">
                 <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
                   <Tag className="w-3 h-3 text-blue-600" />
                   Type
                 </label>
-                <select 
-                  value={filterType} 
-                  onChange={e => setFilterType(e.target.value)} 
-                  className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm"
-                >
-                  <option value="">All Types</option>
-                  {typeOptions.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button
+                    onClick={() => setTypeDropdownOpen(prev => !prev)}
+                    className="w-full px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-200 text-sm text-left flex items-center justify-between transition-colors"
+                  >
+                    <span className={filterType.length > 0 ? "text-blue-700" : "text-slate-500"}>
+                      {filterType.length === 0 
+                        ? "Select types..." 
+                        : filterType.length === 1 
+                          ? filterType[0] 
+                          : `${filterType.length} types selected`
+                      }
+                    </span>
+                    <svg className={`w-4 h-4 text-blue-600 transition-transform ${typeDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Dropdown Options */}
+                  {typeDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-blue-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {typeOptions.map(type => (
+                        <label key={type} className="flex items-center px-3 py-2 hover:bg-blue-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filterType.includes(type)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFilterType([...filterType, type]);
+                              } else {
+                                setFilterType(filterType.filter(t => t !== type));
+                              }
+                            }}
+                            className="mr-2 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-slate-700">{type}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Selected Types Display */}
+                {filterType.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {filterType.map(type => (
+                      <span key={type} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full">
+                        {type}
+                        <button
+                          onClick={() => setFilterType(filterType.filter(t => t !== type))}
+                          className="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Shape Filter */}
-              <div className="space-y-2">
+              <div className="space-y-2 filter-dropdown">
                 <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
                   <Shapes className="w-3 h-3 text-green-600" />
                   Shape
                 </label>
-                <select 
-                  value={filterShape} 
-                  onChange={e => setFilterShape(e.target.value)} 
-                  className="w-full px-3 py-2 rounded-lg border border-green-200 bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-200 text-sm"
-                >
-                  <option value="">All Shapes</option>
-                  {shapeOptions.map(shape => (
-                    <option key={shape} value={shape}>{shape}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button
+                    onClick={() => setShapeDropdownOpen(prev => !prev)}
+                    className="w-full px-3 py-2 rounded-lg border border-green-200 bg-green-50 hover:bg-green-100 focus:outline-none focus:ring-2 focus:ring-green-200 text-sm text-left flex items-center justify-between transition-colors"
+                  >
+                    <span className={filterShape.length > 0 ? "text-green-700" : "text-slate-500"}>
+                      {filterShape.length === 0 
+                        ? "Select shapes..." 
+                        : filterShape.length === 1 
+                          ? filterShape[0] 
+                          : `${filterShape.length} shapes selected`
+                      }
+                    </span>
+                    <svg className={`w-4 h-4 text-green-600 transition-transform ${shapeDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Dropdown Options */}
+                  {shapeDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-green-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {shapeOptions.map(shape => (
+                        <label key={shape} className="flex items-center px-3 py-2 hover:bg-green-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filterShape.includes(shape)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFilterShape([...filterShape, shape]);
+                              } else {
+                                setFilterShape(filterShape.filter(s => s !== shape));
+                              }
+                            }}
+                            className="mr-2 text-green-600 rounded border-gray-300 focus:ring-green-500"
+                          />
+                          <span className="text-sm text-slate-700">{shape}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Selected Shapes Display */}
+                {filterShape.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {filterShape.map(shape => (
+                      <span key={shape} className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">
+                        {shape}
+                        <button
+                          onClick={() => setFilterShape(filterShape.filter(s => s !== shape))}
+                          className="hover:bg-green-200 rounded-full p-0.5 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Style Filter */}
-              <div className="space-y-2">
+              <div className="space-y-2 filter-dropdown">
                 <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
                   <Tag className="w-3 h-3 text-purple-600" />
                   Style
                 </label>
-                <select 
-                  value={filterStyle} 
-                  onChange={e => setFilterStyle(e.target.value)} 
-                  className="w-full px-3 py-2 rounded-lg border border-purple-200 bg-purple-50 focus:outline-none focus:ring-2 focus:ring-purple-200 text-sm"
-                >
-                  <option value="">All Styles</option>
-                  {styleOptions.map(style => (
-                    <option key={style} value={style}>{style}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button
+                    onClick={() => setStyleDropdownOpen(prev => !prev)}
+                    className="w-full px-3 py-2 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 focus:outline-none focus:ring-2 focus:ring-purple-200 text-sm text-left flex items-center justify-between transition-colors"
+                  >
+                    <span className={filterStyle.length > 0 ? "text-purple-700" : "text-slate-500"}>
+                      {filterStyle.length === 0 
+                        ? "Select styles..." 
+                        : filterStyle.length === 1 
+                          ? filterStyle[0] 
+                          : `${filterStyle.length} styles selected`
+                      }
+                    </span>
+                    <svg className={`w-4 h-4 text-purple-600 transition-transform ${styleDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Dropdown Options */}
+                  {styleDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-purple-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {styleOptions.map(style => (
+                        <label key={style} className="flex items-center px-3 py-2 hover:bg-purple-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filterStyle.includes(style)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFilterStyle([...filterStyle, style]);
+                              } else {
+                                setFilterStyle(filterStyle.filter(s => s !== style));
+                              }
+                            }}
+                            className="mr-2 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                          />
+                          <span className="text-sm text-slate-700">{style}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Selected Styles Display */}
+                {filterStyle.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {filterStyle.map(style => (
+                      <span key={style} className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                        {style}
+                        <button
+                          onClick={() => setFilterStyle(filterStyle.filter(s => s !== style))}
+                          className="hover:bg-purple-200 rounded-full p-0.5 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Special Categories Filter */}
-              <div className="space-y-2">
+              <div className="space-y-2 filter-dropdown">
                 <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
                   <Tag className="w-3 h-3 text-yellow-600" />
                   Special Categories
                 </label>
-                <select 
-                  value={filterSpecialCategories} 
-                  onChange={e => {
-                    const options = Array.from(e.target.selectedOptions, option => option.value);
-                    if(e.target.value === ""){
-                      setFilterSpecialCategories([])
-                    }else{
-                      setFilterSpecialCategories(options);
-                    }
-                  }} 
-                  className="w-full px-3 py-2 rounded-lg border border-yellow-200 bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-yellow-200 text-sm"
-                >
-                  <option value="">All Categories</option>
-                  {specialCategories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button
+                    onClick={() => setSpecialCategoriesDropdownOpen(prev => !prev)}
+                    className="w-full px-3 py-2 rounded-lg border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-200 text-sm text-left flex items-center justify-between transition-colors"
+                  >
+                    <span className={filterSpecialCategories.length > 0 ? "text-yellow-700" : "text-slate-500"}>
+                      {filterSpecialCategories.length === 0 
+                        ? "Select categories..." 
+                        : filterSpecialCategories.length === 1 
+                          ? specialCategories.find(cat => cat.id === filterSpecialCategories[0])?.name || 'Unknown'
+                          : `${filterSpecialCategories.length} categories selected`
+                      }
+                    </span>
+                    <svg className={`w-4 h-4 text-yellow-600 transition-transform ${specialCategoriesDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  
+                  {/* Dropdown Options */}
+                  {specialCategoriesDropdownOpen && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-yellow-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                      {specialCategories.map(cat => (
+                        <label key={cat.id} className="flex items-center px-3 py-2 hover:bg-yellow-50 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filterSpecialCategories.includes(cat.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFilterSpecialCategories([...filterSpecialCategories, cat.id]);
+                              } else {
+                                setFilterSpecialCategories(filterSpecialCategories.filter(id => id !== cat.id));
+                              }
+                            }}
+                            className="mr-2 text-yellow-600 rounded border-gray-300 focus:ring-yellow-500"
+                          />
+                          <span className="text-sm text-slate-700">{cat.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                
+                {/* Selected Special Categories Display */}
+                {filterSpecialCategories.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {filterSpecialCategories.map(catId => {
+                      const cat = specialCategories.find(c => c.id === catId);
+                      return cat ? (
+                        <span key={catId} className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
+                          {cat.name}
+                          <button
+                            onClick={() => setFilterSpecialCategories(filterSpecialCategories.filter(id => id !== catId))}
+                            className="hover:bg-yellow-200 rounded-full p-0.5 transition-colors"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Quantity Filter */}
@@ -397,14 +634,19 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
               <button 
                 className="px-6 py-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-700 font-semibold flex items-center gap-2 shadow transition-all duration-200 hover:shadow-md" 
                 onClick={() => { 
-                  setFilterType(""); 
-                  setFilterShape(""); 
-                  setFilterStyle(""); 
+                  setSearchQuery("");
+                  setFilterType([]); 
+                  setFilterShape([]); 
+                  setFilterStyle([]); 
                   setFilterSpecialCategories([]); 
                   setFilterQuantity(""); 
                   setFilterActive(""); 
                   setFilterLatestTrend(""); 
                   setFilterBestseller(""); 
+                  setTypeDropdownOpen(false);
+                  setShapeDropdownOpen(false);
+                  setStyleDropdownOpen(false);
+                  setSpecialCategoriesDropdownOpen(false);
                 }}
               >
                 <X className="w-4 h-4" /> 
@@ -446,10 +688,11 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products
             .filter(product => product.gender_category && product.gender_category.includes(activeGender))
-            .filter(product => !filterType || (product.type_category && product.type_category.includes(filterType)))
-            .filter(product => !filterShape || product.shape_category === filterShape)
-            .filter(product => !filterStyle || product.style_category === filterStyle)
-            .filter(product => filterSpecialCategories.length === 0 || (productSpecialCategories[product.id] && productSpecialCategories[product.id].some(catId => filterSpecialCategories.includes(catId.toString()))))
+            .filter(product => !searchQuery || product.title.toLowerCase().includes(searchQuery.toLowerCase()))
+            .filter(product => filterType.length === 0 || (product.type_category && hasIntersection(filterType, product.type_category)))
+            .filter(product => filterShape.length === 0 || (product.shape_category && filterShape.includes(product.shape_category)))
+            .filter(product => filterStyle.length === 0 || (product.style_category && filterStyle.includes(product.style_category)))
+            .filter(product => filterSpecialCategories.length === 0 || (productSpecialCategories[product.id] && hasIntersection(filterSpecialCategories, productSpecialCategories[product.id].map(id => id.toString()))))
             .filter(product => !filterQuantity || (product.quantity !== undefined && product.quantity !== null && product.quantity.toString() === filterQuantity))
             .filter(product => !filterLatestTrend || (filterLatestTrend === 'true' && product.latest_trend === true) || (filterLatestTrend === 'false' && product.latest_trend === false))
             .filter(product => !filterBestseller || (filterBestseller === 'true' && product.bestseller === true) || (filterBestseller === 'false' && product.bestseller === false))

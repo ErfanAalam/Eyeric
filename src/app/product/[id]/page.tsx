@@ -139,7 +139,7 @@ const ProductDetailPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
 
-  const [quantity, setQuantity] = useState(1);
+  // const [quantity, setQuantity] = useState(1);
 
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0, relativeX: 0, relativeY: 0 });
@@ -1351,7 +1351,7 @@ const ProductDetailPage = () => {
             ) : null}
 
             {/* Quantity */}
-            <div className="space-y-4">
+            {/* <div className="space-y-4">
               <h3 className="text-lg font-medium text-gray-900">Quantity</h3>
               <div className="flex items-center">
                 <button
@@ -1370,7 +1370,7 @@ const ProductDetailPage = () => {
                   +
                 </button>
               </div>
-            </div>
+            </div> */}
 
             {/* Action Buttons */}
             <div className="space-y-4">

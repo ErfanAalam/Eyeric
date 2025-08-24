@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Eye, Heart } from "lucide-react";
+import { ArrowRight, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
@@ -229,12 +229,12 @@ const SpecialProductCategories = ({ categories }: { categories: SpecialProductCa
   if (!categories || categories.length === 0) return null;
 
   return (
-    <div className="py-20 px-4 bg-gradient-to-br from-slate-50 via-blue-50/30 to-white relative overflow-hidden">
+    <div className="py-20 px-4 relative overflow-hidden  bg-white">
       {/* Background decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
+      {/* <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-teal-200/20 to-blue-300/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-300/20 rounded-full blur-3xl"></div>
-      </div>
+      </div> */}
       
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header Section */}
@@ -249,9 +249,7 @@ const SpecialProductCategories = ({ categories }: { categories: SpecialProductCa
             <span className="block">WEAR THE TREND</span>
           </h2>
           
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Discover our curated collection of trending eyewear styles that define modern fashion
-          </p>
+          
         </div>
 
         {/* Categories Carousel Section */}
@@ -282,69 +280,66 @@ const SpecialProductCategories = ({ categories }: { categories: SpecialProductCa
               id="categories-scroll"
               className="overflow-x-auto pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
-              <div className="flex space-x-6 min-w-min px-2">
+              <div className="flex space-x-6 min-w-min px-2 bg-transparent">
                 {categories.map((category, index) => (
                   <div
                     key={category.id}
                     onClick={() => handleCategoryClick(category)}
-                    className="group cursor-pointer transition-all duration-500 transform hover:-translate-y-3 flex-none w-[200px] sm:w-[220px] lg:w-[240px] xl:w-[260px]"
+                    className="group cursor-pointer  transition-all duration-500 transform hover:-translate-y-3 flex-none w-[200px] sm:w-[220px] lg:w-[240px] xl:w-[260px]"
                     style={{
                       animationDelay: `${index * 100}ms`
                     }}
                   >
-                    <div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl hover:shadow-2xl overflow-hidden border border-white/50 relative group-hover:bg-white transition-all duration-500">
+                    <div className="bg-transparent rounded-3xl overflow-hidden border border-white/50 relative  transition-all duration-500">
                       {/* Category Image */}
-                      <div className="aspect-square w-full bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden relative">
-                        {category.banner_image ? (
-                          <Image
-                            width={260}
-                            height={260}
-                            src={category.banner_image}
-                            alt={category.name}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            quality={90}
-                            sizes="(max-width: 640px) 200px, (max-width: 1024px) 240px, 260px"
-                            placeholder="blur"
-                            blurDataURL="/placeholder.png"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                            <span className="text-4xl sm:text-5xl">👓</span>
-                          </div>
-                        )}
-                        
-                        {/* Overlay gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                      </div>
+                                          <div className="aspect-[4/3] w-full bg-transparent overflow-hidden relative">
+                      {category.banner_image ? (
+                        <Image
+                          width={260}
+                          height={195}
+                          src={category.banner_image}
+                          alt={category.name}
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                          quality={90}
+                          sizes="(max-width: 640px) 200px, (max-width: 1024px) 240px, 260px"
+                          placeholder="blur"
+                          blurDataURL="/placeholder.png"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-3xl sm:text-4xl">👓</span>
+                        </div>
+                      )}
+                      
+                      {/* Overlay gradient */}
+                      {/* <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div> */}
+                    </div>
                       
                       {/* Category Info */}
-                      <div className="p-3 sm:p-4 lg:p-5 text-center bg-white/90 backdrop-blur-sm">
-                        <h3 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 mb-2 sm:mb-3 lg:mb-4 capitalize group-hover:text-teal-600 transition-colors duration-300">
+                      <div className="p-2 sm:p-3 lg:p-4 text-center bg-transparent backdrop-blur-sm">
+                        <h3 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 mb-1 sm:mb-2 lg:mb-3 capitalize group-hover:text-teal-600 transition-colors duration-300">
                           {category.name}
                         </h3>
-                        <button className="w-full bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-xs sm:text-sm font-semibold py-2 sm:py-2.5 lg:py-3 px-4 sm:px-5 lg:px-6 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group-hover:shadow-teal-200/50">
+                        <button className="w-full bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-xs sm:text-sm font-semibold py-1.5 sm:py-2 lg:py-2.5 px-3 sm:px-4 lg:px-5 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group-hover:shadow-teal-200/50">
                           Explore
                         </button>
                       </div>
-                      
-                      {/* Hover effect border */}
-                      <div className="absolute inset-0 rounded-3xl border-2 border-transparent group-hover:border-teal-300/30 transition-all duration-500"></div>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </div>                                                                                                    
           </div>
         </div>
         
         {/* Bottom decorative element */}
-        <div className="text-center mt-12">
+        {/* <div className="text-center mt-12">
           <div className="inline-flex items-center gap-2 text-gray-500 text-sm">
             <div className="w-1 h-1 bg-teal-400 rounded-full"></div>
             <span>Scroll to explore more styles</span>
             <div className="w-1 h-1 bg-teal-400 rounded-full"></div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -475,7 +470,7 @@ const CategoryTabs = ({
                     fill
                     src={item.image}
                     alt={item.title}
-                    className="object-cover object-center w-full h-full transition-transform duration-300 group-hover:scale-110"
+                    className="object-cover object-top w-full h-full transition-transform duration-300 group-hover:scale-110"
                     quality={90}
                     sizes="(max-width: 768px) 100vw, 400px"
                     placeholder="blur"
@@ -540,23 +535,23 @@ const BestSellers = ({ products }: { products: Product[] }) => {
   };
 
   return (
-    <div className="py-16 px-4 bg-background text-text">
+    <div className="py-10 pb-0 px-4 bg-background text-text">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-semibold text-center mb-12 bg-text bg-clip-text text-transparent">
+        <h2 className="text-2xl md:text-4xl font-semibold text-center mb-6 bg-text bg-clip-text text-transparent">
           Best Sellers
         </h2>
         <div className="relative">
           <div className="overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="flex space-x-6 min-w-min">
+            <div className="flex space-x-4 md:space-x-6 min-w-min px-4 md:px-0">
               {sellers.map((item, index) => (
                 <div
                   key={item.id || index}
-                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[200px] md:w-[320px] flex flex-col cursor-pointer max-h-[300px] md:max-h-[420px]"
+                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[160px] sm:w-[180px] md:w-[220px] lg:w-[250px] flex flex-col cursor-pointer max-h-[280px] sm:max-h-[300px] md:max-h-[320px] lg:max-h-[350px]"
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   onClick={() => handleProductClick(item)}
                 >
-                  <div className="absolute top-3 left-3 z-10">
+                  <div className="absolute top-2 left-2 z-10">
                     <span className="bg-secondary text-white px-2 py-1 rounded-full text-xs font-semibold">
                       Sale
                     </span>
@@ -565,10 +560,10 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                   {/* Favorite Button */}
                   <button
                     onClick={(e) => handleFavoriteClick(e, item)}
-                    className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all duration-300 group-hover:bg-white"
+                    className="absolute top-2 right-2 z-10 bg-white/80 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-all duration-300 group-hover:bg-white"
                   >
                     <Heart
-                      size={20}
+                      size={16}
                       className={`transition-all duration-300 ${
                         isFavorite(item.id!)
                           ? "text-red-500 fill-current"
@@ -591,13 +586,13 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                   </div>
-                  <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-3 min-h-[3.5rem]">
+                  <div className="p-3 md:p-4 flex flex-col flex-grow">
+                    <h3 className="text-xs sm:text-sm md:text-base font-bold mb-2 text-gray-800 line-clamp-2 min-h-[2rem]">
                       {item.title}
                     </h3>
                     {item.discounted_price && (
                       <>
-                        <span className="text-xs md:text-sm w-fit font-semibold text-green-600 bg-green-100 px-1 py-0.5 rounded">
+                        <span className="text-xs w-fit font-semibold text-green-600 bg-green-100 px-1 py-0.5 rounded">
                           {calculateDiscount(
                             item.original_price,
                             item.discounted_price
@@ -609,26 +604,22 @@ const BestSellers = ({ products }: { products: Product[] }) => {
 
                     <div className="mt-auto flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-md md:text-xl font-bold text-text">
+                        <span className="text-sm md:text-base font-bold text-text">
                           ₹{item.discounted_price || item.original_price}
                         </span>
                         {item.discounted_price && (
                           <>
-                            <span className="text-md md:text-xl font-bold text-gray-500">
+                            <span className="text-sm md:text-base font-bold text-gray-500">
                               <del>₹{item.original_price}</del>
                             </span>
-                            {/* <span className="text-xs md:text-sm font-semibold text-green-600 bg-green-100 px-1 py-0.5 rounded">
-                              {calculateDiscount(item.original_price, item.discounted_price)}% OFF
-                            </span> */}
                           </>
+                          
                         )}
+                        <button className="bg-button text-white px-2 py-1 rounded-full text-xs">
+                          {/* <ShoppingCart size={16} /> */}
+                          <ArrowRight size={16} />
+                        </button>
                       </div>
-                      {/* <button
-                        className="bg-button text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-                        onClick={() => handleProductClick(item)}
-                      >
-                        Buy Now
-                      </button> */}
                     </div>
                   </div>
                 </div>
@@ -681,23 +672,23 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
   };
 
   return (
-    <div className="py-16 px-4 bg-backgrond text-text`">
+    <div className="py-6 px-4 bg-background text-text">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-text bg-clip-text text-transparent">
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-6 bg-text bg-clip-text text-transparent">
           Latest Trends
         </h2>
         <div className="relative">
           <div className="overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <div className="flex space-x-6 min-w-min">
+            <div className="flex space-x-4 md:space-x-6 min-w-min px-4 md:px-0">
               {trends.map((item, index) => (
                 <div
                   key={item.id || index}
-                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[200px] md:w-[320px] flex flex-col cursor-pointer max-h-[300px] md:max-h-[420px]"
+                  className="group relative overflow-hidden rounded-2xl bg-white/50 backdrop-blur-sm border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 flex-none w-[160px] sm:w-[180px] md:w-[220px] lg:w-[250px] flex flex-col cursor-pointer max-h-[280px] sm:max-h-[300px] md:max-h-[320px] lg:max-h-[350px]"
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
                   onClick={() => handleProductClick(item)}
                 >
-                  <div className="absolute top-3 left-3 z-10">
+                  <div className="absolute top-2 left-2 z-10">
                     <span className="bg-secondary text-white px-2 py-1 rounded-full text-xs font-semibold">
                       Sale
                     </span>
@@ -706,10 +697,10 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                   {/* Favorite Button */}
                   <button
                     onClick={(e) => handleFavoriteClick(e, item)}
-                    className="absolute top-3 right-3 z-10 bg-white/80 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-all duration-300 group-hover:bg-white"
+                    className="absolute top-2 right-2 z-10 bg-white/80 backdrop-blur-sm rounded-full p-1.5 hover:bg-white transition-all duration-300 group-hover:bg-white"
                   >
                     <Heart
-                      size={20}
+                      size={16}
                       className={`transition-all duration-300 ${
                         isFavorite(item.id!)
                           ? "text-red-500 fill-current"
@@ -732,13 +723,13 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                   </div>
-                  <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="text-md md:text-lg font-bold mb-2 text-gray-800 line-clamp-3 min-h-[3.5rem]">
+                  <div className="p-3 md:p-4 flex flex-col flex-grow">
+                    <h3 className="text-xs sm:text-sm md:text-base font-bold mb-2 text-gray-800 line-clamp-2 min-h-[2rem]">
                       {item.title}
                     </h3>
                     {item.discounted_price && (
                       <>
-                        <span className="text-xs md:text-sm w-fit font-semibold text-green-600 bg-green-100 px-1 py-0.5 rounded">
+                        <span className="text-xs w-fit font-semibold text-green-600 bg-green-100 px-1 py-0.5 rounded">
                           {calculateDiscount(
                             item.original_price,
                             item.discounted_price
@@ -749,23 +740,21 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                     )}
                     <div className="mt-auto flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-md md:text-xl font-bold text-text">
+                        <span className="text-sm md:text-base font-bold text-text">
                           ₹{item.discounted_price || item.original_price}
                         </span>
                         {item.discounted_price && (
                           <>
-                            <span className="text-md md:text-xl font-bold text-gray-500">
+                            <span className="text-sm md:text-base font-bold text-gray-500">
                               <del>₹{item.original_price}</del>
                             </span>
                           </>
                         )}
+                        <button className="bg-button text-white px-2 py-1 rounded-full text-xs">
+                          {/* <ShoppingCart size={16} /> */}
+                          <ArrowRight size={16} />
+                        </button>
                       </div>
-                      {/* <button
-                        className="bg-button text-white px-2 py-1 md:px-4 md:py-2 text-[10px] md:text-sm rounded-lg hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-                        onClick={() => handleProductClick(item)}
-                      >
-                        Buy Now
-                      </button> */}
                     </div>
                   </div>
                 </div>
@@ -819,26 +808,26 @@ const ShopByShapes = ({
   };
 
   return (
-    <div className="bg-background text-text py-16 px-4">
+    <div className="bg-white text-text py-10 px-4">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-4xl font-bold text-center mb-12 bg-text bg-clip-text text-transparent">
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-4 bg-text bg-clip-text text-transparent">
           Shop by Shapes
         </h2>
         <div className="flex flex-col items-center">
           {/* Preview Image */}
-          <div className="w-full max-w-2xl mb-8 relative">
+          <div className="w-full max-w-2xl mb-8 relative bg-transparent">
             {uniqueShapes[selectedShape] && (
               <div
-                className="relative overflow-hidden rounded-3xl shadow-2xl bg-white/30 backdrop-blur-sm border border-white/50 cursor-pointer hover:shadow-3xl transition-all duration-500"
+                className="relative overflow-hidden rounded-3xl  border bg-transparent border-white/50 cursor-pointer hover:shadow-3xl transition-all duration-500"
                 onClick={() =>
                   handleShapeClick(
                     String(uniqueShapes[selectedShape].shape_category)
                   )
                 }
               >
-                <div className="aspect-[4/3] w-full bg-gray-100">
+                <div className="aspect-[4/3] w-full bg-transparent">
                   <Image
-                    fill
+                    // fill
                     src={
                       getShapeBanner(
                         String(uniqueShapes[selectedShape].shape_category)
@@ -848,21 +837,27 @@ const ShopByShapes = ({
                       ""
                     }
                     alt={String(uniqueShapes[selectedShape].shape_category)}
-                    className="object-cover object-center w-full h-full transition-all duration-500"
+                    className="object-cover object-center bg-transparent w-full h-full transition-all duration-500"
                     quality={90}
+                    height={300}
+                    width={400}
                     sizes="(max-width: 768px) 100vw, 600px"
                     placeholder="blur"
                     blurDataURL="/placeholder.png"
                   />
                 </div>
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4 md:p-6 text-text">
+                {/* Black overlay covering the whole image */}
+                {/* <div className="absolute inset-0 bg-black/50"></div> */}
+                
+                {/* Centered title and description */}
+                <div className="absolute inset-0 flex flex-col items-center justify-end text-center  p-0 md:p-6 z-10">
                   <h3 className="text-xl md:text-2xl font-bold mb-2">
                     {uniqueShapes[selectedShape].shape_category
                       .charAt(0)
                       .toUpperCase() +
                       uniqueShapes[selectedShape].shape_category.slice(1)}
                   </h3>
-                  <div className="mt-4 text-sm text-text/80">
+                  <div className="text-sm">
                     Click to view all{" "}
                     {String(
                       uniqueShapes[selectedShape].shape_category
@@ -877,7 +872,7 @@ const ShopByShapes = ({
                     e.stopPropagation();
                     handlePrevious();
                   }}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="absolute left-4 top-1/2 md:bottom-4 md:top-auto transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -889,7 +884,7 @@ const ShopByShapes = ({
                     e.stopPropagation();
                     handleNext();
                   }}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="absolute right-4 top-1/2 md:bottom-4 md:top-auto transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
                 >
                   <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -926,31 +921,111 @@ const ShopByShapes = ({
 };
 
 // Vision Care Section
-const VisionCareSection = () => {
+const ImageComparisonSlider = () => {
+  const [sliderPosition, setSliderPosition] = useState(50);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!containerRef.current) return;
+      
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const percentage = (x / rect.width) * 100;
+      
+      setSliderPosition(Math.max(0, Math.min(100, percentage)));
+    };
+    
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    
+    // Update position immediately
+    handleMouseMove(e.nativeEvent);
+    
+    // Add global listeners
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!containerRef.current) return;
+      
+      const rect = containerRef.current.getBoundingClientRect();
+      const x = e.touches[0].clientX - rect.left;
+      const percentage = (x / rect.width) * 100;
+      
+      setSliderPosition(Math.max(0, Math.min(100, percentage)));
+    };
+    
+    const handleTouchEnd = () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+    
+    // Update position immediately
+    handleTouchMove(e.nativeEvent as TouchEvent);
+    
+    // Add global listeners
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+  };
+
   return (
-    <div className="relative py-16 md:py-24 flex items-center justify-center overflow-hidden bg-text">
-      <div className="absolute inset-0 bg-black/30" />
+    <div className="relative py-16 md:py-24 flex items-center justify-center overflow-hidden bg-text h-[40vh] md:h-[60vh]">
+      {/* Background Image (Second Image) */}
       <Image
         width={1200}
         height={600}
         loading="lazy"
-        src="https://images.unsplash.com/photo-1509695507497-903c140c43b0?w=1200&h=600&fit=crop"
-        alt="Eye care"
-        className="absolute inset-0 w-full h-full object-cover"
+        src={"/EyericLens.jpeg"}
+        alt="Vision care comparison"
+        className="absolute inset-0 w-full h-full object-fit"
       />
-      <div className="relative z-10 text-center text-white px-4 max-w-4xl">
-        <Eye className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-4 text-blue-400" />
-        <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4">
-          Your Vision, Our Priority
-        </h2>
-        <p className="text-sm md:text-lg lg:text-xl mb-6 opacity-90">
-          Experience the world through crystal-clear lenses with our advanced
-          eye care technology
-        </p>
-        <button className="bg-white/20 backdrop-blur-sm border border-white/30 text-white px-6 py-3 text-sm md:text-base rounded-full hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
-          Schedule Eye Test
-        </button>
+      
+      {/* Foreground Image Container (First Image) */}
+      <div 
+        className="absolute inset-0 overflow-hidden"
+        style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
+      >
+        <Image
+          width={1200}
+          height={600}
+          loading="lazy"
+          src="/normalLens.jpeg"
+          alt="Vision care before"
+          className="absolute inset-0 w-full h-full object-fit"
+        />
       </div>
+      
+      {/* Slider Handle */}
+      <div
+        className="absolute top-0 bottom-0 w-1 bg-white cursor-ew-resize z-20 flex items-center justify-center"
+        style={{ left: `${sliderPosition}%` }}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+      >
+        <div className="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-300 hover:scale-110 transition-transform duration-200">
+          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+          </svg>
+        </div>
+      </div>
+      
+      {/* Clickable area for the slider */}
+      <div 
+        ref={containerRef}
+        className="absolute inset-0 cursor-ew-resize z-10 select-none"
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+      />
     </div>
   );
 };
@@ -1092,9 +1167,9 @@ export default function Home() {
       <Navbar />
       {/* <WelcomeSection /> */}
       <HeroSlider slides={slides} />
-      <SpecialProductCategories categories={specialProductCategories} />
       <CategoryTabs products={products} categoryBanners={categoryBanners} />
-      <VisionCareSection />
+      <SpecialProductCategories categories={specialProductCategories} />
+      <ImageComparisonSlider />
       <BestSellers products={products} />
       <LatestTrends products={products} />
       <ShopByShapes products={products} shapeBanners={shapeBanners} />

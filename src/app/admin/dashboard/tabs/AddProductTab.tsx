@@ -219,7 +219,11 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setBannerImage2(null);
       // Convert database images to state format
       const dbImages = editProduct.images || [];
-      setImages(dbImages.map(img => ({ url: img.url, display_order: img.display_order })));
+      const imagesWithDisplayOrders = dbImages.map(img => ({ 
+        url: img.url, 
+        display_order: img.display_order || 0 
+      }));
+      setImages(imagesWithDisplayOrders);
       setImagePreviews(dbImages.map(img => img.url));
       setSizes(editProduct.sizes || []);
       setFrameMaterial(editProduct.frame_material || "");
@@ -260,8 +264,13 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setBannerImage2Preview(editProduct.banner_image_2 || null);
       setImagePreviews((editProduct.images || []).map(img => img.url));
       setRemoveImages((editProduct.images || []).map(() => false));
+      
       // Set display orders for existing images
-      setNewImageDisplayOrders((editProduct.images || []).map(img => img.display_order || 0));
+      const displayOrders = imagesWithDisplayOrders.map(img => img.display_order);
+      setNewImageDisplayOrders(displayOrders);
+      
+      console.log('Edit mode - Images loaded:', imagesWithDisplayOrders);
+      console.log('Edit mode - Display orders loaded:', displayOrders);
       
       // Fetch special product categories for this product
       if (editProduct.id) {
@@ -300,11 +309,35 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     setLoading(true);
     setMessage("");
 
-if(!title || !description || !originalPrice || !discountedPrice || !frameMaterial || !quantity || !styleCategory || !frameColour || !templeColour || !shapeCategory || !selectedGenders ||  !lensWidth || !bridgeWidth || !templeLength || !productSerialNumber ){
-  setMessage("Please fill all the required fields");
-  setLoading(false);
-  return;
-}
+    // Validate required fields
+    if(!title || !description || !originalPrice || !discountedPrice || !frameMaterial || !quantity || !styleCategory || !frameColour || !templeColour || !shapeCategory || !selectedGenders ||  !lensWidth || !bridgeWidth || !templeLength || !productSerialNumber ){
+      setMessage("Please fill all the required fields");
+      setLoading(false);
+      return;
+    }
+
+    // Validate and normalize display orders for images
+    const allImages = [...images, ...newImages];
+    const displayOrders = allImages.map((_, idx) => newImageDisplayOrders[idx] || idx + 1);
+    
+    // Ensure display orders are unique and sequential
+    const uniqueOrders = [...new Set(displayOrders)].sort((a, b) => a - b);
+    if (uniqueOrders.length !== displayOrders.length) {
+      // Reassign sequential display orders
+      const sequentialOrders = displayOrders.map((_, idx) => idx + 1);
+      setNewImageDisplayOrders(sequentialOrders);
+      
+      // Update images state with normalized display orders
+      if (editProduct) {
+        const updatedImages = images.map((img, idx) => ({
+          ...img,
+          display_order: sequentialOrders[idx] || idx + 1
+        }));
+        setImages(updatedImages);
+      }
+      
+      console.log('Display orders normalized to sequential:', sequentialOrders);
+    }
 
 
     // Validate discounted price
@@ -368,8 +401,32 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
       }
 
       // Handle product images - combine existing images with new uploaded images
-      const existingImages = images.filter(img => typeof img.url === 'string');
+      // Filter out images that were marked for removal
+      const existingImages = images.filter((img, idx) => 
+        typeof img.url === 'string' && !removeImages[idx]
+      );
       const newImageFiles = newImages;
+      
+      // Update display orders for existing images based on newImageDisplayOrders
+      // Only include images that weren't removed
+      const updatedExistingImages = existingImages.map((img, idx) => {
+        const originalIndex = images.findIndex(originalImg => originalImg.url === img.url);
+        const displayOrder = originalIndex >= 0 && newImageDisplayOrders[originalIndex] > 0 
+          ? newImageDisplayOrders[originalIndex] 
+          : img.display_order || idx + 1;
+        
+        console.log('Processing existing image:', { 
+          url: img.url, 
+          originalIndex, 
+          displayOrder, 
+          newImageDisplayOrders: newImageDisplayOrders[originalIndex] 
+        });
+        
+        return {
+          ...img,
+          display_order: displayOrder
+        };
+      });
       
       // Upload new images
       const uploadedImages = await Promise.all(newImageFiles.map(async (file, idx) => {
@@ -383,14 +440,18 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
         }
         const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(filePath);
         // Use custom display order or fallback to sequential
-        return { url: urlData.publicUrl, display_order: newImageDisplayOrders[idx] > 0 ? newImageDisplayOrders[idx] : existingImages.length + idx + 1 };
+        const displayOrder = newImageDisplayOrders[existingImages.length + idx] > 0 
+          ? newImageDisplayOrders[existingImages.length + idx] 
+          : existingImages.length + idx + 1;
+        return { url: urlData.publicUrl, display_order: displayOrder };
       }));
       
       if (uploadedImages.some(img => img === null)) return; // error already set
       
       // Combine existing and new images
-      const imageUploads = [...existingImages, ...uploadedImages.filter(img => img !== null)];
-      console.log('imageUploads', imageUploads);
+      const imageUploads = [...updatedExistingImages, ...uploadedImages.filter(img => img !== null)];
+      console.log('Final imageUploads for update:', imageUploads);
+      console.log('Display orders:', imageUploads.map(img => img.display_order));
       if (imageUploads.some(img => img === null)) return; // error already set
 
       const updateObj: Partial<Product> = {
@@ -613,6 +674,10 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
     const tags = ["manufactured by Eyeric"];
 
     // Insert product with category-specific display orders
+    const finalImages = [...images, ...imageUploads.filter(img => img !== null)];
+    console.log('Final images for insert:', finalImages);
+    console.log('Display orders for insert:', finalImages.map(img => img.display_order));
+    
     const { data: inserted, error } = await supabase.from("products").insert({
       title,
       description,
@@ -622,7 +687,7 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
       latest_trend: latestTrend,
       banner_image_1: bannerImage1Url,
       banner_image_2: bannerImage2Url,
-      images: [...images, ...imageUploads.filter(img => img !== null)],
+      images: finalImages,
       sizes,
       shape_category: shapeCategory,
       style_category: styleCategory,
@@ -683,9 +748,13 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
     setDiscountedPrice("");
     setBannerImage1(null);
     setBannerImage2(null);
+    setBannerImage1Preview(null);
+    setBannerImage2Preview(null);
     setImages([]);
     setNewImages([]);
     setNewImageDisplayOrders([]);
+    setImagePreviews([]);
+    setRemoveImages([]);
     setSizes([]);
     setFrameMaterial("");
     setFeatures("");
@@ -792,6 +861,10 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
         setNewImages(compressedFiles);
         // Set display orders starting from 1
         setNewImageDisplayOrders(compressedFiles.map((_, idx) => idx + 1));
+        // Clear existing images and previews
+        setImages([]);
+        setImagePreviews([]);
+        setRemoveImages([]);
       } else {
         // Add to existing images
         setNewImages(prev => [...prev, ...compressedFiles]);
@@ -837,6 +910,19 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
       updatedOrders[index] = cleanValue ? parseInt(cleanValue, 10) : 0;
     }
     setNewImageDisplayOrders(updatedOrders);
+    
+    // If editing, also update the images state to reflect the new display order
+    if (editProduct && index < images.length) {
+      const updatedImages = [...images];
+      updatedImages[index] = {
+        ...updatedImages[index],
+        display_order: updatedOrders[index]
+      };
+      setImages(updatedImages);
+    }
+    
+    // Debug logging
+    console.log('Display order changed:', { index, newOrder, updatedOrders });
   };
 
   // Helper function to format price inputs
@@ -879,6 +965,21 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
     const updatedOrders = [...newImageDisplayOrders];
     updatedOrders.splice(imgIdx, 1);
     setNewImageDisplayOrders(updatedOrders);
+    
+    // Reorder remaining display orders to be sequential
+    const reorderedOrders = updatedOrders.map((_, idx) => idx + 1);
+    setNewImageDisplayOrders(reorderedOrders);
+    
+    // Update the images state to reflect the new display orders
+    if (editProduct) {
+      const updatedImages = [...images];
+      updatedImages.splice(imgIdx, 1);
+      // Update display orders for remaining images
+      updatedImages.forEach((img, idx) => {
+        img.display_order = idx + 1;
+      });
+      setImages(updatedImages);
+    }
   };
 
   return (
@@ -1002,6 +1103,7 @@ if(!title || !description || !originalPrice || !discountedPrice || !frameMateria
                               }}
                               className="w-full text-xs text-center border border-gray-300 rounded px-1 py-1"
                               placeholder={`${imgIdx + 1}`}
+                              title={`Display order: ${newImageDisplayOrders[imgIdx] || imgIdx + 1}`}
                             />
                           </div>
                         </div>
