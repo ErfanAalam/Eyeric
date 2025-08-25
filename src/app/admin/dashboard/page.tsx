@@ -18,6 +18,7 @@ import AddLensTab, { Lens } from "./tabs/AddLensTab";
 import ManageLensTab from "./tabs/ManageLensTab";
 import ManageLensCategoriesTab from "./tabs/ManageLensCategoriesTab";
 import ManageSpecialProductCategoriesTab from "./tabs/ManageSpecialProductCategoriesTab";
+import MarqueeTab from "./tabs/MarqueeTab";
 import CouponPage from "../coupon/page";
 import type { Product } from "../../../types/product";
 
@@ -50,6 +51,7 @@ const Sidebar = ({
     { id: "lenses", label: "Lenses", icon: "👓", dropdown: true },
     { id: "coupons", label: "Coupons", icon: "🏷️", dropdown: true },
     { id: "special-categories", label: "Special Product Categories", icon: "⭐" },
+    { id: "marquee", label: "Marquee", icon: "📢" },
     { id: "users", label: "Customers", icon: "👥" },
     { id: "media", label: "Media", icon: "🖼️" },
     { id: "invite", label: "Team", icon: "👨‍💼" },
@@ -397,6 +399,7 @@ const AdminDashboard = () => {
       users: "Customer Management",
       slides: "Media Library",
       invite: "Team Management",
+      marquee: "Marquee Management",
     };
     return titles[currentTab as keyof typeof titles] || "Dashboard";
   };
@@ -411,6 +414,7 @@ const AdminDashboard = () => {
       users: "View and manage customer accounts",
       slides: "Upload and manage promotional images",
       invite: "Invite new team members to admin panel",
+      marquee: "Manage scrolling text content for your website",
     };
     return (
       descriptions[currentTab as keyof typeof descriptions] ||
@@ -606,6 +610,8 @@ const AdminDashboard = () => {
               {tab === "lenses-categories" && <ManageLensCategoriesTab />}
 
               {tab === "special-categories" && <ManageSpecialProductCategoriesTab />}
+
+              {tab === "marquee" && <MarqueeTab />}
 
               {tab === "coupons-add" && <CouponPage initialTab="add" />}
               {tab === "coupons-manage" && <CouponPage initialTab="manage" />}

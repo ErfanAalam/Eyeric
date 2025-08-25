@@ -7,6 +7,7 @@ import { FavoritesProvider } from "../contexts/FavoritesContext";
 import { CartProvider } from '../contexts/CartContext';
 import { OrderProvider } from '../contexts/OrderContext';
 import { Toaster } from 'react-hot-toast';
+import Marquee from '../components/Marquee';
 // import Script from "next/script";
 
 // ✅ Load Poppins font with CSS variable
@@ -55,6 +56,7 @@ export default function RootLayout({
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript> */}
+        <Marquee />
         <AuthProvider>
           <AdminAuthProvider>
             <CartProvider>

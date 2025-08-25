@@ -14,12 +14,14 @@ import {
   Eye,
   Users,
   Star,
-  ChevronUp,
-  ArrowRight
+  // ChevronUp,
+  ArrowRight,
+  // MessageCircle
 } from 'lucide-react';
 
 // Import your colors (assuming same structure as navbar)
 import colors from '@/constants/colors';
+import { BsWhatsapp } from 'react-icons/bs';
 
 interface FooterLink {
   title: string;
@@ -34,19 +36,26 @@ interface FooterSection {
 const Footer: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [isSubscribed, setIsSubscribed] = useState<boolean>(false);
-  const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
+  // const [showScrollTop, setShowScrollTop] = useState<boolean>(false);
   const [hoveredSocial, setHoveredSocial] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 300);
+      // setShowScrollTop(window.scrollY > 300);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // const scrollToTop = () => {
+  //   window.scrollTo({ top: 0, behavior: 'smooth' });
+  // };
+
+  const handleWhatsAppClick = () => {
+    const phoneNumber = '+918905344556'; // Replace with actual admin phone number
+    const message = 'Hi! I need help with EYERIC eyewear.';
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleNewsletterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -62,10 +71,10 @@ const Footer: React.FC = () => {
     {
       title: 'Shop',
       links: [
-        { title: 'Sunglasses', href: '/products?category=men&type=sunglasses' },
         { title: 'Eyeglasses', href: '/products?category=men&type=eyeglasses' },
+        { title: 'Sunglasses', href: '/products?category=men&type=sunglasses' },
         { title: 'Computer Glasses', href: '/products?category=men&type=computer glasses' },
-        {title: 'Eye Glasses', href: '/products?category=men&type=eye glasses'}
+        {title: 'Powered Sunglasses', href: '/products?category=men&type=powered sunglasses'}
       ]
     },
     {
@@ -458,8 +467,17 @@ const Footer: React.FC = () => {
           </div>
         </div>
 
+        {/* WhatsApp Contact Button */}
+        <button
+          onClick={handleWhatsAppClick}
+          className="fixed bottom-8 right-8 z-100 p-4 bg-green-500 text-white rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 animate-glow hover-lift"
+          aria-label="Contact us on WhatsApp"
+        >
+          <BsWhatsapp size={34} />
+        </button>
+
         {/* Scroll to Top Button */}
-        {showScrollTop && (
+        {/* {showScrollTop && (
           <button
             onClick={scrollToTop}
             className="fixed bottom-8 right-8 z-50 p-4 bg-primary text-white rounded-full shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 animate-glow hover-lift"
@@ -467,7 +485,7 @@ const Footer: React.FC = () => {
           >
             <ChevronUp size={24} />
           </button>
-        )}
+        )} */}
       </footer>
     </>
   );

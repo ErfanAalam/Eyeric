@@ -361,6 +361,9 @@ const CategoryTabs = ({
   const [activeTab, setActiveTab] = useState("men");
   const router = useRouter();
 
+  // Define the preferred order for category types
+  const preferredOrder = ["eyeglasses", "computer glasses", "sunglasses",  "powered sunglasses"];
+  
   // Get all unique type categories from products
   const typeTitles = Array.from(
     new Set(
@@ -371,15 +374,37 @@ const CategoryTabs = ({
   );
   const categoryKeys = ["men", "women", "kids"];
 
-  // For kids, only show eyeglasses and computer glasses
+  // For kids, only show eyeglasses and sunglasses
   const kidsAllowedTypes = ["eyeglasses", "sunglasses"];
+
+  // Function to sort categories by preferred order
+  const sortByPreferredOrder = (categories: { title: string; image: string; description: string }[]) => {
+    return categories.sort((a, b) => {
+      const aIndex = preferredOrder.findIndex(order => 
+        a.title.toLowerCase().includes(order.toLowerCase())
+      );
+      const bIndex = preferredOrder.findIndex(order => 
+        b.title.toLowerCase().includes(order.toLowerCase())
+      );
+      
+      // If both are in preferred order, sort by their position
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      // If only one is in preferred order, prioritize it
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      // If neither is in preferred order, maintain original order
+      return 0;
+    });
+  };
 
   // Build categories object dynamically from products
   const dynamicCategories: {
     [key: string]: { title: string; image: string; description: string }[];
   } = {};
   categoryKeys.forEach((gender) => {
-    dynamicCategories[gender] = typeTitles
+    const categories = typeTitles
       .filter((type) =>
         gender === "kids" ? kidsAllowedTypes.includes(type.toLowerCase()) : true
       )
@@ -420,6 +445,9 @@ const CategoryTabs = ({
               description: "",
             };
       });
+    
+    // Sort the categories by preferred order
+    dynamicCategories[gender] = sortByPreferredOrder(categories);
   });
 
   const handleCategoryClick = (category: string, title: string) => {
@@ -444,7 +472,7 @@ const CategoryTabs = ({
                 <button
                   key={category}
                   onClick={() => setActiveTab(category)}
-                  className={`px-3 sm:px-4 md:px-6 py-2 rounded-full text-xs sm:text-sm md:text-base font-semibold transition-all duration-300 capitalize m-0.5 ${
+                  className={`px-3 sm:px-4 md:px-6  py-2 rounded-full text-xs sm:text-sm md:text-base font-semibold transition-all duration-300 capitalize m-0.5 ${
                     activeTab === category
                       ? `bg-button text-white shadow-lg transform scale-105`
                       : "text-gray-600 hover:text-gray-800 hover:bg-white/50"
@@ -483,7 +511,7 @@ const CategoryTabs = ({
                 )}
               </div>
               <div className="p-4">
-                <h3 className="text-[12px] md:text-lg font-bold mb-1 text-gray-800">
+                <h3 className="text-[12px] md:text-lg text-center font-bold mb-1 text-gray-800">
                   {item.title.toUpperCase()}
                 </h3>
               </div>
@@ -982,8 +1010,8 @@ const ImageComparisonSlider = () => {
     <div className="relative py-16 md:py-24 flex items-center justify-center overflow-hidden bg-text h-[40vh] md:h-[60vh]">
       {/* Background Image (Second Image) */}
       <Image
-        width={1200}
-        height={600}
+        width={4200}
+        height={4200}
         loading="lazy"
         src={"/EyericLens.jpeg"}
         alt="Vision care comparison"
@@ -996,8 +1024,8 @@ const ImageComparisonSlider = () => {
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
         <Image
-          width={1200}
-          height={600}
+          width={4200}
+          height={4200}
           loading="lazy"
           src="/normalLens.jpeg"
           alt="Vision care before"
