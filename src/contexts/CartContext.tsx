@@ -319,13 +319,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : cartItem
         );
         
-        // console.log('Updated existing item in cart:', updatedCart);
-        router.push('/cart');
+        console.log('Updated existing item in cart:', updatedCart);
+        // Navigate to cart after state update
+        setTimeout(() => router.push('/cart'), 100);
         return updatedCart;
       } else {
         // Add new item if it doesn't exist
         const newCart = [...prev, { ...item, quantity: item.quantity || 1 }];
         console.log('Added new item to cart:', newCart);
+        // Navigate to cart after state update
+        setTimeout(() => router.push('/cart'), 100);
         return newCart;
       }
     });
@@ -343,11 +346,33 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     console.log('Removing item from cart at index:', index);
-    const error = supabase.from('user').delete().eq('id', userProfile.id);
-    if (error) {
-      console.error('Error deleting cart in database:', error);
-    }
-    setCartItems(prev => prev.filter((_, i) => i !== index));
+    
+    // Remove item from local state first
+    setCartItems(prev => {
+      const updatedCart = prev.filter((_, i) => i !== index);
+      
+      // Update database with updated cart
+      if (userProfile) {
+        const updateCartInDatabase = async () => {
+          try {
+            const { error } = await supabase
+              .from('user')
+              .update({ cart_items: updatedCart })
+              .eq('id', userProfile.id);
+            
+            if (error) {
+              console.error('Error updating cart in database after removal:', error);
+            }
+          } catch (error) {
+            console.error('Error updating cart in database after removal:', error);
+          }
+        };
+        
+        updateCartInDatabase();
+      }
+      
+      return updatedCart;
+    });
   };
 
   const clearCart = () => {
@@ -361,13 +386,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    const error = supabase.from('user').delete();
-    if (error) {
-      console.error('Error deleting cart in database:', error);
-    }
-
     console.log('Clearing cart');
+    
+    // Clear cart from local state first
     setCartItems([]);
+    
+    // Update database with empty cart
+    if (userProfile) {
+      const updateCartInDatabase = async () => {
+        try {
+          const { error } = await supabase
+            .from('user')
+            .update({ cart_items: [] })
+            .eq('id', userProfile.id);
+          
+          if (error) {
+            console.error('Error clearing cart in database:', error);
+          }
+        } catch (error) {
+          console.error('Error clearing cart in database:', error);
+        }
+      };
+      
+      updateCartInDatabase();
+    }
   };
 
   // Check if a product (with optional lens and powerCategory) is already in the cart
@@ -394,13 +436,37 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     console.log('Removing item by details:', item);
-    setCartItems(prev => prev.filter(cartItem =>
-      !(
-        cartItem.product.id === item.product.id &&
-        (item.lens ? cartItem.lens?.id === item.lens.id : !cartItem.lens) &&
-        (item.powerCategory ? cartItem.powerCategory === item.powerCategory : !cartItem.powerCategory)
-      )
-    ));
+    setCartItems(prev => {
+      const updatedCart = prev.filter(cartItem =>
+        !(
+          cartItem.product.id === item.product.id &&
+          (item.lens ? cartItem.lens?.id === item.lens.id : !cartItem.lens) &&
+          (item.powerCategory ? cartItem.powerCategory === item.powerCategory : !cartItem.powerCategory)
+        )
+      );
+      
+      // Update database with updated cart
+      if (userProfile) {
+        const updateCartInDatabase = async () => {
+          try {
+            const { error } = await supabase
+              .from('user')
+              .update({ cart_items: updatedCart })
+              .eq('id', userProfile.id);
+            
+            if (error) {
+              console.error('Error updating cart in database after removal:', error);
+            }
+          } catch (error) {
+            console.error('Error updating cart in database after removal:', error);
+          }
+        };
+        
+        updateCartInDatabase();
+      }
+      
+      return updatedCart;
+    });
   };
 
   // Update quantity of a cart item
@@ -420,9 +486,33 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     console.log('Updating quantity at index:', index, 'to:', quantity);
-    setCartItems(prev => prev.map((item, i) => 
-      i === index ? { ...item, quantity: quantity || 1 } : item
-    ));
+    setCartItems(prev => {
+      const updatedCart = prev.map((item, i) => 
+        i === index ? { ...item, quantity: quantity || 1 } : item
+      );
+      
+      // Update database with updated cart
+      if (userProfile) {
+        const updateCartInDatabase = async () => {
+          try {
+            const { error } = await supabase
+              .from('user')
+              .update({ cart_items: updatedCart })
+              .eq('id', userProfile.id);
+            
+            if (error) {
+              console.error('Error updating cart in database after quantity update:', error);
+            }
+          } catch (error) {
+            console.error('Error updating cart in database after quantity update:', error);
+          }
+        };
+        
+        updateCartInDatabase();
+      }
+      
+      return updatedCart;
+    });
   };
 
   // Calculate total cart value

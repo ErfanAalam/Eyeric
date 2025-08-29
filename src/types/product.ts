@@ -31,6 +31,8 @@ export type Product = {
   frame_colour?: string;
   temple_colour?: string;
   special_product_categories?: string[];
+  
+  // Individual display orders (legacy - can be removed later)
   mens_display_order?: number;
   womens_display_order?: number;
   kids_display_order?: number;
@@ -38,6 +40,22 @@ export type Product = {
   eyeglasses_display_order?: number;
   computerglasses_display_order?: number;
   powered_sunglasses_display_order?: number;
+  
+  // Combined gender-type display orders (new)
+  men_sunglasses_display_order?: number;
+  men_eyeglasses_display_order?: number;
+  men_computerglasses_display_order?: number;
+  men_powered_sunglasses_display_order?: number;
+  women_sunglasses_display_order?: number;
+  women_eyeglasses_display_order?: number;
+  women_computerglasses_display_order?: number;
+  women_powered_sunglasses_display_order?: number;
+  kids_sunglasses_display_order?: number;
+  kids_eyeglasses_display_order?: number;
+  kids_computerglasses_display_order?: number;
+  kids_powered_sunglasses_display_order?: number;
+  
+  // Shape-specific display orders
   round_display_order?: number;
   cat_eye_display_order?: number;
   aviator_display_order?: number;

@@ -688,7 +688,7 @@ const ManageProductTab = ({ onEditProduct }: { onEditProduct: (product: Product)
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products
             .filter(product => product.gender_category && product.gender_category.includes(activeGender))
-            .filter(product => !searchQuery || product.title.toLowerCase().includes(searchQuery.toLowerCase()))
+            .filter(product => !searchQuery || product.title.toLowerCase().includes(searchQuery.toLowerCase()) || product.product_serial_number?.toLowerCase().includes(searchQuery))
             .filter(product => filterType.length === 0 || (product.type_category && hasIntersection(filterType, product.type_category)))
             .filter(product => filterShape.length === 0 || (product.shape_category && filterShape.includes(product.shape_category)))
             .filter(product => filterStyle.length === 0 || (product.style_category && filterStyle.includes(product.style_category)))

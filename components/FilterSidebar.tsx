@@ -77,7 +77,7 @@ export default function FilterSidebar({
         console.error('Error fetching categories:', error);
         // Fallback to default options if database fails
         setGenderOptions(['Men', 'Women', 'Kids']);
-        setStyleOptions(['Classic', 'Modern', 'Vintage', 'Sporty']);
+        setStyleOptions(['half-rim', 'full-rim', 'rimless', 'clip-on']);
         setShapeOptions(['Round', 'Square', 'Oval', 'Heart', 'Cat-Eye', 'Aviator', 'Wayfarer', 'Rectangle']);
       } finally {
         setLoading(false);
@@ -87,13 +87,21 @@ export default function FilterSidebar({
     fetchCategories();
   }, []);
 
-  const handleStyleToggle = (style: string) => {
+  const handleStyleToggle = (style: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setLocalStyles((prev) =>
       prev.includes(style) ? prev.filter((s) => s !== style) : [...prev, style]
     );
   };
   
-  const handleShapeToggle = (shape: string) => {
+  const handleShapeToggle = (shape: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setLocalShapes((prev) =>
       prev.includes(shape) ? prev.filter((s) => s !== shape) : [...prev, shape]
     );
@@ -201,10 +209,10 @@ export default function FilterSidebar({
                   <input
                     type="checkbox"
                     checked={localStyles.includes(style)}
-                    onChange={() => handleStyleToggle(style)}
+                    readOnly
                     className="mr-3"
                   />
-                  <label>{style.charAt(0).toUpperCase() + style.slice(1).toLowerCase()}</label>
+                  <label className="cursor-pointer">{style.charAt(0).toUpperCase() + style.slice(1).toLowerCase()}</label>
                 </div>
               ))
             )}
@@ -244,10 +252,10 @@ export default function FilterSidebar({
                   <input
                     type="checkbox"
                     checked={localShapes.includes(shape)}
-                    onChange={() => handleShapeToggle(shape)}
+                    readOnly
                     className="mr-3"
                   />
-                  <label>{shape.charAt(0).toUpperCase() + shape.slice(1).toLowerCase()}</label>
+                  <label className="cursor-pointer">{shape.charAt(0).toUpperCase() + shape.slice(1).toLowerCase()}</label>
                 </div>
               ))
             )}

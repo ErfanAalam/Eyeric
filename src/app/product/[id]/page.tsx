@@ -12,7 +12,6 @@ import {
   ArrowLeft,
   X,
   Ruler,
-  Monitor,
   Glasses,
   ChevronLeft,
   ChevronRight,
@@ -141,8 +140,6 @@ const ProductDetailPage = () => {
 
   // const [quantity, setQuantity] = useState(1);
 
-  const [showMagnifier, setShowMagnifier] = useState(false);
-  const [magnifierPosition, setMagnifierPosition] = useState({ x: 0, y: 0, relativeX: 0, relativeY: 0 });
   const [showPreview, setShowPreview] = useState(false);
   const [previewIndex, setPreviewIndex] = useState(0);
 
@@ -160,28 +157,28 @@ const ProductDetailPage = () => {
   const lensTypes = [
     {
       key: "single-vision",
-      icon: <Glasses className="w-8 h-8 text-gray-700" />,
+      icon: '/12.jpg',
       title: "Single Vision",
       description:
         "For distance or reading, Includes anti-glare, blue-light filter & thin lens options.",
     },
     {
       key: "bifocal-progressive",
-      icon: <Glasses className="w-8 h-8 text-gray-700" />,
+      icon: '/Progressivelens.jpg',
       title: "Progressive/Bifocal",
       description:
         "Two-in-one lenses for distance and reading - no need to switch glasses.",
     },
     {
       key: "zero-power",
-      icon: <Monitor className="w-8 h-8 text-gray-700" />,
+      icon: '/16.jpg',
       title: "Zero Power",
       description:
         "Protect your eyes from screens - Anti-glare & blue light protection.",
     },
     {
       key: "frame-only",
-      icon: <Glasses className="w-8 h-8 text-gray-700" />,
+      icon: '/15.jpg',
       title: "Frame Only",
       description: "Buy Only Frame",
     },
@@ -204,16 +201,28 @@ const ProductDetailPage = () => {
   );
   const [showSavedPowersModal, setShowSavedPowersModal] = useState(false);
   const [showLensDetailsModal, setShowLensDetailsModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     description: false,
     easyReturn: false,
   });
+
+  // Add state for features toggle
+  const [showAllFeatures, setShowAllFeatures] = useState<{ [key: string]: boolean }>({});
 
   // Toggle dropdown sections
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
+    }));
+  };
+
+  // Toggle features for a specific lens
+  const toggleFeatures = (lensId: string) => {
+    setShowAllFeatures(prev => ({
+      ...prev,
+      [lensId]: !prev[lensId]
     }));
   };
 
@@ -248,6 +257,16 @@ const ProductDetailPage = () => {
       created_at: new Date().toISOString(),
     };
     await addPowerToUserTable(userProfile.id, newPower);
+    
+    // Close all modals immediately
+    setShowEnterPowerManuallyModal(false);
+    setShowAddPowerModal(false);
+    setShowPowerModal(false);
+    setShowPowerLensModal(false);
+    setSelectedLensForPower(null);
+    setSelectedLensType(null);
+    setSelectedPowerLensId(null);
+    
     addToCart({
       product,
       lens: selectedLensForPower,
@@ -259,8 +278,7 @@ const ProductDetailPage = () => {
       powerName: name,
       powerPhone: phone,
     });
-    setShowEnterPowerManuallyModal(false);
-    setSelectedLensForPower(null);
+    
     toast.success("Power details saved and added to cart successfully!");
   };
 
@@ -291,6 +309,16 @@ const ProductDetailPage = () => {
       created_at: new Date().toISOString(),
     };
     await addPowerToUserTable(userProfile.id, newPower);
+    
+    // Close all modals immediately
+    setShowUploadPrescriptionModal(false);
+    setShowAddPowerModal(false);
+    setShowPowerModal(false);
+    setShowPowerLensModal(false);
+    setSelectedLensForPower(null);
+    setSelectedLensType(null);
+    setSelectedPowerLensId(null);
+    
     addToCart({
       product,
       lens: selectedLensForPower,
@@ -302,8 +330,7 @@ const ProductDetailPage = () => {
       powerName: name,
       powerPhone: phone,
     });
-    setShowUploadPrescriptionModal(false);
-    setSelectedLensForPower(null);
+    
     toast.success("Prescription uploaded and added to cart successfully!");
   };
 
@@ -318,6 +345,14 @@ const ProductDetailPage = () => {
   const handleAddToCartWithSubmitPowerLater = () => {
     if (!product || !selectedLensForPower || cartLoading) return;
 
+    // Close all modals immediately
+    setShowAddPowerModal(false);
+    setShowPowerModal(false);
+    setShowPowerLensModal(false);
+    setSelectedLensForPower(null);
+    setSelectedLensType(null);
+    setSelectedPowerLensId(null);
+
     addToCart({
       product,
       lens: selectedLensForPower,
@@ -329,8 +364,7 @@ const ProductDetailPage = () => {
       powerName: "",
       powerPhone: "",
     });
-    setShowAddPowerModal(false);
-    setSelectedLensForPower(null);
+    
     toast.success(
       "Item added to cart! You can submit your power within 7 days."
     );
@@ -345,6 +379,16 @@ const ProductDetailPage = () => {
   // Handler for selecting a specific saved power
   const handleSelectSpecificSavedPower = (power: PowerEntry) => {
     if (!product || !selectedLensForPower || cartLoading) return;
+    
+    // Close all modals immediately
+    setShowSavedPowersModal(false);
+    setShowAddPowerModal(false);
+    setShowPowerModal(false);
+    setShowPowerLensModal(false);
+    setSelectedLensForPower(null);
+    setSelectedLensType(null);
+    setSelectedPowerLensId(null);
+    
     addToCart({
       product,
       lens: selectedLensForPower,
@@ -356,9 +400,75 @@ const ProductDetailPage = () => {
       powerName: power.name,
       powerPhone: power.phone,
     });
-    setShowSavedPowersModal(false);
-    setSelectedLensForPower(null);
+    
     toast.success(`Item added to cart with saved power for ${power.name}!`);
+  };
+
+  // Share functionality
+  const handleShare = async () => {
+    if (!product) return;
+
+    const shareData = {
+      title: product.title,
+      text: `Check out this amazing ${product.title} from Eyeric!`,
+      url: window.location.href,
+    };
+
+    // Try native sharing first (mobile devices)
+    if (navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+      try {
+        await navigator.share(shareData);
+        toast.success("Shared successfully!");
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error sharing:', error);
+          toast.error("Failed to share");
+        }
+      }
+    } else {
+      // Fallback to custom share modal
+      setShowShareModal(true);
+    }
+  };
+
+  const shareToWhatsApp = () => {
+    const text = encodeURIComponent(`Check out this amazing ${product?.title} from Eyeric!\n\n${window.location.href}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+    setShowShareModal(false);
+    toast.success("Opening WhatsApp...");
+  };
+
+  const shareToTelegram = () => {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(`Check out this amazing ${product?.title} from Eyeric!`)}`, '_blank');
+    setShowShareModal(false);
+    toast.success("Opening Telegram...");
+  };
+
+  const shareToFacebook = () => {
+    const url = encodeURIComponent(window.location.href);
+    const quote = encodeURIComponent(`Check out this amazing ${product?.title} from Eyeric!`);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${quote}`, '_blank');
+    setShowShareModal(false);
+    toast.success("Opening Facebook...");
+  };
+
+  const shareToTwitter = () => {
+    const text = encodeURIComponent(`Check out this amazing ${product?.title} from Eyeric!`);
+    const url = encodeURIComponent(window.location.href);
+    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+    setShowShareModal(false);
+    toast.success("Opening Twitter...");
+  };
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+      setShowShareModal(false);
+    } catch (error) {
+      console.error('Failed to copy link:', error);
+      toast.error("Failed to copy link");
+    }
   };
 
   useEffect(() => {
@@ -478,10 +588,10 @@ const ProductDetailPage = () => {
   const handleFavoriteClick = async () => {
     if (!product) return;
 
-    if (!isLoggedIn) {
-      router.push("/login");
-      return;
-    }
+    // if (!isLoggedIn) {
+    //   router.push("/login");
+    //   return;
+    // }
 
     try {
       if (isFavorite(product.id!)) {
@@ -546,13 +656,16 @@ const ProductDetailPage = () => {
     setShowPowerModal(true);
   };
 
-  // Enhanced Magnifier event handlers
-  const handleMouseEnter = () => setShowMagnifier(true);
-  const handleMouseLeave = () => {
+  // Magnifier event handlers for preview modal
+  const [showPreviewMagnifier, setShowPreviewMagnifier] = useState(false);
+  const [previewMagnifierPosition, setPreviewMagnifierPosition] = useState({ x: 0, y: 0, relativeX: 0, relativeY: 0 });
+
+  const handlePreviewMouseEnter = () => setShowPreviewMagnifier(true);
+  const handlePreviewMouseLeave = () => {
     // Add a small delay to prevent flickering when moving between elements
-    setTimeout(() => setShowMagnifier(false), 100);
+    setTimeout(() => setShowPreviewMagnifier(false), 100);
   };
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const handlePreviewMouseMove = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
     
     // Calculate position with bounds checking
@@ -565,7 +678,7 @@ const ProductDetailPage = () => {
     
     // Use relative position to ensure we're showing the correct part of the image
     // This helps ensure the magnifier shows exactly what's under the cursor
-    setMagnifierPosition({ 
+    setPreviewMagnifierPosition({ 
       x: x, 
       y: y,
       relativeX: relativeX,
@@ -754,30 +867,95 @@ const ProductDetailPage = () => {
   // Add to Cart (frame only)
   const handleAddToCart = () => {
     if (!product || cartLoading) return;
+    
+    // Close all modals immediately
+    setShowLensModal(false);
+    setShowPowerModal(false);
+    setShowPowerLensModal(false);
+    setShowAddPowerModal(false);
+    setShowEnterPowerManuallyModal(false);
+    setShowUploadPrescriptionModal(false);
+    setShowSavedPowersModal(false);
+    setSelectedLensForPower(null);
+    setSelectedLensType(null);
+    setSelectedPowerLensId(null);
+    
     addToCart({ product, powerCategory: "frame only", quantity: 1 });
     toast.success("Frame added to cart successfully!");
     router.push("/cart");
   };
   const handleRemoveFromCart = () => {
     if (!product || cartLoading) return;
+    
+    // Close all modals immediately
+    setShowLensModal(false);
+    setShowPowerModal(false);
+    setShowPowerLensModal(false);
+    setShowAddPowerModal(false);
+    setShowEnterPowerManuallyModal(false);
+    setShowUploadPrescriptionModal(false);
+    setShowSavedPowersModal(false);
+    setSelectedLensForPower(null);
+    setSelectedLensType(null);
+    setSelectedPowerLensId(null);
+    
     removeByDetails({ product, powerCategory: "frame only", quantity: 1 });
     toast.success("Frame removed from cart!");
   };
   // Add to Cart with lens
   const handleAddLensToCart = (lens: Lens) => {
     if (!product || cartLoading) return;
+    
+    // Close all modals immediately
+    setShowLensModal(false);
+    setShowPowerModal(false);
+    setShowPowerLensModal(false);
+    setShowAddPowerModal(false);
+    setShowEnterPowerManuallyModal(false);
+    setShowUploadPrescriptionModal(false);
+    setShowSavedPowersModal(false);
+    setSelectedLensForPower(null);
+    setSelectedLensType(null);
+    setSelectedPowerLensId(null);
+    
     addToCart({ product, lens, quantity: 1 });
     router.push("/cart");
     toast.success(`Added to cart with ${lens.title}!`);
   };
   const handleRemoveLensFromCart = (lens: Lens) => {
     if (!product || cartLoading) return;
+    
+    // Close all modals immediately
+    setShowLensModal(false);
+    setShowPowerModal(false);
+    setShowPowerLensModal(false);
+    setShowAddPowerModal(false);
+    setShowEnterPowerManuallyModal(false);
+    setShowUploadPrescriptionModal(false);
+    setShowSavedPowersModal(false);
+    setSelectedLensForPower(null);
+    setSelectedLensType(null);
+    setSelectedPowerLensId(null);
+    
     removeByDetails({ product, lens, quantity: 1 });
     toast.success(`Removed from cart!`);
   };
   // Add to Cart with power (category and lens)
   const handleAddPowerToCart = (powerCategory: string, lens: Lens) => {
     if (!product || cartLoading) return;
+    
+    // Close all modals immediately
+    setShowLensModal(false);
+    setShowPowerModal(false);
+    setShowPowerLensModal(false);
+    setShowAddPowerModal(false);
+    setShowEnterPowerManuallyModal(false);
+    setShowUploadPrescriptionModal(false);
+    setShowSavedPowersModal(false);
+    setSelectedLensForPower(null);
+    setSelectedLensType(null);
+    setSelectedPowerLensId(null);
+    
     addToCart({ product, lens, powerCategory, quantity: 1 });
     toast.success(`Added to cart with ${lens.title} and ${powerCategory}!`);
     router.push("/cart");
@@ -823,20 +1001,7 @@ const ProductDetailPage = () => {
                 <div
                   ref={imageContainerRef}
                   className="aspect-square bg-white rounded-lg overflow-hidden relative hover:border-gray-300 transition-all duration-200 group"
-                  onMouseEnter={handleMouseEnter}
-                  onMouseLeave={handleMouseLeave}
-                  onMouseMove={handleMouseMove}
                 >
-                  {/* Magnifier Tooltip */}
-                  <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-3 py-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20 flex items-center gap-1.5 shadow-lg">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                      <line x1="11" y1="8" x2="11" y2="14"></line>
-                      <line x1="8" y1="11" x2="14" y2="11"></line>
-                    </svg>
-                    <span>Hover to zoom (2x)</span>
-                  </div>
                   {productImages.length > 0 ? (
                     <>
                       <Image
@@ -848,7 +1013,7 @@ const ProductDetailPage = () => {
                         className="w-full h-full object-cover select-none"
                         draggable={false}
                         onClick={handleImageClick}
-                        style={{ cursor: "zoom-in" }}
+                        style={{ cursor: "pointer" }}
                         priority={selectedImage === 0}
                         loading={selectedImage === 0 ? "eager" : "lazy"}
                         placeholder="blur"
@@ -856,37 +1021,7 @@ const ProductDetailPage = () => {
                         decoding="async"
                       />
                       
-                      {/* Magnifier Cursor Indicator */}
-                      {showMagnifier && (
-                        <>
-                          {/* Outer ring */}
-                          <div
-                            className="absolute w-12 h-12 border border-white/50 rounded-full pointer-events-none z-10 animate-pulse"
-                            style={{
-                              left: magnifierPosition.x - 24,
-                              top: magnifierPosition.y - 24,
-                              boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1)",
-                            }}
-                          />
-                          {/* Inner circle */}
-                          <div
-                            className="absolute w-6 h-6 border-2 border-white rounded-full shadow-lg pointer-events-none z-10"
-                            style={{
-                              left: magnifierPosition.x - 12,
-                              top: magnifierPosition.y - 12,
-                              boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.3)",
-                            }}
-                          />
-                          {/* Center dot */}
-                          <div
-                            className="absolute w-1.5 h-1.5 bg-white rounded-full shadow-sm pointer-events-none z-10"
-                            style={{
-                              left: magnifierPosition.x - 3,
-                              top: magnifierPosition.y - 3,
-                            }}
-                          />
-                        </>
-                      )}
+
 
                       {/* Favorite Button */}
                       <button
@@ -906,9 +1041,7 @@ const ProductDetailPage = () => {
 
                       {/* Share Button */}
                       <button
-                        onClick={() => {
-                          /* TODO: add share logic */
-                        }}
+                        onClick={() => handleShare()}
                         className="absolute top-3 right-3 z-10 w-10 h-10 rounded-full flex items-center justify-center bg-white shadow-md hover:shadow-lg text-gray-400 hover:text-gray-600 transition-all duration-200"
                         aria-label="Share"
                       >
@@ -930,9 +1063,6 @@ const ProductDetailPage = () => {
               <div
                 ref={imageContainerRef}
                 className="aspect-square bg-whiterounded-2xl overflow-hidden relative group"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-                onMouseMove={handleMouseMove}
               >
                 {/* Swipeable Image Container for Mobile */}
                 <div 
@@ -983,48 +1113,7 @@ const ProductDetailPage = () => {
                   )}
                 </div>
 
-                {/* Magnifier Tooltip (Mobile) */}
-                <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-3 py-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20 flex items-center gap-1.5 shadow-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    <line x1="11" y1="8" x2="11" y2="14"></line>
-                    <line x1="8" y1="11" x2="14" y2="11"></line>
-                  </svg>
-                  <span>Hover to zoom (2x)</span>
-                </div>
-                
-                {/* Magnifier Cursor Indicator (Mobile) */}
-                {showMagnifier && (
-                  <>
-                    {/* Outer ring */}
-                    <div
-                      className="absolute w-12 h-12 border border-white/50 rounded-full pointer-events-none z-10 animate-pulse"
-                      style={{
-                        left: magnifierPosition.x - 24,
-                        top: magnifierPosition.y - 24,
-                        boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1)",
-                      }}
-                    />
-                    {/* Inner circle */}
-                    <div
-                      className="absolute w-6 h-6 border-2 border-white rounded-full shadow-lg pointer-events-none z-10"
-                      style={{
-                        left: magnifierPosition.x - 12,
-                        top: magnifierPosition.y - 12,
-                        boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.3)",
-                      }}
-                    />
-                    {/* Center dot */}
-                    <div
-                      className="absolute w-1.5 h-1.5 bg-white rounded-full shadow-sm pointer-events-none z-10"
-                      style={{
-                        left: magnifierPosition.x - 3,
-                        top: magnifierPosition.y - 3,
-                      }}
-                    />
-                  </>
-                )}
+
 
                 {/* Favorite Button */}
                 <button
@@ -1046,9 +1135,7 @@ const ProductDetailPage = () => {
 
                 {/* Share Button */}
                 <button
-                  onClick={() => {
-                    /* TODO: add share logic */
-                  }}
+                  onClick={() => handleShare()}
                   className="absolute top-3 right-3 z-10 border-2 border-gray-200 bg-white/95 backdrop-blur-sm w-12 h-12 flex items-center justify-center rounded-xl shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-lg hover:scale-110"
                   aria-label="Share"
                 >
@@ -1108,34 +1195,7 @@ const ProductDetailPage = () => {
               )}
             </div>
 
-            {/* Enhanced Magnifier (desktop only) */}
-            {showMagnifier && productImages.length > 0 && (
-              <div
-                className="hidden lg:block absolute top-0 left-[calc(100%+32px)] w-[420px] h-[420px] rounded-2xl border-2 border-white shadow-2xl overflow-hidden bg-white animate-in fade-in-0 zoom-in-95 duration-200"
-                style={{
-                  zIndex: 30,
-                  background: `url(${productImages[selectedImage]}) no-repeat`,
-                  backgroundSize: `${productImages[selectedImage] ? '1000px 1000px' : '800px 800px'}`,
-                  backgroundPosition: `${-magnifierPosition.relativeX * 1000 + 210}px ${-magnifierPosition.relativeY * 1000 + 210}px`,
-                  boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1)",
-                  backgroundColor: "white",
-                }}
-              >
-                {/* Magnifier Border Glow Effect */}
-                <div className="absolute inset-0 rounded-2xl border border-white/20 pointer-events-none" />
-                
-                {/* Magnifier Corner Indicators */}
-                <div className="absolute top-2 left-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
-                <div className="absolute top-2 right-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
-                <div className="absolute bottom-2 left-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
-                <div className="absolute bottom-2 right-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
-                
-                {/* Zoom Level Indicator */}
-                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-black/60 text-white text-xs px-2 py-1 rounded-full font-medium">
-                  2x Zoom
-                </div>
-              </div>
-            )}
+
           </div>
 
           {/* Product Info */}
@@ -1793,8 +1853,11 @@ const ProductDetailPage = () => {
               {productImages.map((src, idx) => (
                 <div
                   key={idx}
-                  className="relative min-w-full h-full flex items-center justify-center p-4 md:p-8"
+                  className="relative min-w-full h-full flex items-center justify-center p-4 md:p-8 group"
                   style={{ scrollSnapAlign: "start" }}
+                  onMouseEnter={handlePreviewMouseEnter}
+                  onMouseLeave={handlePreviewMouseLeave}
+                  onMouseMove={handlePreviewMouseMove}
                 >
                   <Image
                     src={src}
@@ -1811,9 +1874,80 @@ const ProductDetailPage = () => {
                     placeholder="blur"
                     blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjZWVlIi8+PC9zdmc+"
                   />
+                  
+                  {/* Magnifier Tooltip */}
+                  <div className="absolute top-4 left-4 bg-black/70 text-white text-xs px-3 py-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20 flex items-center gap-1.5 shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      <line x1="11" y1="8" x2="11" y2="14"></line>
+                      <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                    <span>Hover to zoom (2x)</span>
+                  </div>
+                  
+                  {/* Magnifier Cursor Indicator */}
+                  {showPreviewMagnifier && (
+                    <>
+                      {/* Outer ring */}
+                      <div
+                        className="absolute w-12 h-12 border border-white/50 rounded-full pointer-events-none z-10 animate-pulse"
+                        style={{
+                          left: previewMagnifierPosition.x - 24,
+                          top: previewMagnifierPosition.y - 24,
+                          boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.1)",
+                        }}
+                      />
+                      {/* Inner circle */}
+                      <div
+                        className="absolute w-6 h-6 border-2 border-white rounded-full shadow-lg pointer-events-none z-10"
+                        style={{
+                          left: previewMagnifierPosition.x - 12,
+                          top: previewMagnifierPosition.y - 12,
+                          boxShadow: "0 0 0 1px rgba(0, 0, 0, 0.3)",
+                        }}
+                      />
+                      {/* Center dot */}
+                      <div
+                        className="absolute w-1.5 h-1.5 bg-white rounded-full shadow-sm pointer-events-none z-10"
+                        style={{
+                          left: previewMagnifierPosition.x - 3,
+                          top: previewMagnifierPosition.y - 3,
+                        }}
+                      />
+                    </>
+                  )}
                 </div>
               ))}
             </div>
+            
+            {/* Enhanced Magnifier (preview modal) */}
+            {showPreviewMagnifier && productImages.length > 0 && (
+              <div
+                className="absolute top-20 right-40 w-[300px] h-[300px] rounded-2xl border-2 border-white shadow-2xl overflow-hidden bg-white animate-in fade-in-0 zoom-in-95 duration-200 z-30"
+                style={{
+                  background: `url(${productImages[previewIndex]}) no-repeat`,
+                  backgroundSize: `${productImages[previewIndex] ? '800px 800px' : '600px 600px'}`,
+                  backgroundPosition: `${-previewMagnifierPosition.relativeX * 800 + 150}px ${-previewMagnifierPosition.relativeY * 800 + 150}px`,
+                  boxShadow: "0 20px 40px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+                  backgroundColor: "white",
+                }}
+              >
+                {/* Magnifier Border Glow Effect */}
+                <div className="absolute inset-0 rounded-2xl border border-white/20 pointer-events-none" />
+                
+                {/* Magnifier Corner Indicators */}
+                <div className="absolute top-2 left-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+                <div className="absolute top-2 right-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+                <div className="absolute bottom-2 left-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+                <div className="absolute bottom-2 right-2 w-2 h-2 bg-white/80 rounded-full shadow-sm" />
+                
+                {/* Zoom Level Indicator */}
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-black/60 text-white text-xs px-2 py-1 rounded-full font-medium">
+                  2x Zoom
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Pagination Dots for Mobile */}
@@ -1911,7 +2045,7 @@ const ProductDetailPage = () => {
                       style={{
                         boxShadow:
                           selectedLensId === lens.id
-                            ? `0 0 0 2px ${BRAND_COLOR}33`
+                            ? `0 0 0 2px ${BRAND_COLOR}`
                             : undefined,
                       }}
                       onClick={() =>
@@ -2065,13 +2199,20 @@ const ProductDetailPage = () => {
                     onClick={() => handlePowerLensTypeSelect(type.key)}
                   >
                     <div className="w-12 h-12 md:w-16 md:h-16 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center mr-2 md:mr-6 border border-gray-200">
-                      {type.icon}
+                      {/* {type.icon} */}
+                      <Image
+                        src={type.icon}
+                        alt={type.title}
+                        width={60}
+                        height={60}
+                        className="object-cover w-full h-full"
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-base md:text-lg text-gray-900 mb-1 truncate">
+                      <div className="font-semibold text-base md:text-lg text-text mb-1 truncate">
                         {type.title}
                       </div>
-                      <div className="text-gray-700 text-xs md:text-base mb-1">
+                      <div className="text-text text-xs md:text-base mb-1">
                         {type.description}
                       </div>
                     </div>
@@ -2103,6 +2244,15 @@ const ProductDetailPage = () => {
                     onClick={() => {
                       removeByDetails({ product, powerCategory: "frame only" });
                       setShowPowerModal(false);
+                      setShowLensModal(false);
+                      setShowPowerLensModal(false);
+                      setShowAddPowerModal(false);
+                      setShowEnterPowerManuallyModal(false);
+                      setShowUploadPrescriptionModal(false);
+                      setShowSavedPowersModal(false);
+                      setSelectedLensForPower(null);
+                      setSelectedLensType(null);
+                      setSelectedPowerLensId(null);
                       toast.success("Removed from cart!");
                     }}
                   >
@@ -2114,6 +2264,15 @@ const ProductDetailPage = () => {
                     onClick={() => {
                       addToCart({ product, powerCategory: "frame only" });
                       setShowPowerModal(false);
+                      setShowLensModal(false);
+                      setShowPowerLensModal(false);
+                      setShowAddPowerModal(false);
+                      setShowEnterPowerManuallyModal(false);
+                      setShowUploadPrescriptionModal(false);
+                      setShowSavedPowersModal(false);
+                      setSelectedLensForPower(null);
+                      setSelectedLensType(null);
+                      setSelectedPowerLensId(null);
                       toast.success("Added to cart!");
                     }}
                   >
@@ -2127,6 +2286,15 @@ const ProductDetailPage = () => {
                     onClick={() => {
                       removeByDetails({ product, powerCategory: "zero power" });
                       setShowPowerModal(false);
+                      setShowLensModal(false);
+                      setShowPowerLensModal(false);
+                      setShowAddPowerModal(false);
+                      setShowEnterPowerManuallyModal(false);
+                      setShowUploadPrescriptionModal(false);
+                      setShowSavedPowersModal(false);
+                      setSelectedLensForPower(null);
+                      setSelectedLensType(null);
+                      setSelectedPowerLensId(null);
                       toast.success("Removed from cart!");
                     }}
                   >
@@ -2138,6 +2306,15 @@ const ProductDetailPage = () => {
                     onClick={() => {
                       addToCart({ product, powerCategory: "zero power" });
                       setShowPowerModal(false);
+                      setShowLensModal(false);
+                      setShowPowerLensModal(false);
+                      setShowAddPowerModal(false);
+                      setShowEnterPowerManuallyModal(false);
+                      setShowUploadPrescriptionModal(false);
+                      setShowSavedPowersModal(false);
+                      setSelectedLensForPower(null);
+                      setSelectedLensType(null);
+                      setSelectedPowerLensId(null);
                       toast.success("Added to cart!");
                     }}
                   >
@@ -2284,18 +2461,30 @@ const ProductDetailPage = () => {
                               </div>
 
                               {/* Features */}
-                              <div className="space-y-2 mb-3">
+                              <div className="space-y-3 mb-3">
                                 {Array.isArray(lens.features) &&
-                                  lens.features.slice(0, 3).map((feature, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                      <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <svg className="w-2.5 h-2.5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
+                                  lens.features
+                                    .slice(0, showAllFeatures[lens.id] ? undefined : 4)
+                                    .map((feature, i) => (
+                                      <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                                          <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        </div>
+                                        <span className="text-base text-gray-700">{feature}</span>
                                       </div>
-                                      <span className="text-sm text-gray-700">{feature}</span>
-                                    </div>
-                                  ))}
+                                    ))}
+                                
+                                {/* Toggle button - only show if there are more than 4 features */}
+                                {Array.isArray(lens.features) && lens.features.length > 4 && (
+                                  <button
+                                    onClick={() => toggleFeatures(lens.id)}
+                                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+                                  >
+                                    {showAllFeatures[lens.id] ? 'View Less' : 'View More'}
+                                  </button>
+                                )}
                               </div>
 
                               {/* Pricing */}
@@ -2326,7 +2515,7 @@ const ProductDetailPage = () => {
                         <div className="p-6">
                           <div className="flex items-center gap-6">
                             {/* Left Side - Image */}
-                            <div className="w-40 h-40 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center relative flex-shrink-0">
+                            <div className="w-50 h-50 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center relative flex-shrink-0">
                               {lens.image_url ? (
                                 <Image
                                   src={lens.image_url}
@@ -2349,16 +2538,28 @@ const ProductDetailPage = () => {
                               {/* Features */}
                               <div className="space-y-3 mb-4">
                                 {Array.isArray(lens.features) &&
-                                  lens.features.map((feature, i) => (
-                                    <div key={i} className="flex items-center gap-3">
-                                      <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                                        </svg>
+                                  lens.features
+                                    .slice(0, showAllFeatures[lens.id] ? undefined : 4)
+                                    .map((feature, i) => (
+                                      <div key={i} className="flex items-center gap-3">
+                                        <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center">
+                                          <svg className="w-3 h-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        </div>
+                                        <span className="text-base text-gray-700">{feature}</span>
                                       </div>
-                                      <span className="text-base text-gray-700">{feature}</span>
-                                    </div>
-                                  ))}
+                                    ))}
+                                
+                                {/* Toggle button - only show if there are more than 4 features */}
+                                {Array.isArray(lens.features) && lens.features.length > 4 && (
+                                  <button
+                                    onClick={() => toggleFeatures(lens.id)}
+                                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors relative z-10"
+                                  >
+                                    {showAllFeatures[lens.id] ? 'View Less' : 'View More'}
+                                  </button>
+                                )}
                               </div>
 
                               {/* Pricing */}
@@ -2390,10 +2591,16 @@ const ProductDetailPage = () => {
                         </span>
                       )} */}
 
-                      {/* Click handler for the whole card */}
+                      {/* Click handler for the whole card - excluding button areas */}
                       <div 
                         className="absolute inset-0 cursor-pointer"
-                        onClick={() => setSelectedPowerLensId(lens.id)}
+                        onClick={(e) => {
+                          // Don't trigger if clicking on interactive elements
+                          if ((e.target as HTMLElement).closest('button')) {
+                            return;
+                          }
+                          setSelectedPowerLensId(lens.id);
+                        }}
                       />
                     </div>
                   ))}
@@ -2434,6 +2641,15 @@ const ProductDetailPage = () => {
                             powerCategory: "zero power",
                           });
                           setShowPowerLensModal(false);
+                          setShowPowerModal(false);
+                          setShowLensModal(false);
+                          setShowAddPowerModal(false);
+                          setShowEnterPowerManuallyModal(false);
+                          setShowUploadPrescriptionModal(false);
+                          setShowSavedPowersModal(false);
+                          setSelectedLensForPower(null);
+                          setSelectedLensType(null);
+                          setSelectedPowerLensId(null);
                           toast.success("Removed from cart!");
                         }}
                       >
@@ -2449,6 +2665,15 @@ const ProductDetailPage = () => {
                             powerCategory: "zero power",
                           });
                           setShowPowerLensModal(false);
+                          setShowPowerModal(false);
+                          setShowLensModal(false);
+                          setShowAddPowerModal(false);
+                          setShowEnterPowerManuallyModal(false);
+                          setShowUploadPrescriptionModal(false);
+                          setShowSavedPowersModal(false);
+                          setSelectedLensForPower(null);
+                          setSelectedLensType(null);
+                          setSelectedPowerLensId(null);
                           toast.success("Added to cart!");
                         }}
                       >
@@ -2470,6 +2695,15 @@ const ProductDetailPage = () => {
                             powerCategory: selectedLensType,
                           });
                           setShowPowerLensModal(false);
+                          setShowPowerModal(false);
+                          setShowLensModal(false);
+                          setShowAddPowerModal(false);
+                          setShowEnterPowerManuallyModal(false);
+                          setShowUploadPrescriptionModal(false);
+                          setShowSavedPowersModal(false);
+                          setSelectedLensForPower(null);
+                          setSelectedLensType(null);
+                          setSelectedPowerLensId(null);
                           toast.success("Removed from cart!");
                         }}
                       >
@@ -2499,6 +2733,15 @@ const ProductDetailPage = () => {
                             powerCategory: selectedLensType,
                           });
                           setShowPowerLensModal(false);
+                          setShowPowerModal(false);
+                          setShowLensModal(false);
+                          setShowAddPowerModal(false);
+                          setShowEnterPowerManuallyModal(false);
+                          setShowUploadPrescriptionModal(false);
+                          setShowSavedPowersModal(false);
+                          setSelectedLensForPower(null);
+                          setSelectedLensType(null);
+                          setSelectedPowerLensId(null);
                           toast.success("Removed from cart!");
                         }}
                       >
@@ -2702,6 +2945,130 @@ const ProductDetailPage = () => {
         }}
         onSubmit={handleUploadPrescription}
       />
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div
+          className="fixed inset-0 z-70 flex items-end md:items-center justify-center bg-black/40"
+          onClick={() => setShowShareModal(false)}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-t-2xl md:rounded-2xl shadow-2xl p-0 overflow-hidden animate-slideInUp md:animate-zoomIn relative flex flex-col max-h-[90vh] md:max-h-[70vh]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-100 bg-white">
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight">
+                Share Product
+              </h2>
+              <button
+                className="p-2 -mr-2"
+                onClick={() => setShowShareModal(false)}
+              >
+                <X className="w-6 h-6 text-gray-700" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-6 py-6">
+              <div className="space-y-4">
+                {/* Product Preview */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 bg-gray-200 rounded-lg overflow-hidden flex-shrink-0">
+                      {product?.banner_image_1 && (
+                        <Image
+                          src={product.banner_image_1}
+                          alt={product.title}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-sm line-clamp-2">
+                        {product?.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm mt-1">
+                        ₹{product?.discounted_price || product?.original_price}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Share Options */}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* WhatsApp */}
+                  <button
+                    onClick={shareToWhatsApp}
+                    className="flex flex-col items-center gap-2 p-4 bg-green-50 hover:bg-green-100 rounded-xl transition-colors duration-200 group"
+                  >
+                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">WhatsApp</span>
+                  </button>
+
+                  {/* Telegram */}
+                  <button
+                    onClick={shareToTelegram}
+                    className="flex flex-col items-center gap-2 p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors duration-200 group"
+                  >
+                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Telegram</span>
+                  </button>
+
+                  {/* Facebook */}
+                  <button
+                    onClick={shareToFacebook}
+                    className="flex flex-col items-center gap-2 p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors duration-200 group"
+                  >
+                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Facebook</span>
+                  </button>
+
+                  {/* Twitter */}
+                  <button
+                    onClick={shareToTwitter}
+                    className="flex flex-col items-center gap-2 p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors duration-200 group"
+                  >
+                    <div className="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.665 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                      </svg>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Twitter</span>
+                  </button>
+                </div>
+
+                {/* Copy Link */}
+                <button
+                  onClick={copyLink}
+                  className="w-full flex items-center justify-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors duration-200 group"
+                >
+                  <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center">
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-gray-900">Copy Link</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Saved Powers Modal/Drawer */}
       {showSavedPowersModal && (

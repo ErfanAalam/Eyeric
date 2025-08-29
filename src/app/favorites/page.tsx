@@ -11,7 +11,7 @@ import { useHasMounted } from "../../hooks/useHasMounted";
 
 const FavoritesPage = () => {
   const hasMounted = useHasMounted();
-  const { favorites, removeFromFavorites, loading, isLoggedIn } = useFavorites();
+  const { favorites, removeFromFavorites, loading } = useFavorites();
   const router = useRouter();
   if (!hasMounted) return null;
 
@@ -37,7 +37,7 @@ const FavoritesPage = () => {
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="text-center py-16">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading favorites...</p>
+            <p className="mt-4 text-gray-600">Loading Whislist...</p>
           </div>
         </div>
         <Footer />
@@ -46,43 +46,43 @@ const FavoritesPage = () => {
   }
 
   // Show login prompt if user is not logged in
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-white">
-        <Navbar />
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="text-center py-16">
-            <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-white/20 max-w-md mx-auto">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-red-100 to-pink-100 rounded-full flex items-center justify-center">
-                <Heart className="w-10 h-10 text-red-500" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800 mb-3">
-                Login Required
-              </h3>
-              <p className="text-gray-600 leading-relaxed mb-6">
-                Please log in to view and manage your favorite products
-              </p>
-              <div className="space-y-3">
-                <button
-                  onClick={() => router.push('/login')}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105"
-                >
-                  Login
-                </button>
-                <button
-                  onClick={() => router.push('/signup')}
-                  className="w-full bg-gray-100 text-gray-700 px-8 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300"
-                >
-                  Create Account
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  // if (!isLoggedIn) {
+  //   return (
+  //     <div className="min-h-screen bg-white">
+  //       <Navbar />
+  //       <div className="max-w-7xl mx-auto px-4 py-8">
+  //         <div className="text-center py-16">
+  //           <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-12 shadow-xl border border-white/20 max-w-md mx-auto">
+  //             <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-red-100 to-pink-100 rounded-full flex items-center justify-center">
+  //               <Heart className="w-10 h-10 text-red-500" />
+  //             </div>
+  //             <h3 className="text-2xl font-bold text-gray-800 mb-3">
+  //               Login Required
+  //             </h3>
+  //             <p className="text-gray-600 leading-relaxed mb-6">
+  //               Please log in to view and manage your Wishlist products
+  //             </p>
+  //             <div className="space-y-3">
+  //               <button
+  //                 onClick={() => router.push('/login')}
+  //                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+  //               >
+  //                 Login
+  //               </button>
+  //               <button
+  //                 onClick={() => router.push('/signup')}
+  //                 className="w-full bg-gray-100 text-gray-700 px-8 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300"
+  //               >
+  //                 Create Account
+  //               </button>
+  //             </div>
+  //           </div>
+  //         </div>
+  //       </div>
+  //       <Footer />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-white">

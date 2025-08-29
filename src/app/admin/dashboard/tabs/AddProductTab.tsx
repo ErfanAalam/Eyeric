@@ -86,14 +86,10 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
   const [latestTrend, setLatestTrend] = useState(false);
   const [bestseller, setBestseller] = useState(false);
   
-  // Category-specific display orders
-  const [mensDisplayOrder, setMensDisplayOrder] = useState("");
-  const [womensDisplayOrder, setWomensDisplayOrder] = useState("");
-  const [kidsDisplayOrder, setKidsDisplayOrder] = useState("");
-  const [sunglassesDisplayOrder, setSunglassesDisplayOrder] = useState("");
-  const [eyeglassesDisplayOrder, setEyeglassesDisplayOrder] = useState("");
-  const [computerglassesDisplayOrder, setComputerglassesDisplayOrder] = useState("");
-  const [poweredSunglassesDisplayOrder, setPoweredSunglassesDisplayOrder] = useState("");
+  // Category-specific display orders - combined gender and type
+  // const [mensDisplayOrder, setMensDisplayOrder] = useState("");
+  // const [womensDisplayOrder, setWomensDisplayOrder] = useState("");
+  // const [kidsDisplayOrder, setKidsDisplayOrder] = useState("");
   const [roundDisplayOrder, setRoundDisplayOrder] = useState("");
   const [catEyeDisplayOrder, setCatEyeDisplayOrder] = useState("");
   const [aviatorDisplayOrder, setAviatorDisplayOrder] = useState("");
@@ -103,6 +99,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
   const [squareDisplayOrder, setSquareDisplayOrder] = useState("");
   const [latestTrendDisplayOrder, setLatestTrendDisplayOrder] = useState("");
   const [bestsellerDisplayOrder, setBestsellerDisplayOrder] = useState("");
+  
+  // Combined gender-type display orders
+  const [genderTypeDisplayOrders, setGenderTypeDisplayOrders] = useState<Record<string, string>>({});
   const [bannerImage1, setBannerImage1] = useState<File | null>(null);
   const [bannerImage2, setBannerImage2] = useState<File | null>(null);
   const [images, setImages] = useState<{ url: string; display_order: number }[]>([]);
@@ -230,13 +229,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setFrameColour(editProduct.frame_colour || "");
       setTempleColour(editProduct.temple_colour || "");
       setProductSerialNumber(editProduct.product_serial_number || "");
-      setMensDisplayOrder(editProduct.mens_display_order?.toString() || "");
-      setWomensDisplayOrder(editProduct.womens_display_order?.toString() || "");
-      setKidsDisplayOrder(editProduct.kids_display_order?.toString() || "");
-      setSunglassesDisplayOrder(editProduct.sunglasses_display_order?.toString() || "");
-      setEyeglassesDisplayOrder(editProduct.eyeglasses_display_order?.toString() || "");
-      setComputerglassesDisplayOrder(editProduct.computerglasses_display_order?.toString() || "");
-      setPoweredSunglassesDisplayOrder(editProduct.powered_sunglasses_display_order?.toString() || "");
+      // setMensDisplayOrder(editProduct.mens_display_order?.toString() || "");
+      // setWomensDisplayOrder(editProduct.womens_display_order?.toString() || "");
+      // setKidsDisplayOrder(editProduct.kids_display_order?.toString() || "");
       setRoundDisplayOrder(editProduct.round_display_order?.toString() || "");
       setCatEyeDisplayOrder(editProduct.cat_eye_display_order?.toString() || "");
       setAviatorDisplayOrder(editProduct.aviator_display_order?.toString() || "");
@@ -246,6 +241,33 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setSquareDisplayOrder(editProduct.square_display_order?.toString() || "");
       setLatestTrendDisplayOrder(editProduct.latest_trend_display_order?.toString() || "");
       setBestsellerDisplayOrder(editProduct.bestseller_display_order?.toString() || "");
+      
+      // Populate combined gender-type display orders from database
+      const combinedOrders: Record<string, string> = {};
+      if (editProduct.gender_category && editProduct.type_category) {
+        editProduct.gender_category.forEach(gender => {
+          editProduct.type_category.forEach(type => {
+            const key = `${gender}-${type}`;
+            // Map to the correct database column
+            const columnName = `${gender}_${type.replace(' ', '_')}_display_order` as keyof Product;
+            const displayOrder = editProduct[columnName];
+            combinedOrders[key] = displayOrder ? displayOrder.toString() : "";
+            
+            // Debug logging
+            console.log(`Loading display order for ${key}:`, {
+              columnName,
+              displayOrder,
+              finalValue: combinedOrders[key],
+              hasProperty: columnName in editProduct,
+              allKeys: Object.keys(editProduct).filter(k => k.includes('display_order'))
+            });
+          });
+        });
+      }
+      console.log('Final combined orders loaded:', combinedOrders);
+      console.log('All display order properties in editProduct:', Object.keys(editProduct).filter(k => k.includes('display_order')));
+      setGenderTypeDisplayOrders(combinedOrders);
+      
       setFeatures((editProduct.features || []).join('; '));
       setSelectedGenders(editProduct.gender_category || []);
       setSelectedTypes(editProduct.type_category || []);
@@ -336,7 +358,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         setImages(updatedImages);
       }
       
-      console.log('Display orders normalized to sequential:', sequentialOrders);
+      // console.log('Display orders normalized to sequential:', sequentialOrders);
     }
 
 
@@ -481,6 +503,32 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
         product_serial_number: productSerialNumber,
         frame_colour: frameColour,
         temple_colour: templeColour,
+        // mens_display_order: mensDisplayOrder ? parseInt(mensDisplayOrder, 10) : null,
+        // womens_display_order: womensDisplayOrder ? parseInt(womensDisplayOrder, 10) : null,
+        // kids_display_order: kidsDisplayOrder ? parseInt(kidsDisplayOrder, 10) : null,
+        round_display_order: roundDisplayOrder ? parseInt(roundDisplayOrder, 10) : null,
+        cat_eye_display_order: catEyeDisplayOrder ? parseInt(catEyeDisplayOrder, 10) : null,
+        aviator_display_order: aviatorDisplayOrder ? parseInt(aviatorDisplayOrder, 10) : null,
+        wayfarer_display_order: wayfarerDisplayOrder ? parseInt(wayfarerDisplayOrder, 10) : null,
+        oval_display_order: ovalDisplayOrder ? parseInt(ovalDisplayOrder, 10) : null,
+        rectangle_display_order: rectangleDisplayOrder ? parseInt(rectangleDisplayOrder, 10) : null,
+        square_display_order: squareDisplayOrder ? parseInt(squareDisplayOrder, 10) : null,
+        latest_trend_display_order: latestTrendDisplayOrder ? parseInt(latestTrendDisplayOrder, 10) : null,
+        bestseller_display_order: bestsellerDisplayOrder ? parseInt(bestsellerDisplayOrder, 10) : null,
+        
+        // Combined gender-type display orders
+        men_sunglasses_display_order: genderTypeDisplayOrders['men-sunglasses'] ? parseInt(genderTypeDisplayOrders['men-sunglasses'], 10) : null,
+        men_eyeglasses_display_order: genderTypeDisplayOrders['men-eyeglasses'] ? parseInt(genderTypeDisplayOrders['men-eyeglasses'], 10) : null,
+        men_computerglasses_display_order: genderTypeDisplayOrders['men-computer glasses'] ? parseInt(genderTypeDisplayOrders['men-computer glasses'], 10) : null,
+        men_powered_sunglasses_display_order: genderTypeDisplayOrders['men-powered sunglasses'] ? parseInt(genderTypeDisplayOrders['men-powered sunglasses'], 10) : null,
+        women_sunglasses_display_order: genderTypeDisplayOrders['women-sunglasses'] ? parseInt(genderTypeDisplayOrders['women-sunglasses'], 10) : null,
+        women_eyeglasses_display_order: genderTypeDisplayOrders['women-eyeglasses'] ? parseInt(genderTypeDisplayOrders['women-eyeglasses'], 10) : null,
+        women_computerglasses_display_order: genderTypeDisplayOrders['women-computer glasses'] ? parseInt(genderTypeDisplayOrders['women-computer glasses'], 10) : null,
+        women_powered_sunglasses_display_order: genderTypeDisplayOrders['women-powered sunglasses'] ? parseInt(genderTypeDisplayOrders['women-powered sunglasses'], 10) : null,
+        kids_sunglasses_display_order: genderTypeDisplayOrders['kids-sunglasses'] ? parseInt(genderTypeDisplayOrders['kids-sunglasses'], 10) : null,
+        kids_eyeglasses_display_order: genderTypeDisplayOrders['kids-eyeglasses'] ? parseInt(genderTypeDisplayOrders['kids-eyeglasses'], 10) : null,
+        kids_computerglasses_display_order: genderTypeDisplayOrders['kids-computer glasses'] ? parseInt(genderTypeDisplayOrders['kids-computer glasses'], 10) : null,
+        kids_powered_sunglasses_display_order: genderTypeDisplayOrders['kids-powered sunglasses'] ? parseInt(genderTypeDisplayOrders['kids-powered sunglasses'], 10) : null,
       };
       
       // Debug logging
@@ -522,43 +570,23 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     const categoryDisplayOrders: Record<string, number> = {};
     
     // Gender categories
-    if (selectedGenders.includes("men") && mensDisplayOrder) {
-      const order = parseInt(mensDisplayOrder, 10);
-      categoryDisplayOrders.mens_display_order = order;
-      await shiftDisplayOrders("mens_display_order", order);
-    }
-    if (selectedGenders.includes("women") && womensDisplayOrder) {
-      const order = parseInt(womensDisplayOrder, 10);
-      categoryDisplayOrders.womens_display_order = order;
-      await shiftDisplayOrders("womens_display_order", order);
-    }
-    if (selectedGenders.includes("kids") && kidsDisplayOrder) {
-      const order = parseInt(kidsDisplayOrder, 10);
-      categoryDisplayOrders.kids_display_order = order;
-      await shiftDisplayOrders("kids_display_order", order);
-    }
+    // if (selectedGenders.includes("men") && mensDisplayOrder) {
+    //   const order = parseInt(mensDisplayOrder, 10);
+    //   categoryDisplayOrders.mens_display_order = order;
+    //   await shiftDisplayOrders("mens_display_order", order);
+    // }
+    // if (selectedGenders.includes("women") && womensDisplayOrder) {
+    //   const order = parseInt(womensDisplayOrder, 10);
+    //   categoryDisplayOrders.womens_display_order = order;
+    //   await shiftDisplayOrders("womens_display_order", order);
+    // }
+    // if (selectedGenders.includes("kids") && kidsDisplayOrder) {
+    //   const order = parseInt(kidsDisplayOrder, 10);
+    //   categoryDisplayOrders.kids_display_order = order;
+    //   await shiftDisplayOrders("kids_display_order", order);
+    // }
     
-    // Type categories
-    if (selectedTypes.includes("sunglasses") && sunglassesDisplayOrder) {
-      const order = parseInt(sunglassesDisplayOrder, 10);
-      categoryDisplayOrders.sunglasses_display_order = order;
-      await shiftDisplayOrders("sunglasses_display_order", order);
-    }
-    if (selectedTypes.includes("eyeglasses") && eyeglassesDisplayOrder) {
-      const order = parseInt(eyeglassesDisplayOrder, 10);
-      categoryDisplayOrders.eyeglasses_display_order = order;
-      await shiftDisplayOrders("eyeglasses_display_order", order);
-    }
-    if (selectedTypes.includes("computerglasses") && computerglassesDisplayOrder) {
-      const order = parseInt(computerglassesDisplayOrder, 10);
-      categoryDisplayOrders.computerglasses_display_order = order;
-      await shiftDisplayOrders("computerglasses_display_order", order);
-    }
-    if (selectedTypes.includes("powered sunglasses") && poweredSunglassesDisplayOrder) {
-      const order = parseInt(poweredSunglassesDisplayOrder, 10);
-      categoryDisplayOrders.powered_sunglasses_display_order = order;
-      await shiftDisplayOrders("powered_sunglasses_display_order", order);
-    }
+    // Type categories - removed separate display orders, will be handled by gender-category combinations
     
     // Shape categories
     if (shapeCategory === "round" && roundDisplayOrder) {
@@ -707,6 +735,20 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       frame_colour: frameColour,
       temple_colour: templeColour,
       ...categoryDisplayOrders, // Spread all category display orders
+      
+      // Combined gender-type display orders
+      men_sunglasses_display_order: genderTypeDisplayOrders['men-sunglasses'] ? parseInt(genderTypeDisplayOrders['men-sunglasses'], 10) : null,
+      men_eyeglasses_display_order: genderTypeDisplayOrders['men-eyeglasses'] ? parseInt(genderTypeDisplayOrders['men-eyeglasses'], 10) : null,
+      men_computerglasses_display_order: genderTypeDisplayOrders['men-computer glasses'] ? parseInt(genderTypeDisplayOrders['men-computer glasses'], 10) : null,
+      men_powered_sunglasses_display_order: genderTypeDisplayOrders['men-powered sunglasses'] ? parseInt(genderTypeDisplayOrders['men-powered sunglasses'], 10) : null,
+      women_sunglasses_display_order: genderTypeDisplayOrders['women-sunglasses'] ? parseInt(genderTypeDisplayOrders['women-sunglasses'], 10) : null,
+      women_eyeglasses_display_order: genderTypeDisplayOrders['women-eyeglasses'] ? parseInt(genderTypeDisplayOrders['women-eyeglasses'], 10) : null,
+      women_computerglasses_display_order: genderTypeDisplayOrders['women-computer glasses'] ? parseInt(genderTypeDisplayOrders['women-computer glasses'], 10) : null,
+      women_powered_sunglasses_display_order: genderTypeDisplayOrders['women-powered sunglasses'] ? parseInt(genderTypeDisplayOrders['women-powered sunglasses'], 10) : null,
+      kids_sunglasses_display_order: genderTypeDisplayOrders['kids-sunglasses'] ? parseInt(genderTypeDisplayOrders['kids-sunglasses'], 10) : null,
+      kids_eyeglasses_display_order: genderTypeDisplayOrders['kids-eyeglasses'] ? parseInt(genderTypeDisplayOrders['kids-eyeglasses'], 10) : null,
+      kids_computerglasses_display_order: genderTypeDisplayOrders['kids-computer glasses'] ? parseInt(genderTypeDisplayOrders['kids-computer glasses'], 10) : null,
+      kids_powered_sunglasses_display_order: genderTypeDisplayOrders['kids-powered sunglasses'] ? parseInt(genderTypeDisplayOrders['kids-powered sunglasses'], 10) : null,
     }).select();
     
     // Debug logging
@@ -770,7 +812,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     setTempleLength("");
     setLensCategoryId(null);
     setIsActive(true);
-          setSelectedSpecialCategories([]);
+      setSelectedSpecialCategories([]);
       setSelectedCoupons([]);
       setProductSerialNumber("");
       setFrameColour("");
@@ -778,13 +820,9 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
       setFrameMaterial("");
     
     // Reset category-specific display orders
-    setMensDisplayOrder("");
-    setWomensDisplayOrder("");
-    setKidsDisplayOrder("");
-    setSunglassesDisplayOrder("");
-    setEyeglassesDisplayOrder("");
-    setComputerglassesDisplayOrder("");
-    setPoweredSunglassesDisplayOrder("");
+    // setMensDisplayOrder("");
+    // setWomensDisplayOrder("");
+    // setKidsDisplayOrder("");
     setRoundDisplayOrder("");
     setCatEyeDisplayOrder("");
     setAviatorDisplayOrder("");
@@ -794,6 +832,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
     setSquareDisplayOrder("");
     setLatestTrendDisplayOrder("");
     setBestsellerDisplayOrder("");
+    setGenderTypeDisplayOrders({});
     
     setLoading(false);
   };
@@ -1252,7 +1291,7 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Category Display Orders</h3>
               
               {/* Gender Display Orders */}
-              {selectedGenders.length > 0 && (
+              {/* {selectedGenders.length > 0 && (
                 <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
                   <h4 className="text-md font-semibold text-blue-900 mb-4 flex items-center gap-2">
                     <Users className="w-4 h-4" /> Gender Display Orders
@@ -1302,70 +1341,38 @@ const AddProductTab = ({ editProduct, onFinishEdit }: { editProduct?: Product | 
                     )}
                   </div>
                 </div>
-              )}
+              )} */}
 
-              {/* Type Display Orders */}
-              {selectedTypes.length > 0 && (
+              {/* Combined Gender-Type Display Orders */}
+              {selectedGenders.length > 0 && selectedTypes.length > 0 && (
                 <div className="bg-indigo-50 border border-indigo-200 rounded-2xl p-6">
                   <h4 className="text-md font-semibold text-indigo-900 mb-4 flex items-center gap-2">
-                    <Eye className="w-4 h-4" /> Type Display Orders
+                    <Eye className="w-4 h-4" /> Gender-Type Display Orders
                   </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {selectedTypes.includes("sunglasses") && (
-                      <div>
-                        <label className="text-sm font-medium text-indigo-700 mb-2 block">Sunglasses Display Order</label>
-                        <input
-                          type="number"
-                          value={sunglassesDisplayOrder}
-                          onChange={(e) => setSunglassesDisplayOrder(e.target.value)}
-                          min="1"
-                          step="1"
-                          className="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                          placeholder="Enter position for sunglasses..."
-                        />
-                      </div>
-                    )}
-                    {selectedTypes.includes("eyeglasses") && (
-                      <div>
-                        <label className="text-sm font-medium text-indigo-700 mb-2 block">Eyeglasses Display Order</label>
-                        <input
-                          type="number"
-                          value={eyeglassesDisplayOrder}
-                          onChange={(e) => setEyeglassesDisplayOrder(e.target.value)}
-                          min="1"
-                          step="1"
-                          className="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                          placeholder="Enter position for eyeglasses..."
-                        />
-                      </div>
-                    )}
-                    {selectedTypes.includes("computer glasses") && (
-                      <div>
-                        <label className="text-sm font-medium text-indigo-700 mb-2 block">Computer Glasses Display Order</label>
-                        <input
-                          type="number"
-                          value={computerglassesDisplayOrder}
-                          onChange={(e) => setComputerglassesDisplayOrder(e.target.value)}
-                          min="1"
-                          step="1"
-                          className="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                          placeholder="Enter position for computer glasses..."
-                        />
-                      </div>
-                    )}
-                    {selectedTypes.includes("powered sunglasses") && (
-                      <div>
-                        <label className="text-sm font-medium text-indigo-700 mb-2 block">Powered Sunglasses Display Order</label>
-                        <input
-                          type="number"
-                          value={poweredSunglassesDisplayOrder}
-                          onChange={(e) => setPoweredSunglassesDisplayOrder(e.target.value)}
-                          min="1"
-                          step="1"
-                          className="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-                          placeholder="Enter position for powered sunglasses..."
-                        />
-                      </div>
+                  <div className="space-y-4">
+                    {selectedGenders.map(gender => 
+                      selectedTypes.map(type => (
+                        <div key={`${gender}-${type}`} className="bg-white p-4 rounded-lg border border-indigo-200">
+                          <h5 className="text-sm font-medium text-indigo-800 mb-3 capitalize">
+                            {gender} {type} Display Order
+                          </h5>
+                                                      <input
+                              type="number"
+                              value={genderTypeDisplayOrders[`${gender}-${type}`] || ""}
+                              min="1"
+                              step="1"
+                              className="w-full px-3 py-2 border border-indigo-300 rounded-lg focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+                              placeholder={`Enter position for ${gender} ${type}...`}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setGenderTypeDisplayOrders(prev => ({
+                                  ...prev,
+                                  [`${gender}-${type}`]: value
+                                }));
+                              }}
+                            />
+                        </div>
+                      ))
                     )}
                   </div>
                 </div>

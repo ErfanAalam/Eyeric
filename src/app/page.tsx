@@ -246,7 +246,7 @@ const SpecialProductCategories = ({ categories }: { categories: SpecialProductCa
           </div> */}
           
           <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-clip-text text-transparent mb-6">
-            <span className="block">WEAR THE TREND</span>
+            <span className="block">EXPLORE THE LOOK</span>
           </h2>
           
           
@@ -531,7 +531,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
     .slice(0, 8);
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const router = useRouter();
-  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } =
+  const { addToFavorites, removeFromFavorites, isFavorite } =
     useFavorites();
 
   const handleProductClick = (product: Product) => {
@@ -541,10 +541,10 @@ const BestSellers = ({ products }: { products: Product[] }) => {
   const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
 
-    if (!isLoggedIn) {
-      router.push("/login");
-      return;
-    }
+    // if (!isLoggedIn) {
+    //   router.push("/login");
+    //   return;
+    // }
 
     try {
       if (isFavorite(product.id!)) {
@@ -668,7 +668,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
     .slice(0, 8);
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const router = useRouter();
-  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } =
+  const { addToFavorites, removeFromFavorites, isFavorite } =
     useFavorites();
 
   const handleProductClick = (product: Product) => {
@@ -678,10 +678,10 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
   const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
 
-    if (!isLoggedIn) {
-      router.push("/login");
-      return;
-    }
+    // if (!isLoggedIn) {
+    //   router.push("/login");
+    //   return;
+    // }
 
     try {
       if (isFavorite(product.id!)) {

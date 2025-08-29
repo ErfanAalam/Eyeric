@@ -43,6 +43,9 @@ interface FavoritesContextType {
 
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
+// Local storage key for favorites
+const LOCAL_STORAGE_FAVORITES_KEY = 'eyeric_favorites';
+
 export const useFavorites = () => {
   const context = useContext(FavoritesContext);
   if (context === undefined) {
@@ -55,6 +58,81 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, loading: authLoading } = useAuth();
+
+  // Load favorites from localStorage
+  const loadFavoritesFromLocalStorage = useCallback(() => {
+    try {
+      const storedFavorites = localStorage.getItem(LOCAL_STORAGE_FAVORITES_KEY);
+      if (storedFavorites) {
+        const parsedFavorites = JSON.parse(storedFavorites);
+        return Array.isArray(parsedFavorites) ? parsedFavorites : [];
+      }
+    } catch (error) {
+      console.error('Error loading favorites from localStorage:', error);
+    }
+    return [];
+  }, []);
+
+  // Save favorites to localStorage
+  const saveFavoritesToLocalStorage = useCallback((favoritesList: Product[]) => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_FAVORITES_KEY, JSON.stringify(favoritesList));
+    } catch (error) {
+      console.error('Error saving favorites to localStorage:', error);
+    }
+  }, []);
+
+  // Sync localStorage favorites to database when user logs in
+  const syncLocalFavoritesToDatabase = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const localFavorites = loadFavoritesFromLocalStorage();
+      if (localFavorites.length === 0) return;
+
+      console.log('Syncing local favorites to database:', localFavorites.length, 'items');
+
+      // Get current database favorites
+      const { data: userData, error: userError } = await supabase
+        .from('user')
+        .select('favorite_products')
+        .eq('id', user.id)
+        .single();
+
+      if (userError) {
+        console.error('Error fetching user favorites for sync:', userError);
+        return;
+      }
+
+      // Merge local favorites with database favorites (avoid duplicates)
+      const databaseFavorites = userData?.favorite_products || [];
+      const mergedFavorites = [...databaseFavorites];
+      
+      localFavorites.forEach(localProduct => {
+        if (!mergedFavorites.some(dbProduct => dbProduct.id === localProduct.id)) {
+          mergedFavorites.push(localProduct);
+        }
+      });
+
+      // Update database with merged favorites
+      const { error: updateError } = await supabase
+        .from('user')
+        .update({ favorite_products: mergedFavorites })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Error syncing local favorites to database:', updateError);
+      } else {
+        console.log('Successfully synced local favorites to database');
+        // Clear localStorage after successful sync
+        localStorage.removeItem(LOCAL_STORAGE_FAVORITES_KEY);
+        // Update local state with merged favorites
+        setFavorites(mergedFavorites);
+      }
+    } catch (error) {
+      console.error('Error syncing local favorites to database:', error);
+    }
+  }, [user, loadFavoritesFromLocalStorage]);
 
   const loadFavoritesFromDatabase = useCallback(async () => {
     if (!user) return;
@@ -93,18 +171,29 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [user]);
 
+  // Load favorites from localStorage when user is not logged in
+  const loadFavoritesFromLocalStorageState = useCallback(() => {
+    if (!user) {
+      const localFavorites = loadFavoritesFromLocalStorage();
+      setFavorites(localFavorites);
+      setLoading(false);
+    }
+  }, [user, loadFavoritesFromLocalStorage]);
+
   // Load favorites from database when user logs in
   useEffect(() => {
     if (authLoading) return; // Wait for auth to finish loading
+    
     if (user) {
-      loadFavoritesFromDatabase();
+      // User is logged in, sync local favorites first, then load from database
+      syncLocalFavoritesToDatabase().then(() => {
+        loadFavoritesFromDatabase();
+      });
     } else {
-      console.log('User logged out, clearing favorites');
-      // Clear favorites when user logs out
-      setFavorites([]);
-      setLoading(false);
+      // User is not logged in, load from localStorage
+      loadFavoritesFromLocalStorageState();
     }
-  }, [user, authLoading, loadFavoritesFromDatabase]);
+  }, [user, authLoading, syncLocalFavoritesToDatabase, loadFavoritesFromDatabase, loadFavoritesFromLocalStorageState]);
 
   const updateFavoritesInDatabase = async (favoritesList: Product[]) => {
     if (!user) return;
@@ -134,16 +223,20 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const addToFavorites = async (product: Product) => {
-    if (!user) {
-      throw new Error('User must be logged in to add favorites');
-    }
-
     try {
-      console.log('Adding product to favorites:', product.title, 'for user:', user.id);
+      console.log('Adding product to favorites:', product.title);
       const newFavorites = [...favorites, product];
       setFavorites(newFavorites);
-      await updateFavoritesInDatabase(newFavorites);
-      console.log('Successfully added to favorites');
+      
+      if (user) {
+        // User is logged in, save to database
+        await updateFavoritesInDatabase(newFavorites);
+        console.log('Successfully added to favorites in database');
+      } else {
+        // User is not logged in, save to localStorage
+        saveFavoritesToLocalStorage(newFavorites);
+        console.log('Successfully added to favorites in localStorage');
+      }
     } catch (error) {
       console.error('Error adding to favorites:', error);
       throw error;
@@ -151,16 +244,20 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const removeFromFavorites = async (productId: string) => {
-    if (!user) {
-      throw new Error('User must be logged in to remove favorites');
-    }
-
     try {
-      console.log('Removing product from favorites:', productId, 'for user:', user.id);
+      console.log('Removing product from favorites:', productId);
       const newFavorites = favorites.filter(product => product.id !== productId);
       setFavorites(newFavorites);
-      await updateFavoritesInDatabase(newFavorites);
-      console.log('Successfully removed from favorites');
+      
+      if (user) {
+        // User is logged in, update database
+        await updateFavoritesInDatabase(newFavorites);
+        console.log('Successfully removed from favorites in database');
+      } else {
+        // User is not logged in, update localStorage
+        saveFavoritesToLocalStorage(newFavorites);
+        console.log('Successfully removed from favorites in localStorage');
+      }
     } catch (error) {
       console.error('Error removing from favorites:', error);
       throw error;
@@ -174,6 +271,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const refreshFavorites = async () => {
     if (user) {
       await loadFavoritesFromDatabase();
+    } else {
+      loadFavoritesFromLocalStorageState();
     }
   };
 

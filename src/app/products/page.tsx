@@ -29,6 +29,7 @@ interface Product {
   frame_material?: string;
   features: string[];
   shape_category: string;
+  style_category?: string;
   tags: string[];
   gender_category: string[];
   type_category: string[];
@@ -37,7 +38,20 @@ interface Product {
   product_serial_number?: string;
   frame_colour?: string;
   temple_colour?: string;
-
+  
+  // Combined gender-type display orders
+  men_sunglasses_display_order?: number;
+  men_eyeglasses_display_order?: number;
+  men_computerglasses_display_order?: number;
+  men_powered_sunglasses_display_order?: number;
+  women_sunglasses_display_order?: number;
+  women_eyeglasses_display_order?: number;
+  women_computerglasses_display_order?: number;
+  women_powered_sunglasses_display_order?: number;
+  kids_sunglasses_display_order?: number;
+  kids_eyeglasses_display_order?: number;
+  kids_computerglasses_display_order?: number;
+  kids_powered_sunglasses_display_order?: number;
 }
 
 // Client component that uses useSearchParams
@@ -54,8 +68,9 @@ const ProductsContent = () => {
   const [sortBy, setSortBy] = useState("featured");
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
   const [searchQuery, setSearchQuery] = useState("");
+  const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   const router = useRouter();
-  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
 
 
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
@@ -94,6 +109,10 @@ const ProductsContent = () => {
     const allShapes = Array.from(new Set(allProducts.filter(p => p.shape_category).map(p => p.shape_category)));
     console.log("All shapes in database:", allShapes);
 
+    // Debug: Log all unique styles in the database
+    const allStyles = Array.from(new Set(allProducts.filter(p => p.style_category).map(p => p.style_category)));
+    console.log("All styles in database:", allStyles);
+
     // Debug: Log all products that match the shape regardless of type
     if (shape) {
       const shapeMatches = allProducts.filter(product => product.shape_category && normalize(product.shape_category) === normalize(shape));
@@ -123,16 +142,51 @@ const ProductsContent = () => {
     setProducts(filteredProducts);
   }, [category, type, shape, allProducts]);
 
+  // Function to order products by combined gender-type display orders
+  const orderProductsByGenderType = (products: Product[], gender: string, type: string) => {
+    if (!gender || !type) return products;
+    
+    // Map to the correct database column
+    const displayOrderColumn = `${gender}_${type.replace(' ', '_')}_display_order` as keyof Product;
+    
+    return [...products].sort((a, b) => {
+      const aOrder = a[displayOrderColumn] as number;
+      const bOrder = b[displayOrderColumn] as number;
+      
+      // If both have display orders, sort by them
+      if (aOrder && bOrder) {
+        return aOrder - bOrder;
+      }
+      
+      // If only one has display order, prioritize it
+      if (aOrder && !bOrder) return -1;
+      if (!aOrder && bOrder) return 1;
+      
+      // If neither has display order, maintain original order
+      return 0;
+    });
+  };
+
   const sortProducts = (products: Product[]) => {
+    // First, order by gender-type display order if category and type are available
+    let orderedProducts = products;
+    if (category && type) {
+      orderedProducts = orderProductsByGenderType(products, category, type);
+    }
+    
+    // Then apply the selected sort option
     switch (sortBy) {
       case "price-low":
-        return [...products].sort((a, b) => (a.discounted_price || a.original_price) - (b.discounted_price || b.original_price));
+        return [...orderedProducts].sort((a, b) => (a.discounted_price || a.original_price) - (b.discounted_price || b.original_price));
       case "price-high":
-        return [...products].sort((a, b) => (b.discounted_price || b.original_price) - (a.discounted_price || a.original_price));
+        return [...orderedProducts].sort((a, b) => (b.discounted_price || b.original_price) - (a.discounted_price || b.original_price));
       case "name":
-        return [...products].sort((a, b) => a.title.localeCompare(b.title));
+        return [...orderedProducts].sort((a, b) => a.title.localeCompare(b.title));
+      case "featured":
+        // For featured, respect the gender-type display order we already applied
+        return orderedProducts;
       default:
-        return products.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        return orderedProducts.sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
     }
   };
 
@@ -164,10 +218,10 @@ const ProductsContent = () => {
   const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
     
-    if (!isLoggedIn) {
-      router.push('/login');
-      return;
-    }
+    // if (!isLoggedIn) {
+    //   router.push('/login');
+    //   return;
+    // }
 
     try {
       if (isFavorite(product.id!)) {
@@ -185,11 +239,22 @@ const ProductsContent = () => {
       const shapeMatch = selectedShapes.length === 0 || 
         (product.shape_category && selectedShapes.includes(product.shape_category.toLowerCase()));
       const styleMatch = selectedStyles.length === 0 || 
-        (Array.isArray(product.type_category) && selectedStyles.some(style => 
-          product.type_category.map(t => t.toLowerCase()).includes(style.toLowerCase())
+        (product.style_category && selectedStyles.some(style => 
+          product.style_category.toLowerCase().includes(style.toLowerCase())
         ));
       const priceMatch = (product.discounted_price || product.original_price) >= priceRange.min && 
                         (product.discounted_price || product.original_price) <= priceRange.max;
+      
+      // Debug logging for style filtering
+      if (selectedStyles.length > 0) {
+        console.log('Style filtering:', {
+          productTitle: product.title,
+          productStyle: product.style_category,
+          selectedStyles: selectedStyles,
+          styleMatch: styleMatch
+        });
+      }
+      
       // Search filter
       const query = searchQuery.toLowerCase();
       const matchesQuery =
@@ -310,6 +375,8 @@ const ProductsContent = () => {
                     key={product.id} 
                     className="relative  rounded-2xl shadow-lg max-h-[500px] group overflow-hidden flex flex-col cursor-pointer"
                     onClick={() => handleProductClick(product)}
+                    onMouseEnter={() => setHoveredProductId(product.id!)}
+                    onMouseLeave={() => setHoveredProductId(null)}
                   >
                     {/* Wishlist Icon */}
                     <button 
@@ -329,7 +396,7 @@ const ProductsContent = () => {
                     {/* Product Image */}
                     <div className="aspect-[4/3] w-full overflow-hidden">
                       <Image 
-                        src={product.banner_image_1 || product.banner_image_2 || ''} 
+                        src={hoveredProductId === product.id && product.banner_image_2 ? product.banner_image_2 : product.banner_image_1} 
                         alt={product.title} 
                         width={400} 
                         height={300} 

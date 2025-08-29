@@ -63,7 +63,6 @@ export const getProducts = async (): Promise<Product[]> => {
   const { data, error } = await supabase
     .from('products')
     .select('*')
-    .order('display_order', { ascending: true });
   if (error) {
     console.error('Error fetching products:', error);
     return [];

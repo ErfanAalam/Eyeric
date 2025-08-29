@@ -50,7 +50,7 @@ const ShapeProductsContent = () => {
   const [sortBy, setSortBy] = useState("featured");
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
   const router = useRouter();
-  const { addToFavorites, removeFromFavorites, isFavorite, isLoggedIn } = useFavorites();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
 
 
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
@@ -134,10 +134,10 @@ const ShapeProductsContent = () => {
   const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
     
-    if (!isLoggedIn) {
-      router.push('/login');
-      return;
-    }
+    // if (!isLoggedIn) {
+    //   router.push('/login');
+    //   return;
+    // }
 
     try {
       if (isFavorite(product.id!)) {
