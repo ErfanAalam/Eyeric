@@ -78,13 +78,13 @@ function truncateDescription(desc: string): string {
 // Hero Slider Component
 const HeroSlider = ({ slides }: { slides: Slide[] }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  
+
   // Filter out inactive slides and ensure we have valid slides
-  const activeSlides = slides.filter(slide => slide.is_active !== false);
-  
+  const activeSlides = slides.filter((slide) => slide.is_active !== false);
+
   useEffect(() => {
     if (activeSlides.length === 0) return;
-    
+
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % activeSlides.length);
     }, 5000);
@@ -93,12 +93,14 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
 
   const handleSlideClick = (slide: Slide) => {
     if (slide.redirect_url) {
-      window.open(slide.redirect_url, '_blank', 'noopener,noreferrer');
+      window.open(slide.redirect_url, "_blank", "noopener,noreferrer");
     }
   };
 
   const handlePrevious = () => {
-    setCurrentSlide((prev) => (prev === 0 ? activeSlides.length - 1 : prev - 1));
+    setCurrentSlide((prev) =>
+      prev === 0 ? activeSlides.length - 1 : prev - 1
+    );
   };
 
   const handleNext = () => {
@@ -112,8 +114,12 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
         <div className="w-full h-full flex items-center justify-center">
           <div className="text-center text-white">
             <div className="text-4xl mb-4">🖼️</div>
-            <h2 className="text-xl md:text-2xl font-semibold mb-2">Welcome to EYERIC</h2>
-            <p className="text-sm md:text-base opacity-80">Discover amazing eyewear collections</p>
+            <h2 className="text-xl md:text-2xl font-semibold mb-2">
+              Welcome to EYERIC
+            </h2>
+            <p className="text-sm md:text-base opacity-80">
+              Discover amazing eyewear collections
+            </p>
           </div>
         </div>
       ) : (
@@ -126,8 +132,10 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
                 : "opacity-0 scale-105"
             }`}
           >
-            <div 
-              className={`w-full h-full aspect-video bg-gray-200 ${slide.redirect_url ? 'cursor-pointer' : ''}`}
+            <div
+              className={`w-full h-full aspect-video bg-gray-200 ${
+                slide.redirect_url ? "cursor-pointer" : ""
+              }`}
               onClick={() => handleSlideClick(slide)}
             >
               <Image
@@ -152,7 +160,7 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
           </div>
         ))
       )}
-      
+
       {/* Navigation Arrows */}
       {activeSlides.length > 1 && (
         <>
@@ -160,22 +168,42 @@ const HeroSlider = ({ slides }: { slides: Slide[] }) => {
             onClick={handlePrevious}
             className="absolute left-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-all duration-300 shadow-lg hover:shadow-xl"
           >
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
-          
+
           <button
             onClick={handleNext}
             className="absolute right-4 top-1/2 transform -translate-y-1/2 z-30 bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-all duration-300 shadow-lg hover:shadow-xl"
           >
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-6 h-6 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </>
       )}
-      
+
       {/* Dots Navigation */}
       {activeSlides.length > 1 && (
         <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
@@ -205,24 +233,32 @@ interface SpecialProductCategory {
   banner_image?: string;
 }
 
-const SpecialProductCategories = ({ categories }: { categories: SpecialProductCategory[] }) => {
+const SpecialProductCategories = ({
+  categories,
+}: {
+  categories: SpecialProductCategory[];
+}) => {
   const router = useRouter();
 
   const handleCategoryClick = (category: SpecialProductCategory) => {
-    router.push(`/special-category/${category.id}?name=${encodeURIComponent(category.name)}`);
+    router.push(
+      `/special-category/${category.id}?name=${encodeURIComponent(
+        category.name
+      )}`
+    );
   };
 
   const scrollLeft = () => {
-    const container = document.getElementById('categories-scroll');
+    const container = document.getElementById("categories-scroll");
     if (container) {
-      container.scrollBy({ left: -300, behavior: 'smooth' });
+      container.scrollBy({ left: -300, behavior: "smooth" });
     }
   };
 
   const scrollRight = () => {
-    const container = document.getElementById('categories-scroll');
+    const container = document.getElementById("categories-scroll");
     if (container) {
-      container.scrollBy({ left: 300, behavior: 'smooth' });
+      container.scrollBy({ left: 300, behavior: "smooth" });
     }
   };
 
@@ -235,48 +271,66 @@ const SpecialProductCategories = ({ categories }: { categories: SpecialProductCa
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-teal-200/20 to-blue-300/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200/20 to-pink-300/20 rounded-full blur-3xl"></div>
       </div> */}
-      
+
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header Section */}
-        <div className="text-center mb-16">
+        <div className="text-center mb-4">
           {/* <div className="inline-flex items-center gap-2 bg-gradient-to-r from-teal-500 to-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
             Trending Now
             <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
           </div> */}
-          
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-clip-text text-transparent mb-6">
+
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-clip-text text-transparent">
             <span className="block">EXPLORE THE LOOK</span>
           </h2>
-          
-          
         </div>
 
         {/* Categories Carousel Section */}
         <div className="relative">
           {/* Navigation Arrows */}
-          <button 
+          <button
             onClick={scrollLeft}
             className="absolute left-4 hidden md:block top-1/2 transform -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm rounded-full p-4 hover:bg-white transition-all duration-300 shadow-xl hover:shadow-2xl border border-gray-200 hover:scale-110 group"
           >
-            <svg className="w-6 h-6 text-gray-600 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-6 h-6 text-gray-600 group-hover:text-teal-600 transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
-          
-          <button 
+
+          <button
             onClick={scrollRight}
             className="absolute right-4 hidden md:block top-1/2 transform -translate-y-1/2 z-10 bg-white/90 backdrop-blur-sm rounded-full p-4 hover:bg-white transition-all duration-300 shadow-xl hover:shadow-2xl border border-gray-200 hover:scale-110 group"
           >
-            <svg className="w-6 h-6 text-gray-600 group-hover:text-teal-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-6 h-6 text-gray-600 group-hover:text-teal-600 transition-colors"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
 
           {/* Container for perfect card visibility */}
           <div className="w-full lg:w-[1080px] xl:w-[1130px] mx-auto">
             {/* Horizontal Scrollable Categories */}
-            <div 
+            <div
               id="categories-scroll"
               className="overflow-x-auto pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
             >
@@ -287,40 +341,40 @@ const SpecialProductCategories = ({ categories }: { categories: SpecialProductCa
                     onClick={() => handleCategoryClick(category)}
                     className="group cursor-pointer  transition-all duration-500 transform hover:-translate-y-3 flex-none w-[200px] sm:w-[220px] lg:w-[240px] xl:w-[260px]"
                     style={{
-                      animationDelay: `${index * 100}ms`
+                      animationDelay: `${index * 100}ms`,
                     }}
                   >
                     <div className="bg-transparent rounded-3xl overflow-hidden border border-white/50 relative  transition-all duration-500">
                       {/* Category Image */}
-                                          <div className="aspect-[4/3] w-full bg-transparent overflow-hidden relative">
-                      {category.banner_image ? (
-                        <Image
-                          width={260}
-                          height={195}
-                          src={category.banner_image}
-                          alt={category.name}
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                          quality={90}
-                          sizes="(max-width: 640px) 200px, (max-width: 1024px) 240px, 260px"
-                          placeholder="blur"
-                          blurDataURL="/placeholder.png"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <span className="text-3xl sm:text-4xl">👓</span>
-                        </div>
-                      )}
-                      
-                      {/* Overlay gradient */}
-                      {/* <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div> */}
-                    </div>
-                      
+                      <div className="aspect-[5/3] w-full bg-transparent overflow-hidden relative">
+                        {category.banner_image ? (
+                          <Image
+                            width={260}
+                            height={195}
+                            src={category.banner_image}
+                            alt={category.name}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            quality={90}
+                            sizes="(max-width: 640px) 200px, (max-width: 1024px) 240px, 260px"
+                            placeholder="blur"
+                            blurDataURL="/placeholder.png"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <span className="text-3xl sm:text-4xl">👓</span>
+                          </div>
+                        )}
+
+                        {/* Overlay gradient */}
+                        {/* <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div> */}
+                      </div>
+
                       {/* Category Info */}
                       <div className="p-2 sm:p-3 lg:p-4 text-center bg-transparent backdrop-blur-sm">
                         <h3 className="text-sm sm:text-base lg:text-lg font-bold text-gray-800 mb-1 sm:mb-2 lg:mb-3 capitalize group-hover:text-teal-600 transition-colors duration-300">
                           {category.name}
                         </h3>
-                        <button className="w-full bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-600 hover:to-blue-700 text-white text-xs sm:text-sm font-semibold py-1.5 sm:py-2 lg:py-2.5 px-3 sm:px-4 lg:px-5 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group-hover:shadow-teal-200/50">
+                        <button className="w-full bg-button text-white text-xs sm:text-sm font-semibold py-1.5 sm:py-2 lg:py-2.5 px-3 sm:px-4 lg:px-5 rounded-xl sm:rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl group-hover:shadow-teal-200/50">
                           Explore
                         </button>
                       </div>
@@ -328,10 +382,10 @@ const SpecialProductCategories = ({ categories }: { categories: SpecialProductCa
                   </div>
                 ))}
               </div>
-            </div>                                                                                                    
+            </div>
           </div>
         </div>
-        
+
         {/* Bottom decorative element */}
         {/* <div className="text-center mt-12">
           <div className="inline-flex items-center gap-2 text-gray-500 text-sm">
@@ -362,8 +416,13 @@ const CategoryTabs = ({
   const router = useRouter();
 
   // Define the preferred order for category types
-  const preferredOrder = ["eyeglasses", "computer glasses", "sunglasses",  "powered sunglasses"];
-  
+  const preferredOrder = [
+    "eyeglasses",
+    "computer glasses",
+    "sunglasses",
+    "powered sunglasses",
+  ];
+
   // Get all unique type categories from products
   const typeTitles = Array.from(
     new Set(
@@ -378,15 +437,17 @@ const CategoryTabs = ({
   const kidsAllowedTypes = ["eyeglasses", "sunglasses"];
 
   // Function to sort categories by preferred order
-  const sortByPreferredOrder = (categories: { title: string; image: string; description: string }[]) => {
+  const sortByPreferredOrder = (
+    categories: { title: string; image: string; description: string }[]
+  ) => {
     return categories.sort((a, b) => {
-      const aIndex = preferredOrder.findIndex(order => 
+      const aIndex = preferredOrder.findIndex((order) =>
         a.title.toLowerCase().includes(order.toLowerCase())
       );
-      const bIndex = preferredOrder.findIndex(order => 
+      const bIndex = preferredOrder.findIndex((order) =>
         b.title.toLowerCase().includes(order.toLowerCase())
       );
-      
+
       // If both are in preferred order, sort by their position
       if (aIndex !== -1 && bIndex !== -1) {
         return aIndex - bIndex;
@@ -445,7 +506,7 @@ const CategoryTabs = ({
               description: "",
             };
       });
-    
+
     // Sort the categories by preferred order
     dynamicCategories[gender] = sortByPreferredOrder(categories);
   });
@@ -460,7 +521,7 @@ const CategoryTabs = ({
     <div className="py-10 px-4 bg-background text-text">
       <div className="max-w-7xl mx-auto">
         <h2
-          className={`text-2xl md:text-4xl font-semibold text-center mb-8 bg-text bg-clip-text text-transparent`}
+          className={`text-3xl md:text-4xl font-semibold text-center mb-8 bg-text bg-clip-text text-transparent`}
         >
           Pick Your Look
         </h2>
@@ -531,8 +592,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
     .slice(0, 8);
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const router = useRouter();
-  const { addToFavorites, removeFromFavorites, isFavorite } =
-    useFavorites();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
 
   const handleProductClick = (product: Product) => {
     router.push(`/product/${product.id}`);
@@ -580,7 +640,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                   onClick={() => handleProductClick(item)}
                 >
                   <div className="absolute top-2 left-2 z-10">
-                    <span className="bg-secondary text-white px-2 py-1 rounded-full text-xs font-semibold">
+                    <span className="bg-button text-white px-2 py-1 rounded-full text-xs font-semibold">
                       Sale
                     </span>
                   </div>
@@ -615,7 +675,7 @@ const BestSellers = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div className="p-3 md:p-4 flex flex-col flex-grow">
-                    <h3 className="text-xs sm:text-sm md:text-base font-bold mb-2 text-gray-800 line-clamp-2 min-h-[2rem]">
+                    <h3 className="text-xs sm:text-sm md:text-base md:font-semibold mb-2 text-gray-800 line-clamp-2 min-h-[2rem]">
                       {item.title}
                     </h3>
                     {item.discounted_price && (
@@ -632,19 +692,17 @@ const BestSellers = ({ products }: { products: Product[] }) => {
 
                     <div className="mt-auto flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm md:text-base font-bold text-text">
-                          ₹{item.discounted_price || item.original_price}
-                        </span>
                         {item.discounted_price && (
                           <>
                             <span className="text-sm md:text-base font-bold text-gray-500">
                               <del>₹{item.original_price}</del>
                             </span>
                           </>
-                          
                         )}
+                        <span className="text-sm md:text-base font-semibold text-text">
+                          ₹{item.discounted_price || item.original_price}
+                        </span>
                         <button className="bg-button text-white px-2 py-1 rounded-full text-xs">
-                          {/* <ShoppingCart size={16} /> */}
                           <ArrowRight size={16} />
                         </button>
                       </div>
@@ -668,8 +726,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
     .slice(0, 8);
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
   const router = useRouter();
-  const { addToFavorites, removeFromFavorites, isFavorite } =
-    useFavorites();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
 
   const handleProductClick = (product: Product) => {
     router.push(`/product/${product.id}`);
@@ -752,7 +809,7 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                     />
                   </div>
                   <div className="p-3 md:p-4 flex flex-col flex-grow">
-                    <h3 className="text-xs sm:text-sm md:text-base font-bold mb-2 text-gray-800 line-clamp-2 min-h-[2rem]">
+                    <h3 className="text-xs sm:text-sm md:text-base md:font-semibold mb-2 text-gray-800 line-clamp-2 min-h-[2rem]">
                       {item.title}
                     </h3>
                     {item.discounted_price && (
@@ -768,9 +825,6 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                     )}
                     <div className="mt-auto flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm md:text-base font-bold text-text">
-                          ₹{item.discounted_price || item.original_price}
-                        </span>
                         {item.discounted_price && (
                           <>
                             <span className="text-sm md:text-base font-bold text-gray-500">
@@ -778,8 +832,10 @@ const LatestTrends = ({ products }: { products: Product[] }) => {
                             </span>
                           </>
                         )}
+                        <span className="text-sm md:text-base font-semibold text-text">
+                          ₹{item.discounted_price || item.original_price}
+                        </span>
                         <button className="bg-button text-white px-2 py-1 rounded-full text-xs">
-                          {/* <ShoppingCart size={16} /> */}
                           <ArrowRight size={16} />
                         </button>
                       </div>
@@ -828,11 +884,15 @@ const ShopByShapes = ({
   };
 
   const handlePrevious = () => {
-    setSelectedShape((prev) => (prev === 0 ? uniqueShapes.length - 1 : prev - 1));
+    setSelectedShape((prev) =>
+      prev === 0 ? uniqueShapes.length - 1 : prev - 1
+    );
   };
 
   const handleNext = () => {
-    setSelectedShape((prev) => (prev === uniqueShapes.length - 1 ? 0 : prev + 1));
+    setSelectedShape((prev) =>
+      prev === uniqueShapes.length - 1 ? 0 : prev + 1
+    );
   };
 
   return (
@@ -876,7 +936,7 @@ const ShopByShapes = ({
                 </div>
                 {/* Black overlay covering the whole image */}
                 {/* <div className="absolute inset-0 bg-black/50"></div> */}
-                
+
                 {/* Centered title and description */}
                 <div className="absolute inset-0 flex flex-col items-center justify-end text-center  p-0 md:p-6 z-10">
                   <h3 className="text-xl md:text-2xl font-bold mb-2">
@@ -893,29 +953,49 @@ const ShopByShapes = ({
                     shaped products
                   </div>
                 </div>
-                
+
                 {/* Navigation Buttons */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handlePrevious();
                   }}
-                  className="absolute left-4 top-1/2 md:bottom-4 md:top-auto transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="absolute left-4 top-1/2 md:bottom-4 md:top-auto transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl z-10"
                 >
-                  <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <svg
+                    className="w-6 h-6 text-gray-800"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
                   </svg>
                 </button>
-                
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleNext();
                   }}
-                  className="absolute right-4 top-1/2 md:bottom-4 md:top-auto transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="absolute right-4 top-1/2 md:bottom-4 md:top-auto transform -translate-y-1/2 bg-white/80 backdrop-blur-sm rounded-full p-3 hover:bg-white transition-all duration-300 shadow-lg hover:shadow-xl z-10"
                 >
-                  <svg className="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg
+                    className="w-6 h-6 text-gray-800"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
               </div>
@@ -956,54 +1036,54 @@ const ImageComparisonSlider = () => {
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!containerRef.current) return;
-      
+
       const rect = containerRef.current.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const percentage = (x / rect.width) * 100;
-      
+
       setSliderPosition(Math.max(0, Math.min(100, percentage)));
     };
-    
+
     const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
     };
-    
+
     // Update position immediately
     handleMouseMove(e.nativeEvent);
-    
+
     // Add global listeners
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.preventDefault();
-    
+
     const handleTouchMove = (e: TouchEvent) => {
       if (!containerRef.current) return;
-      
+
       const rect = containerRef.current.getBoundingClientRect();
       const x = e.touches[0].clientX - rect.left;
       const percentage = (x / rect.width) * 100;
-      
+
       setSliderPosition(Math.max(0, Math.min(100, percentage)));
     };
-    
+
     const handleTouchEnd = () => {
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
     };
-    
+
     // Update position immediately
     handleTouchMove(e.nativeEvent as TouchEvent);
-    
+
     // Add global listeners
-    document.addEventListener('touchmove', handleTouchMove);
-    document.addEventListener('touchend', handleTouchEnd);
+    document.addEventListener("touchmove", handleTouchMove);
+    document.addEventListener("touchend", handleTouchEnd);
   };
 
   return (
@@ -1017,9 +1097,9 @@ const ImageComparisonSlider = () => {
         alt="Vision care comparison"
         className="absolute inset-0 w-full h-full object-fit"
       />
-      
+
       {/* Foreground Image Container (First Image) */}
-      <div 
+      <div
         className="absolute inset-0 overflow-hidden"
         style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
       >
@@ -1032,7 +1112,7 @@ const ImageComparisonSlider = () => {
           className="absolute inset-0 w-full h-full object-fit"
         />
       </div>
-      
+
       {/* Slider Handle */}
       <div
         className="absolute top-0 bottom-0 w-1 bg-white cursor-ew-resize z-20 flex items-center justify-center"
@@ -1041,14 +1121,24 @@ const ImageComparisonSlider = () => {
         onTouchStart={handleTouchStart}
       >
         <div className="w-8 h-8 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-gray-300 hover:scale-110 transition-transform duration-200">
-          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+          <svg
+            className="w-4 h-4 text-gray-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+            />
           </svg>
         </div>
       </div>
-      
+
       {/* Clickable area for the slider */}
-      <div 
+      <div
         ref={containerRef}
         className="absolute inset-0 cursor-ew-resize z-10 select-none"
         onMouseDown={handleMouseDown}
@@ -1059,34 +1149,78 @@ const ImageComparisonSlider = () => {
 };
 
 // Make In India Banner Section
-const MakeInIndia = () => (
-  <div
-    style={{ background: colors.background, color: colors.text }}
-    className="py-12 flex flex-col items-center text-center"
-  >
-    <div className="mb-2 text-sm md:text-base text-gray-700">
-      Styled By {makeInIndia.styledBy}
+const MakeInIndia = () => {
+  return (
+    <div
+      style={{ background: colors.background, color: colors.text }}
+      className="py-4 flex flex-col items-center text-center"
+    >
+      <div className="mb-2 text-sm md:text-base text-gray-700">
+        Styled By {makeInIndia.styledBy}
+      </div>
+      <h2 className="text-2xl md:text-4xl font-serif font-semibold mb-2 text-gray-900">
+        {makeInIndia.title}
+      </h2>
+      <div className="font-bold text-lg md:text-xl mb-6 text-gray-800">
+        {makeInIndia.subtitle}
+      </div>
+      <a href={makeInIndia.buttonUrl}>
+        <button className="bg-primary text-white px-8 py-3 rounded-md text-base font-medium hover:bg-gray-900 transition-all">
+          {makeInIndia.buttonText}
+        </button>
+      </a>
+      <div className="flex justify-around w-full  my-8">
+        <a href="https://www.instagram.com/eyeric.in?igsh=a2MxNDlid3QxaDFu&utm_source=qr" className="flex flex-col items-center justify-center">
+          <Image
+            src="/1.png"
+            alt="Make in India"
+            width={1000}
+            height={1000}
+            className="w-10 h-10"
+          />
+          <p>Easy Returns</p>
+        </a>
+        <a href="https://www.instagram.com/eyeric.in?igsh=a2MxNDlid3QxaDFu&utm_source=qr" className="flex flex-col items-center justify-center">
+          <Image
+            src="/2.png"
+            alt="Make in India"
+            width={1000}
+            height={1000}
+            className="w-10 h-10"
+          />
+          <p>Secured payments</p>
+        </a>
+        <a href="https://www.instagram.com/eyeric.in?igsh=a2MxNDlid3QxaDFu&utm_source=qr" className="flex flex-col items-center justify-center">
+          <Image
+            src="/3.png"
+            alt="Make in India"
+            width={1000}
+            height={1000}
+            className="w-10 h-10"
+          />
+          <p>Free Deliviery</p>
+        </a>
+        <a href="https://www.instagram.com/eyeric.in?igsh=a2MxNDlid3QxaDFu&utm_source=qr" className="flex flex-col items-center justify-center">
+          <Image
+            src="/4.png"
+            alt="Make in India"
+            width={1000}
+            height={1000}
+            className="w-10 h-10"
+          />
+          <p>Fast Shipping</p>
+        </a>
+      </div>
     </div>
-    <h2 className="text-2xl md:text-4xl font-serif font-semibold mb-2 text-gray-900">
-      {makeInIndia.title}
-    </h2>
-    <div className="font-bold text-lg md:text-xl mb-6 text-gray-800">
-      {makeInIndia.subtitle}
-    </div>
-    <a href={makeInIndia.buttonUrl}>
-      <button className="bg-button text-white px-8 py-3 rounded-md text-base font-medium hover:bg-gray-900 transition-all">
-        {makeInIndia.buttonText}
-      </button>
-    </a>
-  </div>
-);
+  );
+};
 
 const HowToKnowFaceSize = () => {
   const router = useRouter();
   return (
     <div
       style={{ background: colors.background, color: colors.text }}
-      className="py-16 px-4"
+      className="py-6 px-4"
     >
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
@@ -1094,63 +1228,60 @@ const HowToKnowFaceSize = () => {
             Find Your Perfect Fit
           </h2>
           <p className="text-gray-600 text-sm md:text-base max-w-2xl mx-auto">
-            Choosing the right frame size is crucial for comfort and style. Our
-            comprehensive size guide helps you measure your face and find frames
-            that complement your features perfectly.
+            Choose the right frame size and shape for your face. Our
+            comprehensive guides help you find frames that complement your
+            features perfectly.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
-            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
-              <span className="text-2xl">📏</span>
-            </div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-800">
-              Measure Your Face
-            </h3>
-            <p className="text-sm text-gray-600">
-              Learn how to accurately measure your face width, temple length,
-              and bridge size.
-            </p>
-          </div>
-
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
-            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
-              <span className="text-2xl">👓</span>
-            </div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-800">
-              Frame Sizing Guide
-            </h3>
-            <p className="text-sm text-gray-600">
-              Understand frame measurements and how they correspond to your face
-              measurements.
-            </p>
-          </div>
-
-          <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-white/50">
-            <div className="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center mb-4">
-              <span className="text-2xl">✨</span>
-            </div>
-            <h3 className="text-lg font-semibold mb-2 text-gray-800">
-              Style Tips
-            </h3>
-            <p className="text-sm text-gray-600">
-              Discover which frame styles work best for your face shape and
-              size.
-            </p>
-          </div>
-        </div>
-
-        <div className="text-center">
-          <button
-            className="bg-button text-white px-8 py-3 rounded-full text-base font-medium hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+        <div className="flex flex-row gap-8 mb-8 items-center justify-center">
+          {/* Size Guide Box */}
+          <div
+            className="rounded-xl cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group"
             onClick={() => router.push("/size-guide")}
           >
-            View Size Guide
-          </button>
-          <p className="mt-4 text-sm text-gray-500">
-            Need help? Our experts are ready to assist you
-          </p>
+            <div className="aspect-square w-full bg-gray-100 rounded-lg overflow-hidden mb-4 flex items-center justify-center">
+              <Image
+                src="/EyericLens.jpeg"
+                alt="Size Guide"
+                width={200}
+                height={200}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                placeholder="blur"
+                blurDataURL="/placeholder.png"
+              />
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-gray-800 text-center group-hover:text-teal-600 transition-colors duration-300">
+              Size Guide
+            </h3>
+            {/* <p className="text-sm text-gray-600 text-center">
+              Learn how to measure your face and find the perfect frame size
+            </p> */}
+          </div>
+
+          {/* Face Shape Box */}
+          <div
+            className="rounded-xl cursor-pointer hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 group"
+            onClick={() => router.push("/face-shape")}
+          >
+            <div className="aspect-square w-full bg-gray-100 rounded-lg overflow-hidden mb-4 flex items-center justify-center">
+              <Image
+                src="/EyericLens.jpeg"
+                alt="Size Guide"
+                width={200}
+                height={200}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                placeholder="blur"
+                blurDataURL="/placeholder.png"
+              />
+            </div>
+            <h3 className="text-xl font-semibold mb-2 text-gray-800 text-center group-hover:text-teal-600 transition-colors duration-300">
+              Face Shape
+            </h3>
+            {/* <p className="text-sm text-gray-600 text-center">
+              Learn how to measure your face and find the perfect frame shape
+            </p> */}
+          </div>
         </div>
       </div>
     </div>
@@ -1167,18 +1298,24 @@ export default function Home() {
     CategoryBanner[]
   >([]);
   const [shapeBanners, setShapeBanners] = React.useState<ShapeBanner[]>([]);
-  const [specialProductCategories, setSpecialProductCategories] = React.useState<SpecialProductCategory[]>([]);
+  const [specialProductCategories, setSpecialProductCategories] =
+    React.useState<SpecialProductCategory[]>([]);
 
   React.useEffect(() => {
     const fetchAll = async () => {
-      const [productsData, slidesData, categoryBannersData, shapeBannersData, specialCategoriesData] =
-        await Promise.all([
-          getProducts(),
-          getSlides(),
-          getCategoryBanners(),
-          getShapeBanners(),
-          getSpecialProductCategories(),
-        ]);
+      const [
+        productsData,
+        slidesData,
+        categoryBannersData,
+        shapeBannersData,
+        specialCategoriesData,
+      ] = await Promise.all([
+        getProducts(),
+        getSlides(),
+        getCategoryBanners(),
+        getShapeBanners(),
+        getSpecialProductCategories(),
+      ]);
       setProducts(productsData as unknown as Product[]);
       setSlides(slidesData);
       setCategoryBanners(categoryBannersData);

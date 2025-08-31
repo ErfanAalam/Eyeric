@@ -56,7 +56,7 @@ const Marquee: React.FC<MarqueeProps> = ({ speed = 30, className = "" }) => {
   }
 
   return (
-    <div className={`bg-gradient-to-r from-teal-600 via-blue-600 to-purple-600 text-white py-2 overflow-hidden ${className}`}>
+    <div className={`bg-primary text-white py-2 overflow-hidden ${className}`}>
       <div 
         className="whitespace-nowrap animate-marquee"
         style={{

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { Filter, ChevronDown, Heart, SlidersHorizontal } from "lucide-react";
@@ -51,6 +51,7 @@ const ShapeProductsContent = () => {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
   const router = useRouter();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+  const mainContainerRef = useRef<HTMLDivElement>(null);
 
 
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
@@ -127,9 +128,33 @@ const ShapeProductsContent = () => {
     setPriceRange({ min: 0, max: maxPrice });
   };
 
+  // Save scroll position before navigating
   const handleProductClick = (product: Product) => {
+    // Save current scroll position
+    const scrollPosition = window.scrollY;
+    sessionStorage.setItem('shapeProductsPageScrollPosition', scrollPosition.toString());
     router.push(`/product/${product.id}`);
   };
+
+  // Restore scroll position when component mounts
+  useEffect(() => {
+    const savedScrollPosition = sessionStorage.getItem('shapeProductsPageScrollPosition');
+    if (savedScrollPosition) {
+      // Use multiple timeouts to ensure the page is fully rendered
+      const restoreScroll = () => {
+        const position = parseInt(savedScrollPosition);
+        window.scrollTo(0, position);
+        // Clear the saved position after restoring
+        sessionStorage.removeItem('shapeProductsPageScrollPosition');
+      };
+
+      // Try multiple times with increasing delays
+      setTimeout(restoreScroll, 100);
+      setTimeout(restoreScroll, 300);
+      setTimeout(restoreScroll, 500);
+      setTimeout(restoreScroll, 1000);
+    }
+  }, [products, loading]); // Depend on both products and loading state
 
   const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
@@ -180,14 +205,14 @@ const ShapeProductsContent = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <div className="px-3 py-8">
+      <div className="px-3 py-8" ref={mainContainerRef}>
         {/* Breadcrumb and Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
           {/* <div className="text-gray-400 text-sm mb-2 md:mb-0">
             Home / <span className="text-black font-semibold">{shape ? `${shape.charAt(0).toUpperCase() + shape.slice(1)} Shape Collection` : 'All Shapes'}</span>
           </div> */}
           <div className="flex items-center gap-4 w-full justify-between sm:justify-end">
-            <span className="text-gray-600 text-sm">{filteredProducts.length} products</span>
+            {/* <span className="text-gray-600 text-sm">{filteredProducts.length} products</span> */}
             <button className="lg:hidden flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl shadow hover:bg-gray-50 transition" onClick={() => setShowFilters(true)}>
               <Filter className="w-4 h-4" /> Filters
             </button>
@@ -288,12 +313,12 @@ const ShapeProductsContent = () => {
                     </div>
                     {/* Product Info */}
                     <div className="p-4 flex flex-col flex-1">
-                      <h3 className="font-bold text-gray-900 text-base mb-1 line-clamp-2">{product.title}</h3>
+                      <h3 className="md:font-semibold text-sm md:text-base text-gray-900 mb-1 line-clamp-2">{product.title}</h3>
                       <div className="flex items-center gap-2 mb-2">
                         {product.discounted_price && (
                           <span className="text-gray-400 line-through text-sm">₹{product.original_price}</span>
                         )}
-                        <span className="text-text font-bold text-lg">₹{product.discounted_price || product.original_price}</span>
+                        <span className="text-text md:font-semibold text-lg">₹{product.discounted_price || product.original_price}</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-500 text-xs mb-3">
                         <span className="cursor-pointer hover:underline">Compare</span>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { ChevronDown, Heart, SlidersHorizontal, Filter } from "lucide-react";
@@ -71,7 +71,7 @@ const ProductsContent = () => {
   const [hoveredProductId, setHoveredProductId] = useState<string | null>(null);
   const router = useRouter();
   const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
-
+  const mainContainerRef = useRef<HTMLDivElement>(null);
 
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [selectedShapes, setSelectedShapes] = useState<string[]>([]);
@@ -211,9 +211,41 @@ const ProductsContent = () => {
     setPriceRange({ min: 0, max: maxPrice });
   };
 
+  // Save scroll position before navigating
   const handleProductClick = (product: Product) => {
+    // Save current scroll position
+    const scrollPosition = window.scrollY;
+    console.log('Saving scroll position:', scrollPosition);
+    sessionStorage.setItem('productsPageScrollPosition', scrollPosition.toString());
     router.push(`/product/${product.id}`);
   };
+
+  // Restore scroll position when component mounts
+  useEffect(() => {
+    const savedScrollPosition = sessionStorage.getItem('productsPageScrollPosition');
+    console.log('Checking for saved scroll position:', savedScrollPosition);
+    if (savedScrollPosition) {
+      // Use multiple timeouts to ensure the page is fully rendered
+      const restoreScroll = () => {
+        const position = parseInt(savedScrollPosition);
+        console.log('Attempting to restore scroll to position:', position);
+        window.scrollTo(0, position);
+        // Clear the saved position after restoring
+        sessionStorage.removeItem('productsPageScrollPosition');
+      };
+
+      // Try multiple times with increasing delays
+      setTimeout(restoreScroll, 100);
+      setTimeout(restoreScroll, 300);
+      setTimeout(restoreScroll, 500);
+      setTimeout(restoreScroll, 1000);
+
+      // Also try with requestAnimationFrame for better timing
+      requestAnimationFrame(() => {
+        setTimeout(restoreScroll, 50);
+      });
+    }
+  }, [products, loading]); // Depend on both products and loading state
 
   const handleFavoriteClick = async (e: React.MouseEvent, product: Product) => {
     e.stopPropagation();
@@ -287,7 +319,7 @@ const ProductsContent = () => {
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
-      <div className=" px-3 py-8">
+      <div className=" px-3 py-8" ref={mainContainerRef}>
         {/* Breadcrumb and Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
           {/* Search Bar replaces breadcrumb */}
@@ -301,8 +333,9 @@ const ProductsContent = () => {
             />
             <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
           </div>
+            <span className="text-gray-600 my-6 text-center font-semibold text-xl">{type?.toUpperCase()} FOR {category?.toUpperCase()}</span>
           <div className="flex items-center gap-4 w-full justify-between sm:justify-end">
-            <span className="text-gray-600 text-sm">{filteredProducts.length} products</span>
+            {/* <span className="text-gray-600 text-sm">{filteredProducts.length} products</span> */}
             <button className="lg:hidden flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl shadow hover:bg-gray-50 transition" onClick={() => setShowFilters(true)}>
               <Filter className="w-4 h-4" /> Filters
             </button>
@@ -369,11 +402,11 @@ const ProductsContent = () => {
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 ">
                 {filteredProducts.map((product) => (
                   <div 
                     key={product.id} 
-                    className="relative  rounded-2xl shadow-lg max-h-[500px] group overflow-hidden flex flex-col cursor-pointer"
+                    className="relative border md:border-none border-gray-200  max-h-[500px] group overflow-hidden flex flex-col cursor-pointer"
                     onClick={() => handleProductClick(product)}
                     onMouseEnter={() => setHoveredProductId(product.id!)}
                     onMouseLeave={() => setHoveredProductId(null)}
@@ -381,7 +414,7 @@ const ProductsContent = () => {
                     {/* Wishlist Icon */}
                     <button 
                       onClick={(e) => handleFavoriteClick(e, product)}
-                      className="absolute top-3 right-3 z-10 bg-white rounded-full p-2 shadow hover:bg-gray-100 transition"
+                      className="absolute top-1 right-3 z-10 bg-white rounded-full p-2 shadow hover:bg-gray-100 transition"
                     >
                       <Heart 
                         className={`w-5 h-5 transition-colors ${
@@ -405,12 +438,13 @@ const ProductsContent = () => {
                     </div>
                     {/* Product Info */}
                     <div className="p-4 flex flex-col flex-1 border-black">
-                      <h3 className="font-bold text-gray-900 text-base mb-1 line-clamp-2">{product.title}</h3>
+                      <h3 className="md:font-semibold text-sm md:text-base text-gray-900 mb-1 line-clamp-2">{product.title}</h3>
+                        <span className="ext-xs w-fit font-semibold text-green-600 bg-green-100 px-1 py-0.5 rounded">{(100 - (product.discounted_price || product.original_price) / product.original_price * 100).toFixed(0)}% off</span>
                       <div className="flex items-center gap-2 mb-2">
                         {product.discounted_price && (
-                          <span className="text-gray-400 line-through text-sm">₹{product.original_price}</span>
+                          <span className="text-gray-400 line-through text-sm md:text-xl">₹{product.original_price}</span>
                         )}
-                        <span className="text-text font-bold text-lg">₹{product.discounted_price || product.original_price}</span>
+                        <span className="text-text md:font-semibold text-lg md:text-xl">₹{product.discounted_price || product.original_price}</span>
                       </div>
                       {/* <button className="mt-auto flex items-center justify-center gap-2 bg-button hover:bg-button/80 text-white rounded-full py-2 px-4 md:py-4 md:px-6 font-semibold shadow transition-all text-sm md:text-base" onClick={() => handleProductClick(product)}>
                         <ShoppingBag className="w-4 h-4" /> Buy Now

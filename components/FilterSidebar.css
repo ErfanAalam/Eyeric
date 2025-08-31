@@ -21,22 +21,23 @@
 }
 
 .filter-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: white;
+  color: black;
   padding: 10px 14px;
   border-radius: 12px;
   margin-bottom: 12px;
-  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  font-weight: 400;
   font-size: 14px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(var(--color-secondary), 0.3);
   transition: all 0.3s ease;
 }
 
 .filter-header:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 16px rgba(var(--color-secondary), 0.4);
 }
 
 .filter-header:active {
@@ -78,7 +79,7 @@
 }
 
 .gender-button.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: var(--color-secondary);
   color: white;
   border-color: #3b82f6;
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
@@ -103,7 +104,7 @@
 .checkbox-container input[type="checkbox"] {
   width: 18px;
   height: 18px;
-  accent-color: #3b82f6;
+  accent-color: var(--color-primary);
   border-radius: 4px;
 }
 
@@ -115,8 +116,8 @@
 }
 
 .action-button {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
+  background: white;
+  color: black;
   border: none;
   border-radius: 12px;
   padding: 14px 20px;

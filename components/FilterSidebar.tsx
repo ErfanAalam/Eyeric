@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Filter, Sparkles, ChevronDown, ChevronRight } from "lucide-react";
+import { X, Filter, ChevronDown, ChevronRight } from "lucide-react";
 import { getCategoriesByType } from "../src/services/categoryService";
 import "./FilterSidebar.css";
 
@@ -129,7 +129,7 @@ export default function FilterSidebar({
     <div className="filter-sidebar p-4 space-y-4">
       {/* Header with icon */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+        <div className="p-2 bg-secondary rounded-lg">
           <Filter className="w-6 h-6 text-white" />
         </div>
         <div>
@@ -146,7 +146,7 @@ export default function FilterSidebar({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
+              {/* <Sparkles className="w-4 h-4" /> */}
               GENDER
             </div>
             {collapsedSections.gender ? (
@@ -185,8 +185,8 @@ export default function FilterSidebar({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              STYLE
+              {/* <Sparkles className="w-4 h-4" /> */}
+              FRAME TYPE
             </div>
             {collapsedSections.style ? (
               <ChevronRight className="w-5 h-5 transition-transform duration-300" />
@@ -228,8 +228,8 @@ export default function FilterSidebar({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              FACE SHAPE
+              {/* <Sparkles className="w-4 h-4" /> */}
+              FRAME SHAPE
             </div>
             {collapsedSections.faceShape ? (
               <ChevronRight className="w-5 h-5 transition-transform duration-300" />
@@ -271,7 +271,7 @@ export default function FilterSidebar({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
+              {/* <Sparkles clasName="w-4 h-4" /> */}
               PRICE RANGE
             </div>
             {collapsedSections.price ? (
@@ -304,7 +304,7 @@ export default function FilterSidebar({
       {/* Action Buttons */}
       <div className="space-y-3 pt-4">
         <button
-          className="action-button w-full"
+          className={`px-4 py-3 rounded-lg w-full ${localStyles.length > 0 || localShapes.length > 0 ? 'bg-primary text-white' : 'bg-white text-black border-1 border-gray-300'}`}
           onClick={handleApply}
         >
           Apply Filters

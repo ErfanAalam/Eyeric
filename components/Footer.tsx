@@ -6,14 +6,10 @@ import {
   Facebook, 
   Twitter, 
   Instagram, 
-  Youtube, 
-  Linkedin,
+  // Youtube, 
+  // Linkedin,
   Send,
   Heart,
-  Sparkles,
-  Eye,
-  Users,
-  Star,
   // ChevronUp,
   ArrowRight,
   // MessageCircle
@@ -58,12 +54,32 @@ const Footer: React.FC = () => {
     window.open(whatsappUrl, '_blank');
   };
 
-  const handleNewsletterSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleNewsletterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (email) {
-      setIsSubscribed(true);
-      setEmail('');
-      setTimeout(() => setIsSubscribed(false), 3000);
+      try {
+        const response = await fetch('/api/newsletter', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setIsSubscribed(true);
+          setEmail('');
+          setTimeout(() => setIsSubscribed(false), 3000);
+        } else {
+          console.error('Newsletter subscription failed:', data.error);
+          // You can add a toast notification here for error handling
+        }
+      } catch (error) {
+        console.error('Newsletter subscription error:', error);
+        // You can add a toast notification here for error handling
+      }
     }
   };
 
@@ -82,11 +98,10 @@ const Footer: React.FC = () => {
       links: [
         { title: 'Contact Us', href: '/contact' },
         { title: 'Size Guide', href: '/size-guide' },
+        { title: 'Face shape guide', href: '/face-shape' },
         { title: 'Returns & Exchanges', href: '/refund' },
         { title: 'Privacy Policy', href: '/privacy' },
         { title: 'Terms of Service', href: '/terms' },
-        { title: 'Shipping Policy', href: '/shipping' },
-        { title: 'Refund Policy', href: '/refund' },
       ]
     },
     {
@@ -94,19 +109,14 @@ const Footer: React.FC = () => {
       links: [
         { title: 'About Us', href: '/about' },
         { title: 'Our Story', href: '/story' },
-        { title: 'Careers', href: '/careers' },
-        { title: 'Press', href: '/press' },
-        { title: 'Reviews', href: '/reviews' },
         { title: 'Blog', href: '/blog' }
       ]
     },
     {
       title: 'Legal',
       links: [
-        { title: 'Size Guide', href: '/size-guide' },
         { title: 'Refund Policy', href: '/refund' },
         { title: 'Privacy Policy', href: '/privacy' },
-        { title: 'Contact Us', href: '/contact' },
         { title: 'Terms of Service', href: '/terms' },
         { title: 'Returns & Exchanges', href: '/refund' },
         { title: 'Shipping Policy', href: '/shipping' },
@@ -115,11 +125,11 @@ const Footer: React.FC = () => {
   ];
 
   const socialLinks = [
-    { name: 'Facebook', icon: Facebook, href: '#', color: 'hover:text-blue-600', bg: 'hover:bg-blue-50' },
-    { name: 'Twitter', icon: Twitter, href: '#', color: 'hover:text-sky-500', bg: 'hover:bg-sky-50' },
-    { name: 'Instagram', icon: Instagram, href: '#', color: 'hover:text-pink-600', bg: 'hover:bg-pink-50' },
-    { name: 'Youtube', icon: Youtube, href: '#', color: 'hover:text-red-600', bg: 'hover:bg-red-50' },
-    { name: 'LinkedIn', icon: Linkedin, href: '#', color: 'hover:text-blue-700', bg: 'hover:bg-blue-50' }
+    { name: 'Facebook', icon: Facebook, href: 'https://www.facebook.com/profile.php?id=61572201010000', color: 'hover:text-blue-600', bg: 'hover:bg-blue-50' },
+    { name: 'Twitter', icon: Twitter, href: 'https://x.com/eyericin?s=21', color: 'hover:text-sky-500', bg: 'hover:bg-sky-50' },
+    { name: 'Instagram', icon: Instagram, href: 'https://www.instagram.com/eyeric.in?igsh=a2MxNDlid3QxaDFu&utm_source=qr', color: 'hover:text-pink-600', bg: 'hover:bg-pink-50' },
+    // { name: 'Youtube', icon: Youtube, href: '#', color: 'hover:text-red-600', bg: 'hover:bg-red-50' },
+    // { name: 'LinkedIn', icon: Linkedin, href: '#', color: 'hover:text-blue-700', bg: 'hover:bg-blue-50' }
   ];
 
   return (
@@ -415,10 +425,9 @@ const Footer: React.FC = () => {
           </div>
 
           {/* Bottom Section */}
-          <div className="glass-dark">
+          {/* <div className="glass-dark">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
               <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
-                {/* Logo and Copyright */}
                 <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-8">
                   <div className="flex items-center space-x-3 group animate-slideInLeft">
                     <div className="relative">
@@ -445,7 +454,6 @@ const Footer: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Stats */}
                 <div className="flex items-center space-x-8 animate-slideInRight">
                   <div className="text-center">
                     <div className="text-2xl font-bold gradient-text">50K+</div>
@@ -464,7 +472,7 @@ const Footer: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* WhatsApp Contact Button */}

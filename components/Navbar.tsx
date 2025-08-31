@@ -615,7 +615,7 @@ const Navbar: React.FC = () => {
         </div>
 
         {/* Mobile Search Bar - Outside Menu */}
-        <div className="md:hidden px-4 py-3 bg-white/95 rounded-lg border-b border-gray-100/50">
+        {/* <div className="md:hidden px-4 py-3 bg-white/95 rounded-lg border-b border-gray-100/50">
           <form onSubmit={handleSearchSubmit} className="relative">
             <div className={`relative transition-all duration-300 `}>
               <input
@@ -638,7 +638,7 @@ const Navbar: React.FC = () => {
               </button>
             </div>
           </form>
-        </div>
+        </div> */}
 
         {/* Top Bar - Desktop Only */}
         <div className="hidden md:flex w-full bg-white/90 border-b border-gray-100/50 py-2 px-4 items-center justify-between">

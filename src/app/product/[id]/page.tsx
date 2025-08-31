@@ -125,6 +125,8 @@ async function addPowerToUserTable(userId: string, newPower: PowerEntry) {
   return newPower.id;
 }
 
+
+
 const ProductDetailPage = () => {
   const params = useParams();
   const router = useRouter();
@@ -134,6 +136,7 @@ const ProductDetailPage = () => {
   const { userProfile } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [recommendations, setRecommendations] = useState<Product[]>([]);
+  const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -209,6 +212,50 @@ const ProductDetailPage = () => {
 
   // Add state for features toggle
   const [showAllFeatures, setShowAllFeatures] = useState<{ [key: string]: boolean }>({});
+
+  // Utility functions for recently viewed products
+  const addToRecentlyViewed = (productId: string) => {
+    try {
+      const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+      // Add new product to the beginning if it's not already there
+      if (!recentlyViewed.includes(productId)) {
+        const updatedList = [productId, ...recentlyViewed].slice(0, 10);
+        localStorage.setItem('recentlyViewed', JSON.stringify(updatedList));
+        console.log('Added to recently viewed:', productId, 'Updated list:', updatedList);
+      } else {
+        console.log('Product already in recently viewed:', productId);
+      }
+    } catch (error) {
+      console.error('Error updating recently viewed:', error);
+    }
+  };
+
+  const getRecentlyViewedProducts = async (recentlyViewedIds: string[]) => {
+    try {
+      if (recentlyViewedIds.length === 0) return [];
+      
+      console.log('Fetching recently viewed products for IDs:', recentlyViewedIds);
+      
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .in("id", recentlyViewedIds)
+        .order("created_at", { ascending: false });
+      
+      if (error) throw error;
+      
+      // Sort by the order they were viewed (most recent first)
+      const sortedProducts = recentlyViewedIds
+        .map(id => data?.find(product => product.id === id))
+        .filter(Boolean) as Product[];
+      
+      console.log('Fetched recently viewed products:', sortedProducts);
+      return sortedProducts;
+    } catch (error) {
+      console.error('Error fetching recently viewed products:', error);
+      return [];
+    }
+  };
 
   // Toggle dropdown sections
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -507,7 +554,17 @@ const ProductDetailPage = () => {
         }
 
         // Add coupons to the product object
-        setProduct({...data, coupons} as Product);
+        const productWithCoupons = {...data, coupons} as Product;
+        setProduct(productWithCoupons);
+        
+        // Add to recently viewed
+        addToRecentlyViewed(params.id as string);
+        
+        // Fetch recently viewed products
+        const recentlyViewedIds = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+        const recentlyViewedProducts = await getRecentlyViewedProducts(recentlyViewedIds);
+        setRecentlyViewed(recentlyViewedProducts);
+        
       } catch (error) {
         console.error("Error fetching product:", error);
         setError("Failed to load product");
@@ -1502,6 +1559,13 @@ const ProductDetailPage = () => {
                 </button>
               )}
             </div>
+            <button
+                  className="w-full bg-primary text-white py-3 px-6 rounded-md font-medium border border-gray-300 hover:border-gray-400 transition-colors duration-200 flex items-center justify-center gap-2"
+                  onClick={(e) => handleRecommendationFavoriteClick(e, product)}
+                >
+                  <Heart className="w-5 h-5" />
+                  {isFavorite(product.id!) ? "Remove from Wishlist" : "Add to Wishlist"}
+                </button>
           </div>
 
           {/* Product Description Dropdown */}
@@ -1774,6 +1838,82 @@ const ProductDetailPage = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recently Viewed Products Section */}
+        {recentlyViewed.filter(item => item.id !== product?.id).length > 0 && (
+          <div className="mt-16">
+            <div className="mb-8">
+              <h2 className="text-2xl font-medium text-gray-900 mb-2">
+                Recently Viewed
+              </h2>
+              <p className="text-gray-600">
+                Products you&apos;ve looked at recently
+              </p>
+            </div>
+            <div className="flex gap-6 overflow-x-auto">
+              {recentlyViewed
+                .filter(item => item.id !== product?.id) // Exclude current product
+                .slice(0, 8)
+                .map((item, index) => (
+                  <div
+                    key={item.id || index}
+                    className="group cursor-pointer min-w-72"
+                    onClick={() => handleRecommendationClick(item)}
+                  >
+                    {/* Product Image */}
+                    <div className="aspect-square bg-gray-50 rounded-lg overflow-hidden mb-3 relative">
+                      {item.discounted_price && (
+                        <div className="absolute top-2 left-2 z-10">
+                          <span className="bg-primary text-white px-2 py-1 rounded text-xs font-medium">
+                            Sale
+                          </span>
+                        </div>
+                      )}
+                      <button
+                        onClick={(e) =>
+                          handleRecommendationFavoriteClick(e, item)
+                        }
+                        className="absolute top-2 right-2 z-10 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md hover:shadow-lg transition-shadow"
+                      >
+                        <Heart
+                          className={`w-4 h-4 ${
+                            isFavorite(item.id!)
+                              ? "text-red-500 fill-current"
+                              : "text-gray-400 hover:text-red-500"
+                          }`}
+                        />
+                      </button>
+                      <Image
+                        width={300}
+                        height={300}
+                        loading="lazy"
+                        src={item.banner_image_1 || item.banner_image_2 || ""}
+                        alt={item.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+
+                    {/* Product Info */}
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900 mb-1 line-clamp-2">
+                        {item.title}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-medium text-gray-900">
+                          ₹{item.discounted_price || item.original_price}
+                        </span>
+                        {item.discounted_price && (
+                          <span className="text-sm text-gray-500 line-through">
+                            ₹{item.original_price}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         )}
